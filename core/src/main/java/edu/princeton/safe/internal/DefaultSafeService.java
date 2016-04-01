@@ -5,9 +5,9 @@ import edu.princeton.safe.SafeService;
 
 public class DefaultSafeService implements SafeService {
 
-	@Override
-	public SafeBuilder createBuilder() {
-		return new DefaultSafeBuilder();
-	}
+    @Override
+    public SafeBuilder createBuilder() {
+        return new DefaultSafeBuilder();
+    }
 
 }

@@ -13,69 +13,69 @@ import edu.princeton.safe.internal.neighborhood.MapBasedNeighborhoodMethod;
 
 public class DefaultSafeBuilder implements SafeBuilder {
 
-	private NetworkProvider networkProvider;
-	private AnnotationProvider annotationProvider;
-	private NeighborhoodMethod neighborhoodMethod;
-	private RestrictionMethod restrictionMethod;
-	private GroupingMethod groupingMethod;
-	private OutputMethod outputMethod;
+    private NetworkProvider networkProvider;
+    private AnnotationProvider annotationProvider;
+    private NeighborhoodMethod neighborhoodMethod;
+    private RestrictionMethod restrictionMethod;
+    private GroupingMethod groupingMethod;
+    private OutputMethod outputMethod;
 
-	@Override
-	public SafeBuilder setNetworkProvider(NetworkProvider provider) {
-		networkProvider = provider;
-		return this;
-	}
+    @Override
+    public SafeBuilder setNetworkProvider(NetworkProvider provider) {
+        networkProvider = provider;
+        return this;
+    }
 
-	@Override
-	public SafeBuilder setAnnotationProvider(AnnotationProvider provider) {
-		annotationProvider = provider;
-		return this;
-	}
+    @Override
+    public SafeBuilder setAnnotationProvider(AnnotationProvider provider) {
+        annotationProvider = provider;
+        return this;
+    }
 
-	@Override
-	public SafeBuilder setNeighborhoodMethod(NeighborhoodMethod method) {
-		neighborhoodMethod = method;
-		return this;
-	}
+    @Override
+    public SafeBuilder setNeighborhoodMethod(NeighborhoodMethod method) {
+        neighborhoodMethod = method;
+        return this;
+    }
 
-	@Override
-	public SafeBuilder setRestrictionMethod(RestrictionMethod method) {
-		restrictionMethod = method;
-		return this;
-	}
+    @Override
+    public SafeBuilder setRestrictionMethod(RestrictionMethod method) {
+        restrictionMethod = method;
+        return this;
+    }
 
-	@Override
-	public SafeBuilder setGroupingMethod(GroupingMethod method) {
-		groupingMethod = method;
-		return this;
-	}
+    @Override
+    public SafeBuilder setGroupingMethod(GroupingMethod method) {
+        groupingMethod = method;
+        return this;
+    }
 
-	@Override
-	public SafeBuilder setOutputMethod(OutputMethod method) {
-		outputMethod = method;
-		return this;
-	}
+    @Override
+    public SafeBuilder setOutputMethod(OutputMethod method) {
+        outputMethod = method;
+        return this;
+    }
 
-	@Override
-	public Safe build() throws ConfigurationException {
-		validateSettings();
-		// TODO Auto-generated method stub
-		return new ParallelSafe(networkProvider, annotationProvider, neighborhoodMethod, restrictionMethod,
-				groupingMethod, outputMethod);
-	}
+    @Override
+    public Safe build() throws ConfigurationException {
+        validateSettings();
+        // TODO Auto-generated method stub
+        return new ParallelSafe(networkProvider, annotationProvider, neighborhoodMethod, restrictionMethod,
+                groupingMethod, outputMethod);
+    }
 
-	private void validateSettings() throws ConfigurationException {
-		if (networkProvider == null) {
-			throw new ConfigurationException("NetworkProvider was not provided");
-		}
+    private void validateSettings() throws ConfigurationException {
+        if (networkProvider == null) {
+            throw new ConfigurationException("NetworkProvider was not provided");
+        }
 
-		if (annotationProvider == null) {
-			throw new ConfigurationException("AnnotationProvider was not provided");
-		}
+        if (annotationProvider == null) {
+            throw new ConfigurationException("AnnotationProvider was not provided");
+        }
 
-		if (neighborhoodMethod == null) {
-			neighborhoodMethod = new MapBasedNeighborhoodMethod();
-		}
-	}
+        if (neighborhoodMethod == null) {
+            neighborhoodMethod = new MapBasedNeighborhoodMethod();
+        }
+    }
 
 }
