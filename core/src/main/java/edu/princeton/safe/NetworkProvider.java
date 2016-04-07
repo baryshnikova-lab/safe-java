@@ -4,6 +4,8 @@ public interface NetworkProvider {
 
     int getNodeCount();
 
-    double getDistance(int i, int j);
+    double getDistance(int fromNode, int toNode);
+
+    double getWeight(int fromNode, int toNode);
 
 }

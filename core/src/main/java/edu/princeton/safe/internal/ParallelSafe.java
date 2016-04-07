@@ -1,6 +1,5 @@
 package edu.princeton.safe.internal;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -10,11 +9,11 @@ import org.apache.commons.math3.util.CentralPivotingStrategy;
 import org.apache.commons.math3.util.KthSelector;
 
 import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.DistanceMetric;
 import edu.princeton.safe.FunctionalAttribute;
 import edu.princeton.safe.FunctionalGroup;
 import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.Neighborhood;
-import edu.princeton.safe.NeighborhoodMethod;
 import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.NodePair;
 import edu.princeton.safe.OutputMethod;
@@ -23,31 +22,34 @@ import edu.princeton.safe.Safe;
 
 public class ParallelSafe implements Safe {
 
-    private NetworkProvider networkProvider;
-    private AnnotationProvider annotationProvider;
-    private NeighborhoodMethod neighborhoodMethod;
-    private RestrictionMethod restrictionMethod;
-    private GroupingMethod groupingMethod;
-    private OutputMethod outputMethod;
-    private List<NodePair> distances;
-    private double maximumDistanceThreshold;
-    private List<Neighborhood> neighborhoods;
-    private List<FunctionalAttribute> attributes;
-    private List<FunctionalGroup> groups;
-    
-    private double distancePercentile;
+    NetworkProvider networkProvider;
+    AnnotationProvider annotationProvider;
+    DistanceMetric distanceMetric;
+    RestrictionMethod restrictionMethod;
+    GroupingMethod groupingMethod;
+    OutputMethod outputMethod;
+    List<NodePair> distances;
+    double maximumDistanceThreshold;
+    List<Neighborhood> neighborhoods;
+    List<FunctionalAttribute> attributes;
+    List<FunctionalGroup> groups;
 
-    public ParallelSafe(NetworkProvider networkProvider, AnnotationProvider annotationProvider,
-            NeighborhoodMethod neighborhoodMethod, RestrictionMethod restrictionMethod, GroupingMethod groupingMethod,
-            OutputMethod outputMethod) {
+    double distancePercentile;
+
+    public ParallelSafe(NetworkProvider networkProvider,
+                        AnnotationProvider annotationProvider,
+                        DistanceMetric neighborhoodMethod,
+                        RestrictionMethod restrictionMethod,
+                        GroupingMethod groupingMethod,
+                        OutputMethod outputMethod) {
 
         this.networkProvider = networkProvider;
         this.annotationProvider = annotationProvider;
-        this.neighborhoodMethod = neighborhoodMethod;
+        this.distanceMetric = neighborhoodMethod;
         this.restrictionMethod = restrictionMethod;
         this.groupingMethod = groupingMethod;
         this.outputMethod = outputMethod;
-        
+
         distancePercentile = 0.5;
     }
 
@@ -65,24 +67,24 @@ public class ParallelSafe implements Safe {
         outputMethod.apply(distances, maximumDistanceThreshold, neighborhoods, attributes, groups);
     }
 
-    private void applyColors(List<FunctionalGroup> groups) {
+    void applyColors(List<FunctionalGroup> groups) {
         // TODO Auto-generated method stub
         // assign unique color to each domain
         // compute color for each node
     }
 
-    private List<FunctionalGroup> computeGroups(List<FunctionalAttribute> attributes) {
+    List<FunctionalGroup> computeGroups(List<FunctionalAttribute> attributes) {
         Stream<FunctionalAttribute> filteredAttributes = applyRestriction(attributes);
         // TODO Auto-generated method stub
         return null;
     }
 
-    private Stream<FunctionalAttribute> applyRestriction(List<FunctionalAttribute> attributes) {
+    Stream<FunctionalAttribute> applyRestriction(List<FunctionalAttribute> attributes) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    private List<FunctionalAttribute> computeEnrichment(List<Neighborhood> neighborhoods) {
+    List<FunctionalAttribute> computeEnrichment(List<Neighborhood> neighborhoods) {
         // TODO Auto-generated method stub
 
         // compute enrichment for each neighborhood -> p-values
@@ -91,12 +93,14 @@ public class ParallelSafe implements Safe {
         return null;
     }
 
-    private List<Neighborhood> computeNeighborhoods(List<NodePair> distances, double maximumDistanceThreshold) {
+    List<Neighborhood> computeNeighborhoods(List<NodePair> distances,
+                                            double maximumDistanceThreshold) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    private static double computeMaximumDistanceThreshold(List<NodePair> pairs, double percentileIndex) {
+    static double computeMaximumDistanceThreshold(List<NodePair> pairs,
+                                                  double percentileIndex) {
         double[] distances = pairs.stream()
                                   .mapToDouble(d -> d.getDistance())
                                   .toArray();
@@ -105,31 +109,13 @@ public class ParallelSafe implements Safe {
         return percentile.evaluate(distances, percentileIndex);
     }
 
-    private void computeDistances() {
+    void computeDistances() {
         if (distances != null) {
             return;
         }
 
-        distances = computeDistances(networkProvider);
+        distances = distanceMetric.computeDistances(networkProvider);
         maximumDistanceThreshold = computeMaximumDistanceThreshold(distances, distancePercentile);
-    }
-
-    private static List<NodePair> computeDistances(NetworkProvider networkProvider) {
-        int totalNodes = networkProvider.getNodeCount();
-
-        // Compute pair-wise distances and filter out NaNs.
-        List<NodePair> distances = new ArrayList<>();
-        for (int i = 0; i < totalNodes; i++) {
-            for (int j = 0; j < totalNodes; j++) {
-                double distance = networkProvider.getDistance(i, j);
-                if (!Double.isNaN(distance)) {
-                    NodePair details = new DefaultNodePair(i, j);
-                    details.setDistance(distance);
-                    distances.add(details);
-                }
-            }
-        }
-        return distances;
     }
 
 }

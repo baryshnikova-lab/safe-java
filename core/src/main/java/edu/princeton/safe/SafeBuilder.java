@@ -5,7 +5,7 @@ public interface SafeBuilder {
 
     SafeBuilder setAnnotationProvider(AnnotationProvider provider);
 
-    SafeBuilder setNeighborhoodMethod(NeighborhoodMethod method);
+    SafeBuilder setDistanceMetric(DistanceMetric method);
 
     SafeBuilder setRestrictionMethod(RestrictionMethod method);
 

@@ -3,19 +3,19 @@ package edu.princeton.safe.internal;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.ConfigurationException;
 import edu.princeton.safe.GroupingMethod;
-import edu.princeton.safe.NeighborhoodMethod;
+import edu.princeton.safe.DistanceMetric;
 import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.OutputMethod;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.Safe;
 import edu.princeton.safe.SafeBuilder;
-import edu.princeton.safe.internal.neighborhood.MapBasedNeighborhoodMethod;
+import edu.princeton.safe.internal.distance.MapBasedDistanceMetric;
 
 public class DefaultSafeBuilder implements SafeBuilder {
 
     private NetworkProvider networkProvider;
     private AnnotationProvider annotationProvider;
-    private NeighborhoodMethod neighborhoodMethod;
+    private DistanceMetric distanceMetric;
     private RestrictionMethod restrictionMethod;
     private GroupingMethod groupingMethod;
     private OutputMethod outputMethod;
@@ -33,8 +33,8 @@ public class DefaultSafeBuilder implements SafeBuilder {
     }
 
     @Override
-    public SafeBuilder setNeighborhoodMethod(NeighborhoodMethod method) {
-        neighborhoodMethod = method;
+    public SafeBuilder setDistanceMetric(DistanceMetric metric) {
+        distanceMetric = metric;
         return this;
     }
 
@@ -60,7 +60,7 @@ public class DefaultSafeBuilder implements SafeBuilder {
     public Safe build() throws ConfigurationException {
         validateSettings();
         // TODO Auto-generated method stub
-        return new ParallelSafe(networkProvider, annotationProvider, neighborhoodMethod, restrictionMethod,
+        return new ParallelSafe(networkProvider, annotationProvider, distanceMetric, restrictionMethod,
                 groupingMethod, outputMethod);
     }
 
@@ -73,8 +73,8 @@ public class DefaultSafeBuilder implements SafeBuilder {
             throw new ConfigurationException("AnnotationProvider was not provided");
         }
 
-        if (neighborhoodMethod == null) {
-            neighborhoodMethod = new MapBasedNeighborhoodMethod();
+        if (distanceMetric == null) {
+            distanceMetric = new MapBasedDistanceMetric();
         }
     }
 
