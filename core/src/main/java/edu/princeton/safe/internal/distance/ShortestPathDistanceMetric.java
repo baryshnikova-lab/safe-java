@@ -8,7 +8,9 @@ import edu.princeton.safe.NodePair;
 
 public abstract class ShortestPathDistanceMetric implements DistanceMetric {
 
-    abstract double getCost(NetworkProvider provider, int fromNode, int toNode);
+    abstract double getCost(NetworkProvider provider,
+                            int fromNode,
+                            int toNode);
 
     @Override
     public List<NodePair> computeDistances(NetworkProvider networkProvider) {

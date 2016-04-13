@@ -12,14 +12,15 @@ import org.apache.commons.math3.linear.OpenMapRealMatrix;
 import org.apache.commons.math3.linear.SparseRealMatrix;
 
 import edu.princeton.safe.NetworkProvider;
-import edu.princeton.safe.internal.distance.MapBasedDistanceMetric;
 
 public class TabDelimitedNetworkProvider implements NetworkProvider {
 
     List<Node> nodes;
     SparseRealMatrix weights;
-    
-    public TabDelimitedNetworkProvider(String nodePath, String edgePath) throws IOException {
+
+    public TabDelimitedNetworkProvider(String nodePath,
+                                       String edgePath)
+            throws IOException {
         try (Stream<String> stream = Files.lines(Paths.get(nodePath))) {
             nodes = new ArrayList<>();
             stream.forEach(new Consumer<String>() {
@@ -28,6 +29,7 @@ public class TabDelimitedNetworkProvider implements NetworkProvider {
                     String[] parts = line.split("\t");
                     Node node = new Node();
                     node.label = parts[0];
+                    node.id = parts[1];
                     node.x = Double.parseDouble(parts[2]);
                     node.y = Double.parseDouble(parts[3]);
                     nodes.add(node);
@@ -36,9 +38,9 @@ public class TabDelimitedNetworkProvider implements NetworkProvider {
         }
         int totalNodes = nodes.size();
         weights = new OpenMapRealMatrix(totalNodes, totalNodes);
-        
+
     }
-    
+
     @Override
     public int getNodeCount() {
         return nodes.size();
@@ -58,10 +60,21 @@ public class TabDelimitedNetworkProvider implements NetworkProvider {
         return weights.getEntry(fromNode, toNode);
     }
 
+    @Override
+    public String getNodeLabel(int nodeIndex) {
+        return nodes.get(nodeIndex).label;
+    }
+
+    @Override
+    public String getNodeId(int nodeIndex) {
+        return nodes.get(nodeIndex).id;
+    }
+
     private class Node {
+        String id;
         String label;
         double x;
         double y;
     }
-    
+
 }

@@ -7,6 +7,9 @@ import java.util.Optional;
 
 import org.junit.Test;
 
+import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.Neighborhood;
+import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.NodePair;
 import edu.princeton.safe.internal.distance.MapBasedDistanceMetric;
 
@@ -15,11 +18,17 @@ public class PerformanceTest {
     public void testElapsedTime() throws Exception {
         int loadRepeats = 1;
         int computeRepeats = 1;
-        TabDelimitedNetworkProvider provider = time("Load Network",
-                                                    () -> new TabDelimitedNetworkProvider("src/test/resources/nodes.txt",
-                                                                                          "src/test/resources/edges.txt"),
-                                                    loadRepeats);
+        NetworkProvider provider = time("Load Network",
+                                        () -> new TabDelimitedNetworkProvider("src/test/resources/Costanzo_Science_2010.nodes.txt",
+                                                                              "src/test/resources/Costanzo_Science_2010.edges.txt"),
+                                        loadRepeats);
         System.out.printf("Nodes: %d\n", provider.getNodeCount());
+
+        AnnotationProvider annotationProvider = time("Load Annotations",
+                                                     () -> new DenseAnnotationProvider(provider,
+                                                                                       "src/test/resources/hoepfner_movva_2014_hop_known.txt"),
+                                                     loadRepeats);
+        System.out.printf("Attributes: %d\n", annotationProvider.getAttributeCount());
 
         MapBasedDistanceMetric metric = new MapBasedDistanceMetric();
         List<NodePair> pairs = time("Distances", () -> metric.computeDistances(provider), computeRepeats);
@@ -39,5 +48,17 @@ public class PerformanceTest {
         double threshold = time("Threshold", () -> ParallelSafe.computeMaximumDistanceThreshold(pairs, 0.5),
                                 computeRepeats);
         System.out.println(threshold);
+
+        Neighborhood[] neighborhoods = time("Neighborhoods",
+                                            () -> ParallelSafe.computeNeighborhoods(provider, annotationProvider, pairs,
+                                                                                    threshold),
+                                            computeRepeats);
+
+        time("Binary Enrichment", () -> ParallelSafe.computeBinaryEnrichment(annotationProvider, neighborhoods),
+             computeRepeats);
+
+        time("Quantitative Enrichment",
+             () -> ParallelSafe.computeQuantitativeEnrichment(provider, annotationProvider, neighborhoods),
+             computeRepeats);
     }
 }
