@@ -60,8 +60,8 @@ public class DefaultSafeBuilder implements SafeBuilder {
     public Safe build() throws ConfigurationException {
         validateSettings();
         // TODO Auto-generated method stub
-        return new ParallelSafe(networkProvider, annotationProvider, distanceMetric, restrictionMethod,
-                groupingMethod, outputMethod);
+        return new ParallelSafe(networkProvider, annotationProvider, distanceMetric, restrictionMethod, groupingMethod,
+                                outputMethod);
     }
 
     private void validateSettings() throws ConfigurationException {

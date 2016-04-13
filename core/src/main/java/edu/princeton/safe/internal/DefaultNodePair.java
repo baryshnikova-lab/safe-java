@@ -6,8 +6,9 @@ public class DefaultNodePair implements NodePair {
     int fromIndex;
     int toIndex;
     double distance;
-    
-    public DefaultNodePair(int fromIndex, int toIndex) {
+
+    public DefaultNodePair(int fromIndex,
+                           int toIndex) {
         this.fromIndex = fromIndex;
         this.toIndex = toIndex;
     }
