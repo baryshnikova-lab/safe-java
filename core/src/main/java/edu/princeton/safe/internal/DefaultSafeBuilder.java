@@ -6,6 +6,7 @@ import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.DistanceMetric;
 import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.OutputMethod;
+import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.Safe;
 import edu.princeton.safe.SafeBuilder;
@@ -19,6 +20,11 @@ public class DefaultSafeBuilder implements SafeBuilder {
     private RestrictionMethod restrictionMethod;
     private GroupingMethod groupingMethod;
     private OutputMethod outputMethod;
+    private DefaultProgressReporter progressReporter;
+
+    public DefaultSafeBuilder() {
+        progressReporter = new DefaultProgressReporter();
+    }
 
     @Override
     public SafeBuilder setNetworkProvider(NetworkProvider provider) {
@@ -57,11 +63,16 @@ public class DefaultSafeBuilder implements SafeBuilder {
     }
 
     @Override
+    public SafeBuilder addProgressReporter(ProgressReporter reporter) {
+        progressReporter.add(reporter);
+        return this;
+    }
+
+    @Override
     public Safe build() throws ConfigurationException {
         validateSettings();
-        // TODO Auto-generated method stub
         return new ParallelSafe(networkProvider, annotationProvider, distanceMetric, restrictionMethod, groupingMethod,
-                                outputMethod);
+                                outputMethod, progressReporter);
     }
 
     private void validateSettings() throws ConfigurationException {

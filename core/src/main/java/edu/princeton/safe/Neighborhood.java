@@ -10,6 +10,10 @@ public interface Neighborhood {
         return Math.min(-Math.log10(pValue), -LOG10P) / -LOG10P;
     }
 
+    static double getEnrichmentThreshold(int totalAttributes) {
+        return -Math.log10(0.05 / totalAttributes) / -LOG10P;
+    }
+
     int getNodeCount();
 
     void setSignificance(int attributeIndex,

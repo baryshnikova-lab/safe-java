@@ -24,15 +24,4 @@ public class ParallelSafeTest {
         assertEquals(5, threshold, DELTA);
     }
 
-    @Test
-    public void binomialCoefficient() {
-        assertEquals(1, ParallelSafe.binomialCoefficient(0, 0), DELTA);
-
-        assertEquals(1, ParallelSafe.binomialCoefficient(4, 4), DELTA);
-        assertEquals(5, ParallelSafe.binomialCoefficient(5, 4), DELTA);
-        assertEquals(15, ParallelSafe.binomialCoefficient(6, 4), DELTA);
-        assertEquals(35, ParallelSafe.binomialCoefficient(7, 4), DELTA);
-        assertEquals(70, ParallelSafe.binomialCoefficient(8, 4), DELTA);
-    }
-
 }

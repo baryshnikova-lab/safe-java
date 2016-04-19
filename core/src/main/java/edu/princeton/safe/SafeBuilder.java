@@ -14,4 +14,6 @@ public interface SafeBuilder {
     SafeBuilder setOutputMethod(OutputMethod method);
 
     Safe build() throws ConfigurationException;
+
+    SafeBuilder addProgressReporter(ProgressReporter reporter);
 }
