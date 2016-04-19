@@ -50,7 +50,7 @@ public abstract class TabDelimitedAnnotationParser implements AnnotationParser {
                 if (nodeIndex != -1) {
                     for (int j = 1; j < parts.length; j++) {
                         double value = Double.parseDouble(parts[j]);
-                        if (!Double.isNaN(value) && value != 0) {
+                        if (!Double.isNaN(value)) {
                             addValue(nodeIndex, j - 1, value);
                         }
                     }

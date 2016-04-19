@@ -24,9 +24,13 @@ public class DenseAnnotationProvider implements AnnotationProvider {
                               int totalNodes) {
                 attributeLabels = labels;
                 int totalAttributes = labels.length;
-                values = new double[totalNodes][totalAttributes];
                 nodesPerAttribute = new int[totalAttributes];
                 isBinary = true;
+
+                values = new double[totalNodes][];
+                for (int i = 0; i < totalNodes; i++) {
+                    values[i] = Util.nanArray(totalAttributes);
+                }
             }
 
             @Override
