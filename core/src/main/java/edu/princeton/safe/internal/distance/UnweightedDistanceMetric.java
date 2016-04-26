@@ -5,10 +5,7 @@ import edu.princeton.safe.NetworkProvider;
 public class UnweightedDistanceMetric extends ShortestPathDistanceMetric {
 
     @Override
-    double getCost(NetworkProvider provider,
-                   int fromNode,
-                   int toNode) {
-        return 1;
+    EdgeWeightFunction getEdgeWeightFunction(NetworkProvider networkProvider) {
+        return (int u, int v) -> 1;
     }
-
 }

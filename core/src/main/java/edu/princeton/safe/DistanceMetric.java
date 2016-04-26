@@ -4,6 +4,7 @@ import java.util.List;
 
 public interface DistanceMetric {
 
-    List<NodePair> computeDistances(NetworkProvider networkProvider);
+    <T extends Neighborhood> List<T> computeDistances(NetworkProvider networkProvider,
+                                                      NeighborhoodFactory<T> neighborhoodFactory);
 
 }

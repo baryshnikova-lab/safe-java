@@ -6,7 +6,7 @@ public interface OutputMethod {
 
     void apply(List<NodePair> distances,
                double maximumDistanceThreshold,
-               Neighborhood[] neighborhoods,
+               List<? extends Neighborhood> neighborhoods,
                List<FunctionalAttribute> attributes,
                List<FunctionalGroup> groups);
 

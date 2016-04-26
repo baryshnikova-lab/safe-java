@@ -29,4 +29,6 @@ public interface Neighborhood {
 
     int getNodeCountForAttribute(int j,
                                  AnnotationProvider annotationProvider);
+    
+    void setDistance(int nodeIndex, double distance);
 }

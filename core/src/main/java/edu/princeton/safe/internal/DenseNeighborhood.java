@@ -1,53 +1,23 @@
 package edu.princeton.safe.internal;
 
-import java.util.function.IntConsumer;
+import java.util.Arrays;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.cursors.IntCursor;
-
-import edu.princeton.safe.AnnotationProvider;
-import edu.princeton.safe.Neighborhood;
-
-public class DenseNeighborhood implements Neighborhood {
-
-    int nodeIndex;
+public class DenseNeighborhood extends DefaultNeighborhood {
 
     double[] significanceScores;
-
-    int[] nodeCountsPerAttribute;
-    IntArrayList memberIndexes;
+    double[] distances;
 
     public DenseNeighborhood(int nodeIndex,
                              int nodeCount,
-                             int attributeCount) {
-        this.nodeIndex = nodeIndex;
-        significanceScores = new double[attributeCount];
-        memberIndexes = new IntArrayList();
-        nodeCountsPerAttribute = new int[attributeCount];
-
-        for (int j = 0; j < attributeCount; j++) {
-            nodeCountsPerAttribute[j] = -1;
-        }
-    }
-
-    @Override
-    public int getNodeIndex() {
-        return nodeIndex;
-    }
-
-    @Override
-    public int getNodeCount() {
-        return memberIndexes.size();
-    }
-
-    @Override
-    public void addNode(int nodeIndex) {
-        memberIndexes.add(nodeIndex);
-    }
-
-    @Override
-    public void forEachNodeIndex(IntConsumer action) {
-        memberIndexes.forEach((IntCursor c) -> action.accept(c.value));
+                             int totalAttributes) {
+        super(nodeIndex, totalAttributes);
+        significanceScores = new double[totalAttributes];
+        
+        distances = IntStream.range(0, nodeCount)
+                             .mapToDouble(n -> Double.NaN)
+                             .toArray();
     }
 
     @Override
@@ -57,28 +27,29 @@ public class DenseNeighborhood implements Neighborhood {
     }
 
     @Override
-    public double getEnrichmentScore(int attributeIndex) {
-        double pValue = significanceScores[attributeIndex];
-        return Neighborhood.computeEnrichmentScore(pValue);
+    double getSignificance(int attributeIndex) {
+        return significanceScores[attributeIndex];
     }
 
     @Override
-    public int getNodeCountForAttribute(int j,
-                                        AnnotationProvider annotationProvider) {
-        int count = nodeCountsPerAttribute[j];
-        if (count != -1) {
-            return count;
-        }
-
-        count = 0;
-        for (int i = 0; i < memberIndexes.size(); i++) {
-            int index = memberIndexes.get(i);
-            double value = annotationProvider.getValue(index, j);
-            if (!Double.isNaN(value) && value != 0) {
-                count++;
+    DoubleStream streamDistances() {
+        return Arrays.stream(distances);
+    }
+    
+    @Override
+    void applyDistanceThreshold(double maximumDistanceThreshold) {
+        for (int i = 0; i < distances.length; i++) {
+            double distance = distances[i];
+            if (Double.isNaN(distance) || distance >= maximumDistanceThreshold) {
+                continue;
             }
+            addNode(i);
         }
-        nodeCountsPerAttribute[j] = count;
-        return count;
+    }
+    
+    @Override
+    public void setDistance(int nodeIndex,
+                            double distance) {
+        distances[nodeIndex] = distance;
     }
 }

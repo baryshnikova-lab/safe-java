@@ -8,18 +8,24 @@ import java.util.Arrays;
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.carrotsearch.hppc.ObjectScatterSet;
 
+import edu.princeton.safe.AnnotationConsumer;
 import edu.princeton.safe.AnnotationParser;
 import edu.princeton.safe.NetworkProvider;
 
-public abstract class TabDelimitedAnnotationParser implements AnnotationParser {
+public  class TabDelimitedAnnotationParser implements AnnotationParser {
 
     ObjectScatterSet<String> skippedNodes;
     int skippedValues;
     int totalValues;
-
+    String path;
+    
+    public TabDelimitedAnnotationParser(String path) {
+        this.path = path;
+    }
+    
     @Override
     public void parse(NetworkProvider networkProvider,
-                      String path)
+                      AnnotationConsumer consumer)
             throws IOException {
 
         if (skippedNodes != null) {
@@ -34,7 +40,7 @@ public abstract class TabDelimitedAnnotationParser implements AnnotationParser {
 
             String[] attributeLabels = Arrays.copyOfRange(parts, 1, parts.length);
             int totalNodes = networkProvider.getNodeCount();
-            start(attributeLabels, totalNodes);
+            consumer.start(attributeLabels, totalNodes);
 
             // Create look up for node label -> node index
             ObjectIntHashMap<String> nodeIdsToIndexes = new ObjectIntHashMap<>();
@@ -51,7 +57,7 @@ public abstract class TabDelimitedAnnotationParser implements AnnotationParser {
                     for (int j = 1; j < parts.length; j++) {
                         double value = Double.parseDouble(parts[j]);
                         if (!Double.isNaN(value)) {
-                            addValue(nodeIndex, j - 1, value);
+                            consumer.value(nodeIndex, j - 1, value);
                         }
                     }
                 } else {
@@ -61,6 +67,8 @@ public abstract class TabDelimitedAnnotationParser implements AnnotationParser {
                 totalValues++;
                 line = reader.readLine();
             }
+        } finally {
+            consumer.finish();
         }
     }
 }

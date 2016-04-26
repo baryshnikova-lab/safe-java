@@ -1,47 +1,22 @@
 package edu.princeton.safe.internal;
 
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
+import java.util.stream.DoubleStream;
+import java.util.stream.StreamSupport;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDoubleScatterMap;
-import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 
-import edu.princeton.safe.AnnotationProvider;
-import edu.princeton.safe.Neighborhood;
-
-public class SparseNeighborhood implements Neighborhood {
-
-    int nodeIndex;
+public class SparseNeighborhood extends DefaultNeighborhood {
 
     IntDoubleScatterMap significanceScores;
+    IntDoubleScatterMap distances;
 
-    IntArrayList memberIndexes;
-
-    public SparseNeighborhood(int nodeIndex) {
-        this.nodeIndex = nodeIndex;
+    public SparseNeighborhood(int nodeIndex,
+                              int totalAttributes) {
+        super(nodeIndex, totalAttributes);
         significanceScores = new IntDoubleScatterMap();
-        memberIndexes = new IntArrayList();
-    }
-
-    @Override
-    public int getNodeIndex() {
-        return nodeIndex;
-    }
-
-    @Override
-    public int getNodeCount() {
-        return memberIndexes.size();
-    }
-
-    @Override
-    public void addNode(int nodeIndex) {
-        memberIndexes.add(nodeIndex);
-    }
-
-    @Override
-    public void forEachNodeIndex(IntConsumer action) {
-        memberIndexes.forEach((IntCursor c) -> action.accept(c.value));
+        distances = new IntDoubleScatterMap();
     }
 
     @Override
@@ -51,24 +26,32 @@ public class SparseNeighborhood implements Neighborhood {
     }
 
     @Override
-    public double getEnrichmentScore(int attributeIndex) {
-        double pValue = significanceScores.get(attributeIndex);
-        return Neighborhood.computeEnrichmentScore(pValue);
+    double getSignificance(int attributeIndex) {
+        return significanceScores.get(attributeIndex);
     }
 
     @Override
-    public int getNodeCountForAttribute(int j,
-                                        AnnotationProvider annotationProvider) {
-        int[] count = { 0 };
-        memberIndexes.forEach(new Consumer<IntCursor>() {
-            @Override
-            public void accept(IntCursor cursor) {
-                double value = annotationProvider.getValue(cursor.value, j);
-                if (!Double.isNaN(value) && value != 0) {
-                    count[0]++;
+    DoubleStream streamDistances() {
+        return StreamSupport.stream(distances.spliterator(), false)
+                            .mapToDouble(c -> c.value);
+    }
+
+    @Override
+    void applyDistanceThreshold(double maximumDistanceThreshold) {
+        distances.forEach(new Consumer<IntDoubleCursor>() {
+            public void accept(IntDoubleCursor cursor) {
+                if (Double.isNaN(cursor.value) || cursor.value >= maximumDistanceThreshold) {
+                    return;
                 }
-            }
+                addNode(cursor.key);
+            };
         });
-        return 0;
+    }
+    
+    @Override
+    public void setDistance(int nodeIndex,
+                            double distance) {
+        
+        distances.put(nodeIndex, distance);
     }
 }

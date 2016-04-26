@@ -1,5 +1,7 @@
 package edu.princeton.safe;
 
+import java.util.function.IntConsumer;
+
 public interface NetworkProvider {
 
     int getNodeCount();
@@ -13,5 +15,8 @@ public interface NetworkProvider {
     String getNodeLabel(int nodeIndex);
 
     String getNodeId(int nodeIndex);
+
+    void forEachNeighbor(int nodeIndex,
+                         IntConsumer consumer);
 
 }

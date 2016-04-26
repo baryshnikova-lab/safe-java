@@ -1,6 +1,5 @@
 package edu.princeton.safe.internal;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -22,6 +21,7 @@ import edu.princeton.safe.FunctionalAttribute;
 import edu.princeton.safe.FunctionalGroup;
 import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.Neighborhood;
+import edu.princeton.safe.NeighborhoodFactory;
 import edu.princeton.safe.NeighborhoodScoringMethod;
 import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.NodePair;
@@ -43,7 +43,7 @@ public class ParallelSafe implements Safe {
 
     List<NodePair> nodePairs;
     double maximumDistanceThreshold;
-    Neighborhood[] neighborhoods;
+    List<DefaultNeighborhood> neighborhoods;
     List<FunctionalAttribute> attributes;
     List<FunctionalGroup> groups;
 
@@ -72,7 +72,7 @@ public class ParallelSafe implements Safe {
     public void apply() {
         computeDistances();
 
-        computeNeighborhoods(networkProvider, annotationProvider, nodePairs, maximumDistanceThreshold);
+        computeNeighborhoods(networkProvider, annotationProvider, neighborhoods, maximumDistanceThreshold);
         computeEnrichment(neighborhoods);
 
         computeGroups(attributes);
@@ -99,7 +99,7 @@ public class ParallelSafe implements Safe {
         return null;
     }
 
-    void computeEnrichment(Neighborhood[] neighborhoods) {
+    void computeEnrichment(List<? extends Neighborhood> neighborhoods) {
         if (annotationProvider.isBinary()) {
             computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter, neighborhoods);
         } else {
@@ -119,13 +119,12 @@ public class ParallelSafe implements Safe {
                                               AnnotationProvider annotationProvider,
                                               NeighborhoodScoringMethod scoringMethod,
                                               ProgressReporter progressReporter,
-                                              Neighborhood[] neighborhoods) {
+                                              List<? extends Neighborhood> neighborhoods) {
 
-        Stream<Neighborhood> stream = Arrays.stream(neighborhoods);
+        Stream<? extends Neighborhood> stream = neighborhoods.stream();
         if (progressReporter.supportsParallel()) {
             stream = stream.parallel();
         }
-
         progressReporter.startNeighborhoodScore(networkProvider, annotationProvider);
         stream.forEach(new Consumer<Neighborhood>() {
             @Override
@@ -169,11 +168,11 @@ public class ParallelSafe implements Safe {
     static void computeBinaryEnrichment(NetworkProvider networkProvider,
                                         AnnotationProvider annotationProvider,
                                         ProgressReporter progressReporter,
-                                        Neighborhood[] neighborhoods) {
+                                        List<? extends Neighborhood> neighborhoods) {
 
         int totalNodes = annotationProvider.getNodeCount();
 
-        Stream<Neighborhood> stream = Arrays.stream(neighborhoods);
+        Stream<? extends Neighborhood> stream = neighborhoods.stream();
         if (progressReporter.supportsParallel()) {
             stream = stream.parallel();
         }
@@ -203,46 +202,42 @@ public class ParallelSafe implements Safe {
         progressReporter.finishNeighborhoodScore();
     }
 
-    static Neighborhood[] computeNeighborhoods(NetworkProvider networkProvider,
-                                               AnnotationProvider annotationProvider,
-                                               List<NodePair> pairs,
-                                               double maximumDistanceThreshold) {
+    static void computeNeighborhoods(NetworkProvider networkProvider,
+                                     AnnotationProvider annotationProvider,
+                                     List<DefaultNeighborhood> neighborhoods,
+                                     double maximumDistanceThreshold) {
 
-        int totalNodes = networkProvider.getNodeCount();
-        int totalAttributes = annotationProvider.getAttributeCount();
-
-        Neighborhood[] neighborhoods = new Neighborhood[totalNodes];
-        for (NodePair pair : pairs) {
-            if (pair.getDistance() >= maximumDistanceThreshold) {
-                continue;
-            }
-            int fromIndex = pair.getFromIndex();
-            Neighborhood neighborhood = neighborhoods[fromIndex];
-            if (neighborhood == null) {
-                neighborhood = new DenseNeighborhood(fromIndex, totalNodes, totalAttributes);
-                neighborhoods[fromIndex] = neighborhood;
-            }
-            neighborhood.addNode(pair.getToIndex());
-        }
-        return neighborhoods;
+        neighborhoods.stream()
+                     .forEach(n -> n.applyDistanceThreshold(maximumDistanceThreshold));
     }
 
-    static double computeMaximumDistanceThreshold(List<NodePair> pairs,
+    static double computeMaximumDistanceThreshold(List<? extends DefaultNeighborhood> neighborhoods,
                                                   double percentileIndex) {
-        double[] distances = pairs.stream()
-                                  .mapToDouble(d -> d.getDistance())
-                                  .toArray();
+
+        double[] distances = neighborhoods.stream()
+                                          .flatMapToDouble(n -> n.streamDistances())
+                                          .toArray();
         Percentile percentile = new Percentile().withEstimationType(EstimationType.R_5)
                                                 .withKthSelector(new KthSelector(new CentralPivotingStrategy()));
         return percentile.evaluate(distances, percentileIndex);
     }
 
     void computeDistances() {
-        if (nodePairs != null) {
+        if (neighborhoods != null) {
             return;
         }
 
-        nodePairs = distanceMetric.computeDistances(networkProvider);
-        maximumDistanceThreshold = computeMaximumDistanceThreshold(nodePairs, distancePercentile);
+        int totalNodes = networkProvider.getNodeCount();
+        int totalAttributes = annotationProvider.getAttributeCount();
+
+        NeighborhoodFactory<DefaultNeighborhood> factory;
+        if (annotationProvider.isBinary()) {
+            factory = (int i) -> new SparseNeighborhood(i, totalAttributes);
+        } else {
+            factory = (int i) -> new DenseNeighborhood(i, totalNodes, totalAttributes);
+        }
+
+        neighborhoods = distanceMetric.computeDistances(networkProvider, factory);
+        maximumDistanceThreshold = computeMaximumDistanceThreshold(neighborhoods, distancePercentile);
     }
 }

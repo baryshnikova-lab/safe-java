@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
 
+import edu.princeton.safe.AnnotationConsumer;
 import edu.princeton.safe.AnnotationParser;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.IndexedDoubleConsumer;
@@ -18,9 +19,10 @@ public class SparseAnnotationProvider implements AnnotationProvider {
     boolean isBinary;
 
     public SparseAnnotationProvider(NetworkProvider networkProvider,
-                                    String path)
+                                    AnnotationParser parser)
             throws IOException {
-        AnnotationParser parser = new TabDelimitedAnnotationParser() {
+
+        parser.parse(networkProvider, new AnnotationConsumer() {
 
             @Override
             public void start(String[] labels,
@@ -33,17 +35,20 @@ public class SparseAnnotationProvider implements AnnotationProvider {
             }
 
             @Override
-            public void addValue(int nodeIndex,
-                                 int attributeIndex,
-                                 double value) {
+            public void value(int nodeIndex,
+                              int attributeIndex,
+                              double value) {
                 values.setEntry(nodeIndex, attributeIndex, value);
                 nodesPerAttribute[attributeIndex]++;
                 if (value != 0 && value != 1) {
                     isBinary = false;
                 }
             }
-        };
-        parser.parse(networkProvider, path);
+
+            @Override
+            public void finish() {
+            }
+        });
     }
 
     @Override

@@ -2,6 +2,7 @@ package edu.princeton.safe.internal;
 
 import java.io.IOException;
 
+import edu.princeton.safe.AnnotationConsumer;
 import edu.princeton.safe.AnnotationParser;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.IndexedDoubleConsumer;
@@ -13,11 +14,12 @@ public class DenseAnnotationProvider implements AnnotationProvider {
     double[][] values;
     int[] nodesPerAttribute;
     boolean isBinary;
-    
+
     public DenseAnnotationProvider(NetworkProvider networkProvider,
-                                          String path)
+                                   AnnotationParser parser)
             throws IOException {
-        AnnotationParser parser = new TabDelimitedAnnotationParser() {
+
+        parser.parse(networkProvider, new AnnotationConsumer() {
 
             @Override
             public void start(String[] labels,
@@ -34,17 +36,20 @@ public class DenseAnnotationProvider implements AnnotationProvider {
             }
 
             @Override
-            public void addValue(int nodeIndex,
-                                 int attributeIndex,
-                                 double value) {
+            public void value(int nodeIndex,
+                              int attributeIndex,
+                              double value) {
                 values[nodeIndex][attributeIndex] = value;
                 nodesPerAttribute[attributeIndex]++;
                 if (value != 0 && value != 1) {
                     isBinary = false;
                 }
             }
-        };
-        parser.parse(networkProvider, path);
+
+            @Override
+            public void finish() {
+            }
+        });
     }
 
     @Override
