@@ -158,7 +158,7 @@ public class ParallelSafe implements Safe {
 
                     double score = Neighborhood.computeEnrichmentScore(p);
                     int nodeIndex = neighborhood.getNodeIndex();
-                    progressReporter.neighborhoodScore(nodeIndex, j - 1, score);
+                    progressReporter.neighborhoodScore(nodeIndex, j, score);
                 }
             }
         });
@@ -190,12 +190,12 @@ public class ParallelSafe implements Safe {
                     HypergeometricDistribution distribution = new HypergeometricDistribution(null, totalNodes,
                                                                                              totalNodesForFunction,
                                                                                              neighborhoodSize);
-                    double p = 1.0 - distribution.cumulativeProbability(totalNeighborhoodNodesForFunction);
+                    double p = 1.0 - distribution.cumulativeProbability(totalNeighborhoodNodesForFunction - 1);
                     neighborhood.setSignificance(j, p);
 
                     double score = Neighborhood.computeEnrichmentScore(p);
                     int nodeIndex = neighborhood.getNodeIndex();
-                    progressReporter.neighborhoodScore(nodeIndex, j - 1, score);
+                    progressReporter.neighborhoodScore(nodeIndex, j, score);
                 }
             }
         });

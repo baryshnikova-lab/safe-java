@@ -14,7 +14,7 @@ public class DenseNeighborhood extends DefaultNeighborhood {
                              int totalAttributes) {
         super(nodeIndex, totalAttributes);
         significanceScores = new double[totalAttributes];
-        
+
         distances = IntStream.range(0, nodeCount)
                              .mapToDouble(n -> Double.NaN)
                              .toArray();
@@ -35,18 +35,18 @@ public class DenseNeighborhood extends DefaultNeighborhood {
     DoubleStream streamDistances() {
         return Arrays.stream(distances);
     }
-    
+
     @Override
     void applyDistanceThreshold(double maximumDistanceThreshold) {
         for (int i = 0; i < distances.length; i++) {
             double distance = distances[i];
-            if (Double.isNaN(distance) || distance >= maximumDistanceThreshold) {
+            if (Double.isNaN(distance) || distance > maximumDistanceThreshold) {
                 continue;
             }
             addNode(i);
         }
     }
-    
+
     @Override
     public void setDistance(int nodeIndex,
                             double distance) {

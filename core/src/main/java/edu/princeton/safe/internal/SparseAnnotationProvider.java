@@ -7,16 +7,12 @@ import org.apache.commons.math3.linear.OpenMapRealMatrix;
 
 import edu.princeton.safe.AnnotationConsumer;
 import edu.princeton.safe.AnnotationParser;
-import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.IndexedDoubleConsumer;
 import edu.princeton.safe.NetworkProvider;
 
-public class SparseAnnotationProvider implements AnnotationProvider {
+public class SparseAnnotationProvider extends DefaultAnnotationProvider {
 
-    String[] attributeLabels;
     OpenMapRealMatrix values;
-    int[] nodesPerAttribute;
-    boolean isBinary;
 
     public SparseAnnotationProvider(NetworkProvider networkProvider,
                                     AnnotationParser parser)
@@ -27,10 +23,9 @@ public class SparseAnnotationProvider implements AnnotationProvider {
             @Override
             public void start(String[] labels,
                               int totalNodes) {
-                attributeLabels = labels;
+                setAttributeLabes(labels);
                 int totalAttributes = labels.length;
                 values = new OpenMapRealMatrix(totalNodes, totalAttributes);
-                nodesPerAttribute = new int[totalAttributes];
                 isBinary = true;
             }
 
@@ -38,11 +33,13 @@ public class SparseAnnotationProvider implements AnnotationProvider {
             public void value(int nodeIndex,
                               int attributeIndex,
                               double value) {
-                values.setEntry(nodeIndex, attributeIndex, value);
-                nodesPerAttribute[attributeIndex]++;
+                if (nodeIndex != -1) {
+                    values.setEntry(nodeIndex, attributeIndex, value);
+                }
                 if (value != 0 && value != 1) {
                     isBinary = false;
                 }
+                handleAttributeValue(nodeIndex, attributeIndex, value);
             }
 
             @Override
@@ -57,29 +54,9 @@ public class SparseAnnotationProvider implements AnnotationProvider {
     }
 
     @Override
-    public int getAttributeCount() {
-        return attributeLabels.length;
-    }
-
-    @Override
     public double getValue(int nodeIndex,
                            int attributeIndex) {
         return values.getEntry(nodeIndex, attributeIndex);
-    }
-
-    @Override
-    public int getNodeCountForAttribute(int attributeIndex) {
-        return nodesPerAttribute[attributeIndex];
-    }
-
-    @Override
-    public boolean isBinary() {
-        return isBinary;
-    }
-
-    @Override
-    public String getAttributeLabel(int attributeIndex) {
-        return attributeLabels[attributeIndex];
     }
 
     @Override

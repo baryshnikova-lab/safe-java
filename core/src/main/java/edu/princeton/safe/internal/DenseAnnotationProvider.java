@@ -4,16 +4,12 @@ import java.io.IOException;
 
 import edu.princeton.safe.AnnotationConsumer;
 import edu.princeton.safe.AnnotationParser;
-import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.IndexedDoubleConsumer;
 import edu.princeton.safe.NetworkProvider;
 
-public class DenseAnnotationProvider implements AnnotationProvider {
+public class DenseAnnotationProvider extends DefaultAnnotationProvider {
 
-    String[] attributeLabels;
     double[][] values;
-    int[] nodesPerAttribute;
-    boolean isBinary;
 
     public DenseAnnotationProvider(NetworkProvider networkProvider,
                                    AnnotationParser parser)
@@ -24,9 +20,8 @@ public class DenseAnnotationProvider implements AnnotationProvider {
             @Override
             public void start(String[] labels,
                               int totalNodes) {
-                attributeLabels = labels;
+                setAttributeLabes(labels);
                 int totalAttributes = labels.length;
-                nodesPerAttribute = new int[totalAttributes];
                 isBinary = true;
 
                 values = new double[totalNodes][];
@@ -39,11 +34,13 @@ public class DenseAnnotationProvider implements AnnotationProvider {
             public void value(int nodeIndex,
                               int attributeIndex,
                               double value) {
-                values[nodeIndex][attributeIndex] = value;
-                nodesPerAttribute[attributeIndex]++;
+                if (nodeIndex != -1) {
+                    values[nodeIndex][attributeIndex] = value;
+                }
                 if (value != 0 && value != 1) {
                     isBinary = false;
                 }
+                handleAttributeValue(nodeIndex, attributeIndex, value);
             }
 
             @Override
@@ -58,29 +55,9 @@ public class DenseAnnotationProvider implements AnnotationProvider {
     }
 
     @Override
-    public int getAttributeCount() {
-        return attributeLabels.length;
-    }
-
-    @Override
     public double getValue(int nodeIndex,
                            int attributeIndex) {
         return values[nodeIndex][attributeIndex];
-    }
-
-    @Override
-    public int getNodeCountForAttribute(int attributeIndex) {
-        return nodesPerAttribute[attributeIndex];
-    }
-
-    @Override
-    public boolean isBinary() {
-        return isBinary;
-    }
-
-    @Override
-    public String getAttributeLabel(int attributeIndex) {
-        return attributeLabels[attributeIndex];
     }
 
     @Override

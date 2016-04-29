@@ -59,10 +59,13 @@ public abstract class DefaultNeighborhood implements Neighborhood {
         }
 
         count = 0;
+        boolean isBinary = annotationProvider.isBinary();
         for (int i = 0; i < memberIndexes.size(); i++) {
             int index = memberIndexes.get(i);
             double value = annotationProvider.getValue(index, j);
-            if (!Double.isNaN(value) && value != 0) {
+            if (isBinary && value == 1) {
+                count++;
+            } else if (!isBinary && !Double.isNaN(value)) {
                 count++;
             }
         }
