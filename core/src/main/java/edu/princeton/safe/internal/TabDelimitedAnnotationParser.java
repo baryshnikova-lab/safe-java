@@ -17,8 +17,8 @@ import edu.princeton.safe.NetworkProvider;
 public class TabDelimitedAnnotationParser implements AnnotationParser {
 
     ObjectScatterSet<String> skippedNodes;
-    int skippedValues;
-    int totalValues;
+    int skippedLines;
+    int totalLines;
     String path;
 
     public TabDelimitedAnnotationParser(String path) {
@@ -63,7 +63,7 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
                 IntArrayList indexes = nodeIdsToIndexes.get(label);
                 if (indexes == null) {
                     skippedNodes.add(label);
-                    skippedValues++;
+                    skippedLines++;
                 } else {
                     indexes.forEach(new Consumer<IntCursor>() {
                         @Override
@@ -76,11 +76,11 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
                         }
                     });
                 }
-                totalValues++;
+                totalLines++;
                 line = reader.readLine();
             }
         } finally {
-            consumer.finish();
+            consumer.finish(totalLines);
         }
     }
 }

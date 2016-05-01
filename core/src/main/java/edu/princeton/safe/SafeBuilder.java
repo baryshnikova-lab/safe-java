@@ -1,11 +1,15 @@
 package edu.princeton.safe;
 
+import edu.princeton.safe.internal.BackgroundMethod;
+
 public interface SafeBuilder {
     SafeBuilder setNetworkProvider(NetworkProvider provider);
 
     SafeBuilder setAnnotationProvider(AnnotationProvider provider);
 
     SafeBuilder setDistanceMetric(DistanceMetric method);
+
+    SafeBuilder setBackgroundMethod(BackgroundMethod method);
 
     SafeBuilder setRestrictionMethod(RestrictionMethod method);
 
@@ -16,4 +20,5 @@ public interface SafeBuilder {
     Safe build() throws ConfigurationException;
 
     SafeBuilder addProgressReporter(ProgressReporter reporter);
+
 }

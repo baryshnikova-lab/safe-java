@@ -2,14 +2,18 @@ package edu.princeton.safe;
 
 public interface AnnotationProvider {
 
-    int getNodeCount();
+    int getNetworkNodeCount();
+
+    int getAnnotationNodeCount();
 
     int getAttributeCount();
 
     double getValue(int nodeIndex,
                     int attributeIndex);
 
-    int getNodeCountForAttribute(int attributeIndex);
+    int getNetworkNodeCountForAttribute(int attributeIndex);
+
+    int getAnnotationNodeCountForAttribute(int attributeIndex);
 
     boolean isBinary();
 

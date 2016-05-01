@@ -3,12 +3,12 @@ package edu.princeton.safe;
 public interface AnnotationConsumer {
 
     void start(String[] attributeLabels,
-               int totalNodes);
+               int totalNetworkNodes);
 
     void value(int nodeIndex,
                int attributeIndex,
                double value);
 
-    void finish();
+    void finish(int totalAnnotationNodes);
 
 }

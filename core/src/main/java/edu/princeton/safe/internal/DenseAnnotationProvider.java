@@ -19,13 +19,13 @@ public class DenseAnnotationProvider extends DefaultAnnotationProvider {
 
             @Override
             public void start(String[] labels,
-                              int totalNodes) {
-                setAttributeLabes(labels);
+                              int networkNodes) {
+                setAttributeLabels(labels);
                 int totalAttributes = labels.length;
                 isBinary = true;
 
-                values = new double[totalNodes][];
-                for (int i = 0; i < totalNodes; i++) {
+                values = new double[networkNodes][];
+                for (int i = 0; i < networkNodes; i++) {
                     values[i] = Util.nanArray(totalAttributes);
                 }
             }
@@ -44,13 +44,14 @@ public class DenseAnnotationProvider extends DefaultAnnotationProvider {
             }
 
             @Override
-            public void finish() {
+            public void finish(int annotationNodes) {
+                totalAnnotationNodes = annotationNodes;
             }
         });
     }
 
     @Override
-    public int getNodeCount() {
+    public int getNetworkNodeCount() {
         return values.length;
     }
 

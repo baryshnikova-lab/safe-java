@@ -143,8 +143,9 @@ public class PerformanceTest {
         // DefaultProgressReporter();
         // progressReporter.add(new ConsoleProgressReporter());
 
-        time("Binary Enrichment", () -> ParallelSafe.computeBinaryEnrichment(networkProvider, annotationProvider,
-                                                                             progressReporter, neighborhoods),
+        time("Binary Enrichment",
+             () -> ParallelSafe.computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter,
+                                                        neighborhoods, BackgroundMethod.Annotation),
              computeRepeats);
     }
 }

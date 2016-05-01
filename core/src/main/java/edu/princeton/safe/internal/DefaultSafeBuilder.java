@@ -2,8 +2,8 @@ package edu.princeton.safe.internal;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.ConfigurationException;
-import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.DistanceMetric;
+import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.OutputMethod;
 import edu.princeton.safe.ProgressReporter;
@@ -17,6 +17,7 @@ public class DefaultSafeBuilder implements SafeBuilder {
     private NetworkProvider networkProvider;
     private AnnotationProvider annotationProvider;
     private DistanceMetric distanceMetric;
+    private BackgroundMethod backgroundMethod;
     private RestrictionMethod restrictionMethod;
     private GroupingMethod groupingMethod;
     private OutputMethod outputMethod;
@@ -41,6 +42,12 @@ public class DefaultSafeBuilder implements SafeBuilder {
     @Override
     public SafeBuilder setDistanceMetric(DistanceMetric metric) {
         distanceMetric = metric;
+        return this;
+    }
+
+    @Override
+    public SafeBuilder setBackgroundMethod(BackgroundMethod method) {
+        backgroundMethod = method;
         return this;
     }
 
@@ -71,8 +78,8 @@ public class DefaultSafeBuilder implements SafeBuilder {
     @Override
     public Safe build() throws ConfigurationException {
         validateSettings();
-        return new ParallelSafe(networkProvider, annotationProvider, distanceMetric, restrictionMethod, groupingMethod,
-                                outputMethod, progressReporter);
+        return new ParallelSafe(networkProvider, annotationProvider, distanceMetric, backgroundMethod,
+                                restrictionMethod, groupingMethod, outputMethod, progressReporter);
     }
 
     private void validateSettings() throws ConfigurationException {

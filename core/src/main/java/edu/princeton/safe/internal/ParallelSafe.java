@@ -48,10 +48,12 @@ public class ParallelSafe implements Safe {
     List<FunctionalGroup> groups;
 
     double distancePercentile;
+    private BackgroundMethod backgroundMethod;
 
     public ParallelSafe(NetworkProvider networkProvider,
                         AnnotationProvider annotationProvider,
                         DistanceMetric neighborhoodMethod,
+                        BackgroundMethod backgroundMethod,
                         RestrictionMethod restrictionMethod,
                         GroupingMethod groupingMethod,
                         OutputMethod outputMethod,
@@ -60,6 +62,7 @@ public class ParallelSafe implements Safe {
         this.networkProvider = networkProvider;
         this.annotationProvider = annotationProvider;
         this.distanceMetric = neighborhoodMethod;
+        this.backgroundMethod = backgroundMethod;
         this.restrictionMethod = restrictionMethod;
         this.groupingMethod = groupingMethod;
         this.outputMethod = outputMethod;
@@ -101,7 +104,8 @@ public class ParallelSafe implements Safe {
 
     void computeEnrichment(List<? extends Neighborhood> neighborhoods) {
         if (annotationProvider.isBinary()) {
-            computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter, neighborhoods);
+            computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter, neighborhoods,
+                                    backgroundMethod);
         } else {
             int totalPermutations = 1000;
             int seed = 0;
@@ -168,9 +172,24 @@ public class ParallelSafe implements Safe {
     static void computeBinaryEnrichment(NetworkProvider networkProvider,
                                         AnnotationProvider annotationProvider,
                                         ProgressReporter progressReporter,
-                                        List<? extends Neighborhood> neighborhoods) {
+                                        List<? extends Neighborhood> neighborhoods,
+                                        BackgroundMethod backgroundMethod) {
 
-        int totalNodes = annotationProvider.getNodeCount();
+        int totalNodes;
+        IntIntFunction nodeCount;
+
+        switch (backgroundMethod) {
+        case Network:
+            totalNodes = annotationProvider.getNetworkNodeCount();
+            nodeCount = j -> annotationProvider.getNetworkNodeCountForAttribute(j);
+            break;
+        case Annotation:
+            totalNodes = annotationProvider.getAnnotationNodeCount();
+            nodeCount = j -> annotationProvider.getAnnotationNodeCountForAttribute(j);
+            break;
+        default:
+            throw new RuntimeException("Unexpected background method");
+        }
 
         Stream<? extends Neighborhood> stream = neighborhoods.stream();
         if (progressReporter.supportsParallel()) {
@@ -183,7 +202,7 @@ public class ParallelSafe implements Safe {
             public void accept(Neighborhood neighborhood) {
                 int neighborhoodSize = neighborhood.getNodeCount();
                 for (int j = 0; j < annotationProvider.getAttributeCount(); j++) {
-                    int totalNodesForFunction = annotationProvider.getNodeCountForAttribute(j);
+                    int totalNodesForFunction = nodeCount.apply(j);
                     int totalNeighborhoodNodesForFunction = neighborhood.getNodeCountForAttribute(j,
                                                                                                   annotationProvider);
 

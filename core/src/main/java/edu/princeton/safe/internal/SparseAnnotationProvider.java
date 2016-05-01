@@ -23,7 +23,7 @@ public class SparseAnnotationProvider extends DefaultAnnotationProvider {
             @Override
             public void start(String[] labels,
                               int totalNodes) {
-                setAttributeLabes(labels);
+                setAttributeLabels(labels);
                 int totalAttributes = labels.length;
                 values = new OpenMapRealMatrix(totalNodes, totalAttributes);
                 isBinary = true;
@@ -43,13 +43,14 @@ public class SparseAnnotationProvider extends DefaultAnnotationProvider {
             }
 
             @Override
-            public void finish() {
+            public void finish(int annotationNodes) {
+                totalAnnotationNodes = annotationNodes;
             }
         });
     }
 
     @Override
-    public int getNodeCount() {
+    public int getNetworkNodeCount() {
         return values.getRowDimension();
     }
 
