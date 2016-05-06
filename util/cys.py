@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 def main(network_path, view_path, node_table_path, output_node_path, output_edge_path):
     """Extract tab-delimited node and edge files from a Cytoscape network.
     """
+    
     cynode_indexes = {}
     node_labels = []
     node_aliases = []

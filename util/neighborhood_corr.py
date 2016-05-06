@@ -11,6 +11,7 @@ from scipy.io import loadmat
 def main(session_path, scores_path, output_path, title):
     """Make scatter plot of MATLAB vs Java neighborhood scores.
     """
+
     root = loadmat(session_path, struct_as_record=False, squeeze_me=True)
     layout = root['layout']
 
@@ -39,8 +40,8 @@ def plot(output_path, x, y):
     # the histogram of the data
     plt.scatter(x, y, alpha=0.1, linewidth=0)
 
-    plt.xlim(xmin=0,xmax=1)
-    plt.ylim(ymin=0,ymax=1)
+    plt.xlim(xmin=0, xmax=1)
+    plt.ylim(ymin=0, ymax=1)
     plt.xlabel('MATLAB')
     plt.ylabel('Java')
     plt.title('Neighborhood Scores - %s' % title)

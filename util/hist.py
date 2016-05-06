@@ -7,7 +7,7 @@ import sys
 def main(input_path, output_path, title):
     """Plot histogram of neighborhood score file.
     """
-    
+
     data = read(input_path)
     plot(output_path, title, data)
 
@@ -15,7 +15,7 @@ def plot(output_path, title, data):
     n, bins, patches = plt.hist(data, 100, facecolor='green', alpha=0.75, linewidth=0)
 
     plt.yscale('log')
-    plt.ylim(ymin=1,ymax=1e6)
+    plt.ylim(ymin=1, ymax=1e6)
     plt.xlabel('Score')
     plt.ylabel('Occurrences')
     plt.title('Neighborhood Scores - ' + title)
