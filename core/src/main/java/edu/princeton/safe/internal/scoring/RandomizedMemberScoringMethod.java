@@ -6,8 +6,8 @@ import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import edu.princeton.safe.AnnotationProvider;
-import edu.princeton.safe.Neighborhood;
 import edu.princeton.safe.NeighborhoodScoringMethod;
+import edu.princeton.safe.model.Neighborhood;
 
 /**
  * Computes the neighborhood score by mapping the node indexes of a single
@@ -40,7 +40,7 @@ public class RandomizedMemberScoringMethod implements NeighborhoodScoringMethod 
 
         int totalPermutations = permutations.length;
         double[] scores = new double[totalPermutations];
-        neighborhood.forEachNodeIndex(new IntConsumer() {
+        neighborhood.forEachMemberIndex(new IntConsumer() {
             @Override
             public void accept(int index) {
                 for (int i = 0; i < totalPermutations; i++) {

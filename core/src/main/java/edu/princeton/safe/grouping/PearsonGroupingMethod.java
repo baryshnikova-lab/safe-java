@@ -1,4 +1,4 @@
-package edu.princeton.safe.internal.grouping;
+package edu.princeton.safe.grouping;
 
 import edu.princeton.safe.GroupingMethod;
 

@@ -6,9 +6,9 @@ import java.io.PrintWriter;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.princeton.safe.AnnotationProvider;
-import edu.princeton.safe.Neighborhood;
 import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.ProgressReporter;
+import edu.princeton.safe.model.Neighborhood;
 
 public class FileProgressReporter implements ProgressReporter {
 

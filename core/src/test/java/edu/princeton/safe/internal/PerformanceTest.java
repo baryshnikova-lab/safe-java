@@ -9,15 +9,14 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well44497b;
 import org.junit.Test;
 
-import edu.princeton.safe.AnnotationParser;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.NeighborhoodFactory;
 import edu.princeton.safe.NeighborhoodScoringMethod;
-import edu.princeton.safe.NetworkParser;
 import edu.princeton.safe.NetworkProvider;
-import edu.princeton.safe.ProgressReporter;
-import edu.princeton.safe.internal.distance.MapBasedDistanceMetric;
+import edu.princeton.safe.distance.MapBasedDistanceMetric;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
+import edu.princeton.safe.io.AnnotationParser;
+import edu.princeton.safe.io.NetworkParser;
 
 public class PerformanceTest {
     @Test
@@ -68,8 +67,11 @@ public class PerformanceTest {
                                 computeRepeats);
         System.out.println(threshold);
 
-        time("Neighborhoods",
-             () -> ParallelSafe.computeNeighborhoods(networkProvider, annotationProvider, neighborhoods, threshold),
+        DefaultSafeResult result = new DefaultSafeResult();
+        result.maximumDistanceThreshold = threshold;
+        result.neighborhoods = neighborhoods;
+
+        time("Neighborhoods", () -> ParallelSafe.computeNeighborhoods(result, networkProvider, annotationProvider),
              computeRepeats);
 
         int totalPermutations = 1000;
@@ -78,11 +80,12 @@ public class PerformanceTest {
         NeighborhoodScoringMethod scoringMethod = new RandomizedMemberScoringMethod(annotationProvider, generator,
                                                                                     totalPermutations, totalNodes);
 
-        ProgressReporter progressReporter2 = new FileProgressReporter("neighborhood.quantitative.txt");
-        // ProgressReporter progressReporter2 = progressReporter;
+        DefaultProgressReporter progressReporter = new DefaultProgressReporter();
+        // progressReporter.add(new
+        // FileProgressReporter("neighborhood.quantitative.txt"));
         time("Quantitative Enrichment",
              () -> ParallelSafe.computeQuantitativeEnrichment(networkProvider, annotationProvider, scoringMethod,
-                                                              progressReporter2, neighborhoods),
+                                                              progressReporter, neighborhoods),
              computeRepeats);
     }
 
@@ -134,18 +137,19 @@ public class PerformanceTest {
                                 computeRepeats);
         System.out.println(threshold);
 
-        time("Neighborhoods",
-             () -> ParallelSafe.computeNeighborhoods(networkProvider, annotationProvider, neighborhoods, threshold),
+        DefaultSafeResult result = new DefaultSafeResult();
+        result.maximumDistanceThreshold = threshold;
+        result.neighborhoods = neighborhoods;
+
+        time("Neighborhoods", () -> ParallelSafe.computeNeighborhoods(result, networkProvider, annotationProvider),
              computeRepeats);
 
-        ProgressReporter progressReporter = new FileProgressReporter("neighborhood.binary.txt");
-        // DefaultProgressReporter progressReporter = new
-        // DefaultProgressReporter();
-        // progressReporter.add(new ConsoleProgressReporter());
+        DefaultProgressReporter progressReporter = new DefaultProgressReporter();
+        // progressReporter.add(FileProgressReporter("neighborhood.binary.txt"));
 
         time("Binary Enrichment",
              () -> ParallelSafe.computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter,
-                                                        neighborhoods, BackgroundMethod.Annotation),
+                                                        neighborhoods, BackgroundMethod.Network),
              computeRepeats);
     }
 }

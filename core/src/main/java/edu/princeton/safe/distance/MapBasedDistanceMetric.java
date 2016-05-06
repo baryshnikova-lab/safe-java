@@ -1,11 +1,11 @@
-package edu.princeton.safe.internal.distance;
+package edu.princeton.safe.distance;
 
 import edu.princeton.safe.NetworkProvider;
 
 public class MapBasedDistanceMetric extends ShortestPathDistanceMetric {
 
     @Override
-    EdgeWeightFunction getEdgeWeightFunction(NetworkProvider networkProvider) {
+    protected EdgeWeightFunction getEdgeWeightFunction(NetworkProvider networkProvider) {
         return (int u,
                 int v) -> networkProvider.getDistance(u, v);
     }

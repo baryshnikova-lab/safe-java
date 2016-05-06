@@ -10,9 +10,9 @@ import org.apache.commons.math3.linear.SparseRealMatrix;
 
 import com.carrotsearch.hppc.BitSet;
 
-import edu.princeton.safe.NetworkConsumer;
-import edu.princeton.safe.NetworkParser;
 import edu.princeton.safe.NetworkProvider;
+import edu.princeton.safe.io.NetworkConsumer;
+import edu.princeton.safe.io.NetworkParser;
 
 public class SparseNetworkProvider implements NetworkProvider {
     List<Node> nodes;

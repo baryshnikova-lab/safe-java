@@ -1,4 +1,4 @@
-package edu.princeton.safe;
+package edu.princeton.safe.io;
 
 public interface AnnotationConsumer {
 

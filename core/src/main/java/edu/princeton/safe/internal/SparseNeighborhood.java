@@ -20,8 +20,8 @@ public class SparseNeighborhood extends DefaultNeighborhood {
     }
 
     @Override
-    public void setSignificance(int attributeIndex,
-                                double pValue) {
+    public void setPValue(int attributeIndex,
+                          double pValue) {
         significanceScores.put(attributeIndex, pValue);
     }
 
@@ -43,15 +43,21 @@ public class SparseNeighborhood extends DefaultNeighborhood {
                 if (Double.isNaN(cursor.value) || cursor.value > maximumDistanceThreshold) {
                     return;
                 }
-                addNode(cursor.key);
+                addMember(cursor.key);
             };
         });
     }
 
     @Override
-    public void setDistance(int nodeIndex,
-                            double distance) {
+    public void setNodeDistance(int nodeIndex,
+                                double distance) {
 
         distances.put(nodeIndex, distance);
+    }
+
+    @Override
+    public double getMemberDistance(int memberIndex) {
+        int nodeIndex = memberIndexes.get(memberIndex);
+        return distances.get(nodeIndex);
     }
 }

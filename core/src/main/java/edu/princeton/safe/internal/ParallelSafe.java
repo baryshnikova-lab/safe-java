@@ -9,27 +9,21 @@ import org.apache.commons.math3.distribution.HypergeometricDistribution;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well44497b;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.commons.math3.stat.descriptive.rank.Percentile;
-import org.apache.commons.math3.stat.descriptive.rank.Percentile.EstimationType;
-import org.apache.commons.math3.util.CentralPivotingStrategy;
-import org.apache.commons.math3.util.KthSelector;
 
 import cern.jet.stat.Probability;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.DistanceMetric;
-import edu.princeton.safe.FunctionalAttribute;
-import edu.princeton.safe.FunctionalGroup;
 import edu.princeton.safe.GroupingMethod;
-import edu.princeton.safe.Neighborhood;
 import edu.princeton.safe.NeighborhoodFactory;
 import edu.princeton.safe.NeighborhoodScoringMethod;
 import edu.princeton.safe.NetworkProvider;
-import edu.princeton.safe.NodePair;
 import edu.princeton.safe.OutputMethod;
 import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.Safe;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
+import edu.princeton.safe.model.FunctionalGroup;
+import edu.princeton.safe.model.Neighborhood;
 
 public class ParallelSafe implements Safe {
 
@@ -41,14 +35,10 @@ public class ParallelSafe implements Safe {
     OutputMethod outputMethod;
     ProgressReporter progressReporter;
 
-    List<NodePair> nodePairs;
-    double maximumDistanceThreshold;
-    List<DefaultNeighborhood> neighborhoods;
-    List<FunctionalAttribute> attributes;
-    List<FunctionalGroup> groups;
-
-    double distancePercentile;
+    boolean isDistanceThresholdAbsolute;
+    double distanceThreshold;
     private BackgroundMethod backgroundMethod;
+    int empiricalIterations;
 
     public ParallelSafe(NetworkProvider networkProvider,
                         AnnotationProvider annotationProvider,
@@ -57,6 +47,9 @@ public class ParallelSafe implements Safe {
                         RestrictionMethod restrictionMethod,
                         GroupingMethod groupingMethod,
                         OutputMethod outputMethod,
+                        boolean isDistanceThresholdAbsolute,
+                        double distancePercentile,
+                        int empiricalIterations,
                         ProgressReporter progressReporter) {
 
         this.networkProvider = networkProvider;
@@ -68,43 +61,49 @@ public class ParallelSafe implements Safe {
         this.outputMethod = outputMethod;
         this.progressReporter = progressReporter;
 
-        distancePercentile = 0.5;
+        this.isDistanceThresholdAbsolute = isDistanceThresholdAbsolute;
+        this.distanceThreshold = distancePercentile;
+        this.empiricalIterations = empiricalIterations;
     }
 
     @Override
     public void apply() {
-        computeDistances();
+        DefaultSafeResult result = new DefaultSafeResult();
+        computeDistances(result);
 
-        computeNeighborhoods(networkProvider, annotationProvider, neighborhoods, maximumDistanceThreshold);
-        computeEnrichment(neighborhoods);
+        computeNeighborhoods(result, networkProvider, annotationProvider);
+        computeEnrichment(result);
+        applyRestriction(result, restrictionMethod);
+        computeGroups(result);
 
-        computeGroups(attributes);
+        applyColors(result);
 
-        applyColors(groups);
-
-        outputMethod.apply(nodePairs, maximumDistanceThreshold, neighborhoods, attributes, groups);
+        outputMethod.apply(result);
     }
 
-    void applyColors(List<FunctionalGroup> groups) {
+    static void applyRestriction(DefaultSafeResult result,
+                                 RestrictionMethod method) {
+        if (method == null) {
+            return;
+        }
+        result.neighborhoods.stream()
+                            .forEach(n -> n.setSignificant(method.shouldInclude(result, n)));
+    }
+
+    static void applyColors(DefaultSafeResult result) {
         // TODO Auto-generated method stub
         // assign unique color to each domain
         // compute color for each node
     }
 
-    List<FunctionalGroup> computeGroups(List<FunctionalAttribute> attributes) {
-        Stream<FunctionalAttribute> filteredAttributes = applyRestriction(attributes);
+    static List<FunctionalGroup> computeGroups(DefaultSafeResult result) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    Stream<FunctionalAttribute> applyRestriction(List<FunctionalAttribute> attributes) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    void computeEnrichment(List<? extends Neighborhood> neighborhoods) {
+    void computeEnrichment(DefaultSafeResult result) {
         if (annotationProvider.isBinary()) {
-            computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter, neighborhoods,
+            computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter, result.neighborhoods,
                                     backgroundMethod);
         } else {
             int totalPermutations = 1000;
@@ -115,7 +114,7 @@ public class ParallelSafe implements Safe {
             NeighborhoodScoringMethod scoringMethod = new RandomizedMemberScoringMethod(annotationProvider, generator,
                                                                                         totalPermutations, totalNodes);
             computeQuantitativeEnrichment(networkProvider, annotationProvider, scoringMethod, progressReporter,
-                                          neighborhoods);
+                                          result.neighborhoods);
         }
     }
 
@@ -137,7 +136,7 @@ public class ParallelSafe implements Safe {
                     final int attributeIndex = j;
                     double[] neighborhoodScore = { 0 };
 
-                    neighborhood.forEachNodeIndex(new IntConsumer() {
+                    neighborhood.forEachMemberIndex(new IntConsumer() {
                         @Override
                         public void accept(int index) {
                             double value = annotationProvider.getValue(index, attributeIndex);
@@ -158,7 +157,7 @@ public class ParallelSafe implements Safe {
                     double p = 1
                             - Probability.normal(statistics.getMean(), statistics.getVariance(), neighborhoodScore[0]);
 
-                    neighborhood.setSignificance(j, p);
+                    neighborhood.setPValue(j, p);
 
                     double score = Neighborhood.computeEnrichmentScore(p);
                     int nodeIndex = neighborhood.getNodeIndex();
@@ -200,17 +199,17 @@ public class ParallelSafe implements Safe {
         stream.forEach(new Consumer<Neighborhood>() {
             @Override
             public void accept(Neighborhood neighborhood) {
-                int neighborhoodSize = neighborhood.getNodeCount();
+                int neighborhoodSize = neighborhood.getMemberCount();
                 for (int j = 0; j < annotationProvider.getAttributeCount(); j++) {
                     int totalNodesForFunction = nodeCount.apply(j);
-                    int totalNeighborhoodNodesForFunction = neighborhood.getNodeCountForAttribute(j,
-                                                                                                  annotationProvider);
+                    int totalNeighborhoodNodesForFunction = neighborhood.getMemberCountForAttribute(j,
+                                                                                                    annotationProvider);
 
                     HypergeometricDistribution distribution = new HypergeometricDistribution(null, totalNodes,
                                                                                              totalNodesForFunction,
                                                                                              neighborhoodSize);
                     double p = 1.0 - distribution.cumulativeProbability(totalNeighborhoodNodesForFunction - 1);
-                    neighborhood.setSignificance(j, p);
+                    neighborhood.setPValue(j, p);
 
                     double score = Neighborhood.computeEnrichmentScore(p);
                     int nodeIndex = neighborhood.getNodeIndex();
@@ -221,13 +220,12 @@ public class ParallelSafe implements Safe {
         progressReporter.finishNeighborhoodScore();
     }
 
-    static void computeNeighborhoods(NetworkProvider networkProvider,
-                                     AnnotationProvider annotationProvider,
-                                     List<DefaultNeighborhood> neighborhoods,
-                                     double maximumDistanceThreshold) {
+    static void computeNeighborhoods(DefaultSafeResult result,
+                                     NetworkProvider networkProvider,
+                                     AnnotationProvider annotationProvider) {
 
-        neighborhoods.stream()
-                     .forEach(n -> n.applyDistanceThreshold(maximumDistanceThreshold));
+        result.neighborhoods.stream()
+                            .forEach(n -> n.applyDistanceThreshold(result.maximumDistanceThreshold));
     }
 
     static double computeMaximumDistanceThreshold(List<? extends DefaultNeighborhood> neighborhoods,
@@ -236,13 +234,11 @@ public class ParallelSafe implements Safe {
         double[] distances = neighborhoods.stream()
                                           .flatMapToDouble(n -> n.streamDistances())
                                           .toArray();
-        Percentile percentile = new Percentile().withEstimationType(EstimationType.R_5)
-                                                .withKthSelector(new KthSelector(new CentralPivotingStrategy()));
-        return percentile.evaluate(distances, percentileIndex);
+        return Util.percentile(distances, percentileIndex);
     }
 
-    void computeDistances() {
-        if (neighborhoods != null) {
+    void computeDistances(DefaultSafeResult result) {
+        if (result.neighborhoods != null) {
             return;
         }
 
@@ -256,7 +252,11 @@ public class ParallelSafe implements Safe {
             factory = (int i) -> new DenseNeighborhood(i, totalNodes, totalAttributes);
         }
 
-        neighborhoods = distanceMetric.computeDistances(networkProvider, factory);
-        maximumDistanceThreshold = computeMaximumDistanceThreshold(neighborhoods, distancePercentile);
+        result.neighborhoods = distanceMetric.computeDistances(networkProvider, factory);
+        if (isDistanceThresholdAbsolute) {
+            result.maximumDistanceThreshold = distanceThreshold;
+        } else {
+            result.maximumDistanceThreshold = computeMaximumDistanceThreshold(result.neighborhoods, distanceThreshold);
+        }
     }
 }

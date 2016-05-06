@@ -1,5 +1,9 @@
 package edu.princeton.safe;
 
-public interface RestrictionMethod {
+import edu.princeton.safe.model.Neighborhood;
+import edu.princeton.safe.model.SafeResult;
 
+public interface RestrictionMethod {
+    boolean shouldInclude(SafeResult result,
+                          Neighborhood neighborhood);
 }

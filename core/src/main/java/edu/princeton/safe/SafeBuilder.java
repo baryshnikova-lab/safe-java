@@ -17,8 +17,12 @@ public interface SafeBuilder {
 
     SafeBuilder setOutputMethod(OutputMethod method);
 
-    Safe build() throws ConfigurationException;
+    SafeBuilder setDistancePercentile(double percentile);
+
+    SafeBuilder setDistanceThreshold(double threshold);
 
     SafeBuilder addProgressReporter(ProgressReporter reporter);
+
+    Safe build() throws ConfigurationException;
 
 }

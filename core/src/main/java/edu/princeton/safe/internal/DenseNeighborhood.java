@@ -21,8 +21,8 @@ public class DenseNeighborhood extends DefaultNeighborhood {
     }
 
     @Override
-    public void setSignificance(int attributeIndex,
-                                double pValue) {
+    public void setPValue(int attributeIndex,
+                          double pValue) {
         significanceScores[attributeIndex] = pValue;
     }
 
@@ -43,13 +43,19 @@ public class DenseNeighborhood extends DefaultNeighborhood {
             if (Double.isNaN(distance) || distance > maximumDistanceThreshold) {
                 continue;
             }
-            addNode(i);
+            addMember(i);
         }
     }
 
     @Override
-    public void setDistance(int nodeIndex,
-                            double distance) {
+    public void setNodeDistance(int nodeIndex,
+                                double distance) {
         distances[nodeIndex] = distance;
+    }
+
+    @Override
+    public double getMemberDistance(int memberIndex) {
+        int nodeIndex = memberIndexes.get(memberIndex);
+        return distances[nodeIndex];
     }
 }

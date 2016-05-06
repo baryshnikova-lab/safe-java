@@ -10,21 +10,27 @@ import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.Safe;
 import edu.princeton.safe.SafeBuilder;
-import edu.princeton.safe.internal.distance.MapBasedDistanceMetric;
+import edu.princeton.safe.distance.MapBasedDistanceMetric;
 
 public class DefaultSafeBuilder implements SafeBuilder {
 
-    private NetworkProvider networkProvider;
-    private AnnotationProvider annotationProvider;
-    private DistanceMetric distanceMetric;
-    private BackgroundMethod backgroundMethod;
-    private RestrictionMethod restrictionMethod;
-    private GroupingMethod groupingMethod;
-    private OutputMethod outputMethod;
-    private DefaultProgressReporter progressReporter;
+    NetworkProvider networkProvider;
+    AnnotationProvider annotationProvider;
+    DistanceMetric distanceMetric;
+    BackgroundMethod backgroundMethod;
+    RestrictionMethod restrictionMethod;
+    GroupingMethod groupingMethod;
+    OutputMethod outputMethod;
+    DefaultProgressReporter progressReporter;
+    boolean isDistanceThresholdAbsolute;
+    double distanceThreshold;
+    int empiricalIterations;
 
     public DefaultSafeBuilder() {
         progressReporter = new DefaultProgressReporter();
+        isDistanceThresholdAbsolute = false;
+        distanceThreshold = 0.5;
+        empiricalIterations = 1000;
     }
 
     @Override
@@ -70,6 +76,20 @@ public class DefaultSafeBuilder implements SafeBuilder {
     }
 
     @Override
+    public SafeBuilder setDistancePercentile(double percentile) {
+        isDistanceThresholdAbsolute = false;
+        distanceThreshold = percentile;
+        return this;
+    }
+
+    @Override
+    public SafeBuilder setDistanceThreshold(double threshold) {
+        isDistanceThresholdAbsolute = true;
+        distanceThreshold = threshold;
+        return this;
+    }
+
+    @Override
     public SafeBuilder addProgressReporter(ProgressReporter reporter) {
         progressReporter.add(reporter);
         return this;
@@ -79,10 +99,11 @@ public class DefaultSafeBuilder implements SafeBuilder {
     public Safe build() throws ConfigurationException {
         validateSettings();
         return new ParallelSafe(networkProvider, annotationProvider, distanceMetric, backgroundMethod,
-                                restrictionMethod, groupingMethod, outputMethod, progressReporter);
+                                restrictionMethod, groupingMethod, outputMethod, isDistanceThresholdAbsolute,
+                                distanceThreshold, empiricalIterations, progressReporter);
     }
 
-    private void validateSettings() throws ConfigurationException {
+    void validateSettings() throws ConfigurationException {
         if (networkProvider == null) {
             throw new ConfigurationException("NetworkProvider was not provided");
         }

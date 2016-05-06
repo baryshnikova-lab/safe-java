@@ -2,10 +2,10 @@ package edu.princeton.safe.internal;
 
 import java.io.IOException;
 
-import edu.princeton.safe.AnnotationConsumer;
-import edu.princeton.safe.AnnotationParser;
 import edu.princeton.safe.IndexedDoubleConsumer;
 import edu.princeton.safe.NetworkProvider;
+import edu.princeton.safe.io.AnnotationConsumer;
+import edu.princeton.safe.io.AnnotationParser;
 
 public class DenseAnnotationProvider extends DefaultAnnotationProvider {
 

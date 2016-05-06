@@ -78,5 +78,5 @@ public abstract class DefaultAnnotationProvider implements AnnotationProvider {
     public int getAnnotationNodeCount() {
         return totalAnnotationNodes;
     }
-    
+
 }

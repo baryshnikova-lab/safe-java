@@ -10,9 +10,9 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.ObjectScatterSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
-import edu.princeton.safe.AnnotationConsumer;
-import edu.princeton.safe.AnnotationParser;
 import edu.princeton.safe.NetworkProvider;
+import edu.princeton.safe.io.AnnotationConsumer;
+import edu.princeton.safe.io.AnnotationParser;
 
 public class TabDelimitedAnnotationParser implements AnnotationParser {
 

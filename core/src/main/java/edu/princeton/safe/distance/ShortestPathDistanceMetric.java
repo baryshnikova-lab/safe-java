@@ -1,4 +1,4 @@
-package edu.princeton.safe.internal.distance;
+package edu.princeton.safe.distance;
 
 import java.util.List;
 import java.util.function.IntConsumer;
@@ -9,13 +9,13 @@ import org.jgrapht.util.FibonacciHeap;
 import org.jgrapht.util.FibonacciHeapNode;
 
 import edu.princeton.safe.DistanceMetric;
-import edu.princeton.safe.Neighborhood;
 import edu.princeton.safe.NeighborhoodFactory;
 import edu.princeton.safe.NetworkProvider;
+import edu.princeton.safe.model.Neighborhood;
 
 public abstract class ShortestPathDistanceMetric implements DistanceMetric {
 
-    abstract EdgeWeightFunction getEdgeWeightFunction(NetworkProvider networkProvider);
+    protected abstract EdgeWeightFunction getEdgeWeightFunction(NetworkProvider networkProvider);
 
     @Override
     public <T extends Neighborhood> List<T> computeDistances(NetworkProvider networkProvider,
@@ -30,7 +30,7 @@ public abstract class ShortestPathDistanceMetric implements DistanceMetric {
         johnson(networkProvider, weightFunction, (fromIndex,
                                                   toIndex,
                                                   distance) -> neighborhoods.get(fromIndex)
-                                                                            .setDistance(toIndex, distance));
+                                                                            .setNodeDistance(toIndex, distance));
         return neighborhoods;
     }
 
@@ -55,9 +55,9 @@ public abstract class ShortestPathDistanceMetric implements DistanceMetric {
                  });
     }
 
-    private void computeDistances(ShortestPathResult result,
-                                  int fromIndex,
-                                  NodeDistanceConsumer consumer) {
+    void computeDistances(ShortestPathResult result,
+                          int fromIndex,
+                          NodeDistanceConsumer consumer) {
         for (int toIndex = 0; toIndex < result.distances.length; toIndex++) {
             double distance = result.distances[toIndex];
             if (Double.isFinite(distance)) {

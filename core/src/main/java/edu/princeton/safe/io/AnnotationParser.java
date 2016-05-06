@@ -1,6 +1,8 @@
-package edu.princeton.safe;
+package edu.princeton.safe.io;
 
 import java.io.IOException;
+
+import edu.princeton.safe.NetworkProvider;
 
 public interface AnnotationParser {
     

@@ -1,16 +1,17 @@
-package edu.princeton.safe.internal.distance;
+package edu.princeton.safe.distance;
 
 import java.io.IOException;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import edu.princeton.safe.NetworkConsumer;
-import edu.princeton.safe.NetworkParser;
 import edu.princeton.safe.NetworkProvider;
+import edu.princeton.safe.distance.MapBasedDistanceMetric;
+import edu.princeton.safe.distance.ShortestPathDistanceMetric.NodeDistanceConsumer;
+import edu.princeton.safe.distance.ShortestPathDistanceMetric.ShortestPathResult;
 import edu.princeton.safe.internal.SparseNetworkProvider;
-import edu.princeton.safe.internal.distance.ShortestPathDistanceMetric.NodeDistanceConsumer;
-import edu.princeton.safe.internal.distance.ShortestPathDistanceMetric.ShortestPathResult;
+import edu.princeton.safe.io.NetworkConsumer;
+import edu.princeton.safe.io.NetworkParser;
 
 public class ShortestPathDistanceMetricTest {
     protected static final double DEFAULT_DELTA = 1e-8;

@@ -7,13 +7,14 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
 import edu.princeton.safe.AnnotationProvider;
-import edu.princeton.safe.Neighborhood;
+import edu.princeton.safe.model.Neighborhood;
 
 public abstract class DefaultNeighborhood implements Neighborhood {
 
     int nodeIndex;
     IntArrayList memberIndexes;
     int[] nodeCountsPerAttribute;
+    boolean isSignificant;
 
     public DefaultNeighborhood(int nodeIndex,
                                int totalAttributes) {
@@ -27,7 +28,9 @@ public abstract class DefaultNeighborhood implements Neighborhood {
     }
 
     abstract double getSignificance(int attributeIndex);
+
     abstract DoubleStream streamDistances();
+
     abstract void applyDistanceThreshold(double maximumDistanceThreshold);
 
     @Override
@@ -36,23 +39,23 @@ public abstract class DefaultNeighborhood implements Neighborhood {
     }
 
     @Override
-    public int getNodeCount() {
+    public int getMemberCount() {
         return memberIndexes.size();
     }
 
     @Override
-    public void addNode(int nodeIndex) {
+    public void addMember(int nodeIndex) {
         memberIndexes.add(nodeIndex);
     }
 
     @Override
-    public void forEachNodeIndex(IntConsumer action) {
+    public void forEachMemberIndex(IntConsumer action) {
         memberIndexes.forEach((IntCursor c) -> action.accept(c.value));
     }
 
     @Override
-    public int getNodeCountForAttribute(int j,
-                                        AnnotationProvider annotationProvider) {
+    public int getMemberCountForAttribute(int j,
+                                          AnnotationProvider annotationProvider) {
         int count = nodeCountsPerAttribute[j];
         if (count != -1) {
             return count;
@@ -77,6 +80,16 @@ public abstract class DefaultNeighborhood implements Neighborhood {
     public double getEnrichmentScore(int attributeIndex) {
         double pValue = getSignificance(attributeIndex);
         return Neighborhood.computeEnrichmentScore(pValue);
+    }
+
+    @Override
+    public boolean isSignificant() {
+        return isSignificant;
+    }
+
+    @Override
+    public void setSignificant(boolean significant) {
+        isSignificant = significant;
     }
 
 }

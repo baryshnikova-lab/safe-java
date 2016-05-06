@@ -1,4 +1,4 @@
-package edu.princeton.safe;
+package edu.princeton.safe.io;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package edu.princeton.safe;
+package edu.princeton.safe.model;
 
 public interface FunctionalGroup {
 

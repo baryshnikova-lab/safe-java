@@ -6,8 +6,8 @@ import java.util.function.Consumer;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 
-import edu.princeton.safe.NetworkConsumer;
-import edu.princeton.safe.NetworkParser;
+import edu.princeton.safe.io.NetworkConsumer;
+import edu.princeton.safe.io.NetworkParser;
 
 public class TabDelimitedNetworkParser implements NetworkParser {
 

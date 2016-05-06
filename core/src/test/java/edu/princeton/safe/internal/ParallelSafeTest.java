@@ -16,7 +16,7 @@ public class ParallelSafeTest {
         SparseNeighborhood neighborhood = new SparseNeighborhood(0, 0);
         pairs.add(neighborhood);
         for (int i = 0; i <= 10; i++) {
-            neighborhood.setDistance(i, i);
+            neighborhood.setNodeDistance(i, i);
         }
         double threshold = ParallelSafe.computeMaximumDistanceThreshold(pairs, 50);
         assertEquals(5, threshold, DELTA);
