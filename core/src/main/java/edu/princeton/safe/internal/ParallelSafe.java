@@ -32,12 +32,12 @@ public class ParallelSafe implements Safe {
     DistanceMetric distanceMetric;
     RestrictionMethod restrictionMethod;
     GroupingMethod groupingMethod;
+    BackgroundMethod backgroundMethod;
     OutputMethod outputMethod;
     ProgressReporter progressReporter;
 
     boolean isDistanceThresholdAbsolute;
     double distanceThreshold;
-    private BackgroundMethod backgroundMethod;
     int empiricalIterations;
 
     public ParallelSafe(NetworkProvider networkProvider,
@@ -74,7 +74,7 @@ public class ParallelSafe implements Safe {
         computeNeighborhoods(result, networkProvider, annotationProvider);
         computeEnrichment(result);
         applyRestriction(result, restrictionMethod);
-        computeGroups(result);
+        computeGroups(annotationProvider, result, groupingMethod);
 
         applyColors(result);
 
@@ -87,7 +87,7 @@ public class ParallelSafe implements Safe {
             return;
         }
         result.neighborhoods.stream()
-                            .forEach(n -> n.setSignificant(method.shouldInclude(result, n)));
+                            .forEach(n -> n.setHighest(method.shouldInclude(result, n)));
     }
 
     static void applyColors(DefaultSafeResult result) {
@@ -96,8 +96,9 @@ public class ParallelSafe implements Safe {
         // compute color for each node
     }
 
-    static List<FunctionalGroup> computeGroups(DefaultSafeResult result) {
-        // TODO Auto-generated method stub
+    static List<FunctionalGroup> computeGroups(AnnotationProvider annotationProvider,
+                                               DefaultSafeResult result,
+                                               GroupingMethod method) {
         return null;
     }
 

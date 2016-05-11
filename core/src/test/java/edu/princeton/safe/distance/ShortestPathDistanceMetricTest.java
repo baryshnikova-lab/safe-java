@@ -40,7 +40,7 @@ public class ShortestPathDistanceMetricTest {
         consumer.edge(3, 5, 0.38);
         consumer.finishEdges();
     }
-    
+
     @Test
     public void testJohnson() throws IOException {
         MapBasedDistanceMetric metric = new MapBasedDistanceMetric();

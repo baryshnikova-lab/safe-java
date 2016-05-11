@@ -9,25 +9,12 @@ import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 
 public class SparseNeighborhood extends DefaultNeighborhood {
 
-    IntDoubleScatterMap significanceScores;
     IntDoubleScatterMap distances;
 
     public SparseNeighborhood(int nodeIndex,
                               int totalAttributes) {
         super(nodeIndex, totalAttributes);
-        significanceScores = new IntDoubleScatterMap();
         distances = new IntDoubleScatterMap();
-    }
-
-    @Override
-    public void setPValue(int attributeIndex,
-                          double pValue) {
-        significanceScores.put(attributeIndex, pValue);
-    }
-
-    @Override
-    double getSignificance(int attributeIndex) {
-        return significanceScores.get(attributeIndex);
     }
 
     @Override

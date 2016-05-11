@@ -18,14 +18,16 @@ public interface Neighborhood {
 
     int getMemberCount();
 
+    double getPValue(int attributeIndex);
+
     void setPValue(int attributeIndex,
                    double pValue);
 
     double getEnrichmentScore(int attributeIndex);
 
-    void setSignificant(boolean significant);
+    void setHighest(boolean significant);
 
-    boolean isSignificant();
+    boolean isHighest();
 
     void forEachMemberIndex(IntConsumer action);
 
@@ -40,4 +42,9 @@ public interface Neighborhood {
                          double distance);
 
     double getMemberDistance(int memberIndex);
+
+    boolean isLowest();
+
+    void setLowest(boolean significant);
+
 }

@@ -6,29 +6,16 @@ import java.util.stream.IntStream;
 
 public class DenseNeighborhood extends DefaultNeighborhood {
 
-    double[] significanceScores;
     double[] distances;
 
     public DenseNeighborhood(int nodeIndex,
                              int nodeCount,
                              int totalAttributes) {
         super(nodeIndex, totalAttributes);
-        significanceScores = new double[totalAttributes];
 
         distances = IntStream.range(0, nodeCount)
                              .mapToDouble(n -> Double.NaN)
                              .toArray();
-    }
-
-    @Override
-    public void setPValue(int attributeIndex,
-                          double pValue) {
-        significanceScores[attributeIndex] = pValue;
-    }
-
-    @Override
-    double getSignificance(int attributeIndex) {
-        return significanceScores[attributeIndex];
     }
 
     @Override

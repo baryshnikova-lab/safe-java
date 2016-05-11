@@ -1,5 +1,6 @@
 package edu.princeton.safe.internal;
 
+import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.stream.DoubleStream;
 
@@ -14,20 +15,24 @@ public abstract class DefaultNeighborhood implements Neighborhood {
     int nodeIndex;
     IntArrayList memberIndexes;
     int[] nodeCountsPerAttribute;
-    boolean isSignificant;
+    double[] pValues;
+    double[] enrichmentScores;
+
+    boolean isHighest;
+    boolean isLowest;
 
     public DefaultNeighborhood(int nodeIndex,
                                int totalAttributes) {
         this.nodeIndex = nodeIndex;
         memberIndexes = new IntArrayList();
         nodeCountsPerAttribute = new int[totalAttributes];
+        pValues = new double[totalAttributes];
+        enrichmentScores = new double[totalAttributes];
 
         for (int j = 0; j < totalAttributes; j++) {
             nodeCountsPerAttribute[j] = -1;
         }
     }
-
-    abstract double getSignificance(int attributeIndex);
 
     abstract DoubleStream streamDistances();
 
@@ -50,7 +55,8 @@ public abstract class DefaultNeighborhood implements Neighborhood {
 
     @Override
     public void forEachMemberIndex(IntConsumer action) {
-        memberIndexes.forEach((IntCursor c) -> action.accept(c.value));
+        Consumer<? super IntCursor> consumer = (IntCursor c) -> action.accept(c.value);
+        memberIndexes.forEach(consumer);
     }
 
     @Override
@@ -78,18 +84,39 @@ public abstract class DefaultNeighborhood implements Neighborhood {
 
     @Override
     public double getEnrichmentScore(int attributeIndex) {
-        double pValue = getSignificance(attributeIndex);
-        return Neighborhood.computeEnrichmentScore(pValue);
+        return enrichmentScores[attributeIndex];
     }
 
     @Override
-    public boolean isSignificant() {
-        return isSignificant;
+    public boolean isHighest() {
+        return isHighest;
     }
 
     @Override
-    public void setSignificant(boolean significant) {
-        isSignificant = significant;
+    public void setHighest(boolean significant) {
+        isHighest = significant;
+    }
+
+    @Override
+    public boolean isLowest() {
+        return isLowest;
+    }
+
+    @Override
+    public void setLowest(boolean significant) {
+        isLowest = significant;
+    }
+
+    @Override
+    public void setPValue(int attributeIndex,
+                          double pValue) {
+        pValues[attributeIndex] = pValue;
+        enrichmentScores[attributeIndex] = Neighborhood.computeEnrichmentScore(pValue);
+    }
+
+    @Override
+    public double getPValue(int attributeIndex) {
+        return pValues[attributeIndex];
     }
 
 }
