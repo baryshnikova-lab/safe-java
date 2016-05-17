@@ -35,8 +35,10 @@ public interface Neighborhood {
 
     void addMember(int index);
 
-    int getMemberCountForAttribute(int j,
+    int getMemberCountForAttribute(int attributeIndex,
                                    AnnotationProvider annotationProvider);
+
+    double getNodeDistance(int nodeIndex);
 
     void setNodeDistance(int nodeIndex,
                          double distance);

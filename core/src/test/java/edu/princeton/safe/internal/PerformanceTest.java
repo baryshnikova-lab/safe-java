@@ -10,13 +10,18 @@ import org.apache.commons.math3.random.Well44497b;
 import org.junit.Test;
 
 import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.NeighborhoodFactory;
 import edu.princeton.safe.NeighborhoodScoringMethod;
 import edu.princeton.safe.NetworkProvider;
+import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.distance.MapBasedDistanceMetric;
+import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
+import edu.princeton.safe.grouping.DistanceMethod;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
 import edu.princeton.safe.io.AnnotationParser;
 import edu.princeton.safe.io.NetworkParser;
+import edu.princeton.safe.restriction.RadiusBasedRestrictionMethod;
 
 public class PerformanceTest {
     @Test
@@ -67,7 +72,8 @@ public class PerformanceTest {
                                 computeRepeats);
         System.out.println(threshold);
 
-        DefaultSafeResult result = new DefaultSafeResult();
+        int totalTypes = 2;
+        DefaultSafeResult result = new DefaultSafeResult(annotationProvider, totalTypes);
         result.maximumDistanceThreshold = threshold;
         result.neighborhoods = neighborhoods;
 
@@ -87,6 +93,12 @@ public class PerformanceTest {
              () -> ParallelSafe.computeQuantitativeEnrichment(networkProvider, annotationProvider, scoringMethod,
                                                               progressReporter, neighborhoods),
              computeRepeats);
+
+        RestrictionMethod restrictionMethod = new RadiusBasedRestrictionMethod(65);
+        time("Unimodality", () -> ParallelSafe.computeUnimodality(result, restrictionMethod), computeRepeats);
+
+        GroupingMethod groupingMethod = new ClusterBasedGroupingMethod(0.75, DistanceMethod.JACCARD);
+        time("Grouping", () -> ParallelSafe.computeGroups(annotationProvider, result, groupingMethod), computeRepeats);
     }
 
     @Test
@@ -110,7 +122,9 @@ public class PerformanceTest {
         int totalAttributes = annotationProvider.getAttributeCount();
         System.out.printf("Attributes: %d\n", totalAttributes);
 
-        NeighborhoodFactory<DefaultNeighborhood> factory = (i) -> new SparseNeighborhood(i, totalAttributes);
+        // NeighborhoodFactory<DefaultNeighborhood> factory = (i) -> new
+        // SparseNeighborhood(i, totalAttributes);
+        NeighborhoodFactory<DefaultNeighborhood> factory = (i) -> new DenseNeighborhood(i, totalNodes, totalAttributes);
 
         MapBasedDistanceMetric metric = new MapBasedDistanceMetric();
         List<DefaultNeighborhood> neighborhoods = time("Distances",
@@ -137,7 +151,8 @@ public class PerformanceTest {
                                 computeRepeats);
         System.out.println(threshold);
 
-        DefaultSafeResult result = new DefaultSafeResult();
+        int totalTypes = 1;
+        DefaultSafeResult result = new DefaultSafeResult(annotationProvider, totalTypes);
         result.maximumDistanceThreshold = threshold;
         result.neighborhoods = neighborhoods;
 
@@ -151,5 +166,11 @@ public class PerformanceTest {
              () -> ParallelSafe.computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter,
                                                         neighborhoods, BackgroundMethod.Network),
              computeRepeats);
+
+        RestrictionMethod restrictionMethod = new RadiusBasedRestrictionMethod(65);
+        time("Unimodality", () -> ParallelSafe.computeUnimodality(result, restrictionMethod), computeRepeats);
+
+        GroupingMethod groupingMethod = new ClusterBasedGroupingMethod(0.75, DistanceMethod.JACCARD);
+        time("Grouping", () -> ParallelSafe.computeGroups(annotationProvider, result, groupingMethod), computeRepeats);
     }
 }

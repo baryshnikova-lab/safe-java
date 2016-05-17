@@ -1,13 +1,9 @@
 package edu.princeton.safe.restriction;
 
-import java.util.stream.IntStream;
-
-import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.internal.Util;
-import edu.princeton.safe.model.Neighborhood;
 import edu.princeton.safe.model.SafeResult;
 
-public class RadiusBasedRestrictionMethod implements RestrictionMethod {
+public class RadiusBasedRestrictionMethod extends DistanceBasedRestrictionMethod {
 
     double distancePercentile;
 
@@ -16,14 +12,11 @@ public class RadiusBasedRestrictionMethod implements RestrictionMethod {
     }
 
     @Override
-    public boolean shouldInclude(SafeResult result,
-                                 Neighborhood neighborhood) {
-        double[] distances = IntStream.range(0, neighborhood.getMemberCount())
-                                      .mapToDouble(i -> neighborhood.getMemberDistance(i))
-                                      .filter(d -> d > 0)
-                                      .toArray();
+    protected boolean isIncluded(SafeResult result,
+                                 double[] distances) {
+
         double radius = Util.percentile(distances, distancePercentile);
         return radius <= 2 * result.getMaximumDistanceThreshold();
-    }
 
+    }
 }

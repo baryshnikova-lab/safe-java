@@ -35,6 +35,11 @@ public class DenseNeighborhood extends DefaultNeighborhood {
     }
 
     @Override
+    public double getNodeDistance(int nodeIndex) {
+        return distances[nodeIndex];
+    }
+
+    @Override
     public void setNodeDistance(int nodeIndex,
                                 double distance) {
         distances[nodeIndex] = distance;

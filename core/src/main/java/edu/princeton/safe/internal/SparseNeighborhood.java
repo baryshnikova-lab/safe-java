@@ -36,6 +36,11 @@ public class SparseNeighborhood extends DefaultNeighborhood {
     }
 
     @Override
+    public double getNodeDistance(int nodeIndex) {
+        return distances.get(nodeIndex);
+    }
+
+    @Override
     public void setNodeDistance(int nodeIndex,
                                 double distance) {
 

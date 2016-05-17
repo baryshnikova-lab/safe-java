@@ -3,6 +3,7 @@ package edu.princeton.safe.internal;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.math3.distribution.HypergeometricDistribution;
@@ -22,8 +23,9 @@ import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.Safe;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
-import edu.princeton.safe.model.FunctionalGroup;
+import edu.princeton.safe.model.DomainDetails;
 import edu.princeton.safe.model.Neighborhood;
+import edu.princeton.safe.model.SafeResult;
 
 public class ParallelSafe implements Safe {
 
@@ -68,12 +70,13 @@ public class ParallelSafe implements Safe {
 
     @Override
     public void apply() {
-        DefaultSafeResult result = new DefaultSafeResult();
+        int totalTypes = annotationProvider.isBinary() ? 1 : 2;
+        DefaultSafeResult result = new DefaultSafeResult(annotationProvider, totalTypes);
         computeDistances(result);
 
         computeNeighborhoods(result, networkProvider, annotationProvider);
         computeEnrichment(result);
-        applyRestriction(result, restrictionMethod);
+        computeUnimodality(result, restrictionMethod);
         computeGroups(annotationProvider, result, groupingMethod);
 
         applyColors(result);
@@ -81,13 +84,26 @@ public class ParallelSafe implements Safe {
         outputMethod.apply(result);
     }
 
-    static void applyRestriction(DefaultSafeResult result,
-                                 RestrictionMethod method) {
-        if (method == null) {
+    static void computeUnimodality(DefaultSafeResult result,
+                                   RestrictionMethod restrictionMethod) {
+
+        if (restrictionMethod != null) {
+            restrictionMethod.applyRestriction(result);
             return;
         }
-        result.neighborhoods.stream()
-                            .forEach(n -> n.setHighest(method.shouldInclude(result, n)));
+
+        int totalAttributes = result.getAnnotationProvider()
+                                    .getAttributeCount();
+
+        IntStream.range(0, result.isTop.length)
+                 .forEach(new IntConsumer() {
+                     @Override
+                     public void accept(int typeIndex) {
+                         IntStream.range(0, totalAttributes)
+                                  .forEach(i -> result.setTop(i, typeIndex, true));
+                         return;
+                     }
+                 });
     }
 
     static void applyColors(DefaultSafeResult result) {
@@ -96,10 +112,12 @@ public class ParallelSafe implements Safe {
         // compute color for each node
     }
 
-    static List<FunctionalGroup> computeGroups(AnnotationProvider annotationProvider,
-                                               DefaultSafeResult result,
-                                               GroupingMethod method) {
-        return null;
+    static void computeGroups(AnnotationProvider annotationProvider,
+                              DefaultSafeResult result,
+                              GroupingMethod method) {
+        // TODO Compute other types
+        DomainDetails details = method.group(result, SafeResult.TYPE_HIGHEST);
+        result.domains = details;
     }
 
     void computeEnrichment(DefaultSafeResult result) {
