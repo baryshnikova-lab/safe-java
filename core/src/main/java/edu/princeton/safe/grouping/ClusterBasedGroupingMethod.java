@@ -44,20 +44,28 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         AnnotationProvider annotationProvider = result.getAnnotationProvider();
         int totalAttributes = annotationProvider.getAttributeCount();
 
+        IntArrayList filteredIndexes = new IntArrayList();
+        for (int i = 0; i < totalAttributes; i++) {
+            if (result.isTop(i, typeIndex)) {
+                filteredIndexes.add(i);
+            }
+        }
+        int totalFiltered = filteredIndexes.size();
+
         System.out.println("Scores...");
-        double[][] scores = computeScores(result, totalAttributes, typeIndex);
+        double[][] scores = computeScores(result, totalAttributes, filteredIndexes, typeIndex);
         System.out.println("pdist...");
         double[] distances = pdist(scores, distanceMethod);
 
         System.out.println("Linkages...");
-        List<Linkage> linkages = computeLinkages(distances, totalAttributes);
+        List<Linkage> linkages = computeLinkages(distances, totalFiltered);
         double height = getHeight(linkages);
 
         System.out.printf("Height: %f\n", height);
         System.out.printf("Linkages: %d\n", linkages.size());
 
         double linkageThreshold = height * threshold;
-        int[] parents = computeParents(linkages, totalAttributes, linkageThreshold);
+        int[] parents = computeParents(linkages, totalFiltered, linkageThreshold);
         List<IntArrayList> clusters = computeClusters(parents);
 
         DefaultDomainDetails details = new DefaultDomainDetails();
@@ -71,7 +79,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         }
         for (IntArrayList cluster : clusters) {
             for (IntCursor cursor : cluster) {
-                details.domainsByAttribute[cursor.value] = cursor.index;
+                details.domainsByAttribute[filteredIndexes.get(cursor.value)] = filteredIndexes.get(cursor.index);
             }
             System.out.printf("%d\t%s\n", cluster.size(), cluster.toString());
         }
@@ -165,18 +173,21 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
 
     static double[][] computeScores(SafeResult result,
                                     int totalAttributes,
+                                    IntArrayList attributeIndexes,
                                     int typeIndex) {
+
         List<? extends Neighborhood> neighborhoods = result.getNeighborhoods();
-        double[][] scores = new double[totalAttributes][];
-        IntStream.range(0, totalAttributes)
+        int filteredAttributes = attributeIndexes.size();
+        double[][] scores = new double[filteredAttributes][];
+        IntStream.range(0, filteredAttributes)
                  .parallel()
                  .forEach(new IntConsumer() {
                      @Override
-                     public void accept(int attributeIndex) {
-                         scores[attributeIndex] = neighborhoods.stream()
-                                                               .mapToDouble(n -> result.isTop(attributeIndex, typeIndex)
-                                                                       ? n.getEnrichmentScore(attributeIndex) : 0)
-                                                               .toArray();
+                     public void accept(int filteredIndex) {
+                         int attributeIndex = attributeIndexes.get(filteredIndex);
+                         scores[filteredIndex] = neighborhoods.stream()
+                                                              .mapToDouble(n -> n.getEnrichmentScore(attributeIndex))
+                                                              .toArray();
                      }
                  });
         return scores;
