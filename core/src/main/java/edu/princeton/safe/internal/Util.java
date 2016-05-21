@@ -78,8 +78,10 @@ public class Util {
         }
         return p;
     }
-    
-    public static int[] interpolateLinear(int[] v1, int[] v2, double t) {
+
+    public static int[] interpolateLinear(int[] v1,
+                                          int[] v2,
+                                          double t) {
         int[] result = new int[v1.length];
         for (int i = 0; i < result.length; i++) {
             result[i] = (int) Math.round(v2[i] * t + v1[i] * (1 - t));

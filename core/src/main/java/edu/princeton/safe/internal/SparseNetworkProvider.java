@@ -66,7 +66,7 @@ public class SparseNetworkProvider implements NetworkProvider {
                              double weight) {
                 weights.setEntry(fromIndex, toIndex, weight);
                 neighbors[fromIndex].set(toIndex);
-                
+
                 if (!parser.isDirected()) {
                     weights.setEntry(toIndex, fromIndex, weight);
                     neighbors[toIndex].set(fromIndex);

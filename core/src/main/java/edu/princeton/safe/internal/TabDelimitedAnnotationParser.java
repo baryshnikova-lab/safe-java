@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.ObjectScatterSet;
@@ -20,6 +22,7 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
     int skippedLines;
     int totalLines;
     String path;
+    private Set<String> unmappedNodeNames;
 
     public TabDelimitedAnnotationParser(String path) {
         this.path = path;
@@ -56,6 +59,8 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
                 list.add(i);
             }
 
+            HashMap<String, IntArrayList> notSeen = new HashMap<>(nodeIdsToIndexes);
+
             line = reader.readLine();
             while (line != null) {
                 String[] parts = line.split("\t");
@@ -65,6 +70,8 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
                     skippedNodes.add(label);
                     skippedLines++;
                 } else {
+                    notSeen.remove(label);
+
                     indexes.forEach(new Consumer<IntCursor>() {
                         @Override
                         public void accept(IntCursor cursor) {
@@ -79,8 +86,26 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
                 totalLines++;
                 line = reader.readLine();
             }
+
+            unmappedNodeNames = notSeen.values()
+                                       .stream()
+                                       .flatMapToInt(l -> Arrays.stream(l.buffer, 0, l.elementsCount))
+                                       .mapToObj(i -> networkProvider.getNodeLabel(i))
+                                       .collect(Collectors.toSet());
         } finally {
             consumer.finish(totalLines);
         }
+    }
+
+    public Set<String> getMissingNodes() {
+        return unmappedNodeNames;
+    }
+
+    public int getTotalLines() {
+        return totalLines;
+    }
+
+    public int getSkippedLines() {
+        return skippedLines;
     }
 }

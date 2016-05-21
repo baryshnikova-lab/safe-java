@@ -5,6 +5,7 @@ import edu.princeton.safe.model.SafeResult;
 
 public interface GroupingMethod {
 
-    DomainDetails group(SafeResult result, int typeIndex);
+    DomainDetails group(SafeResult result,
+                        int typeIndex);
 
 }
