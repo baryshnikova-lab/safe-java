@@ -5,11 +5,17 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.cytoscape.application.CyApplicationManager;
+import org.cytoscape.application.events.SetCurrentNetworkViewListener;
 import org.cytoscape.application.swing.CyAction;
 import org.cytoscape.application.swing.CySwingApplication;
+import org.cytoscape.model.events.ColumnCreatedListener;
+import org.cytoscape.model.events.ColumnDeletedListener;
+import org.cytoscape.model.events.ColumnNameChangedListener;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.view.model.CyNetworkViewManager;
+import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
 import org.cytoscape.work.ServiceProperties;
 import org.cytoscape.work.swing.DialogTaskManager;
 import org.osgi.framework.BundleContext;
@@ -25,16 +31,27 @@ public class CyActivator extends AbstractCyActivator {
         CySwingApplication application = getService(context, CySwingApplication.class);
         DialogTaskManager taskManager = getService(context, DialogTaskManager.class);
 
-        SafeController importController = new SafeController(registrar, application, taskManager, applicationManager);
+        SafeController safeController = new SafeController(registrar, application, taskManager, applicationManager);
 
         Map<String, String> safeActionProperties = new MapBuilder().put("inMenuBar", "true")
                                                                    .put("preferredMenu", ServiceProperties.APPS_MENU)
                                                                    .build();
         SafeAction safeAction = new SafeAction(safeActionProperties, applicationManager, networkViewManager,
-                                               importController);
+                                               safeController);
         safeAction.putValue(CyAction.NAME, "SAFE");
 
-        registerService(context, safeAction, CyAction.class, new Properties());
+        registerService(context, safeAction, CyAction.class);
+        registerService(context, safeController, SetCurrentNetworkViewListener.class,
+                        NetworkViewAboutToBeDestroyedListener.class, ColumnCreatedListener.class,
+                        ColumnDeletedListener.class, ColumnNameChangedListener.class, SessionLoadedListener.class);
+    }
+
+    void registerService(BundleContext context,
+                         Object service,
+                         Class<?>... interfaces) {
+        for (Class<?> type : interfaces) {
+            registerService(context, service, type, new Properties());
+        }
     }
 
     static class PropertiesBuilder {

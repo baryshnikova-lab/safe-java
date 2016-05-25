@@ -3,13 +3,15 @@ package edu.princeton.safe.internal.cytoscape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -31,6 +33,8 @@ import org.cytoscape.model.events.ColumnDeletedListener;
 import org.cytoscape.model.events.ColumnNameChangedEvent;
 import org.cytoscape.model.events.ColumnNameChangedListener;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.session.events.SessionLoadedEvent;
+import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedEvent;
 import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
@@ -39,10 +43,11 @@ import org.cytoscape.work.swing.DialogTaskManager;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 
+import edu.princeton.safe.internal.cytoscape.UiUtil.FileSelectionMode;
 import net.miginfocom.swing.MigLayout;
 
 public class SafeController implements SetCurrentNetworkViewListener, NetworkViewAboutToBeDestroyedListener,
-        ColumnCreatedListener, ColumnDeletedListener, ColumnNameChangedListener {
+        ColumnCreatedListener, ColumnDeletedListener, ColumnNameChangedListener, SessionLoadedListener {
 
     CyServiceRegistrar registrar;
     CySwingApplication application;
@@ -90,6 +95,12 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         setNetworkView(view);
     }
 
+    @Override
+    public void handleEvent(SessionLoadedEvent event) {
+        CyNetworkView view = applicationManager.getCurrentNetworkView();
+        setNetworkView(view);
+    }
+    
     void setNetworkView(CyNetworkView view) {
         if (view == null) {
             setSession(null);
@@ -213,12 +224,16 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         JButton chooseAnnotationFileButton = new JButton("Choose");
         chooseAnnotationFileButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                int result = chooser.showOpenDialog(application.getJFrame());
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    annotationPath.setText(chooser.getSelectedFile()
-                                                  .getPath());
+            public void actionPerformed(ActionEvent event) {
+                Set<String> extensions = new HashSet<>();
+                try {
+                    File file = UiUtil.getFile(application.getJFrame(), "Select Annotation File", new File("."),
+                                               "Annotation File", extensions, FileSelectionMode.OPEN_FILE);
+                    if (file != null) {
+                        annotationPath.setText(file.getPath());
+                    }
+                } catch (IOException e) {
+                    fail(e, "Unexpected error while reading annotation file");
                 }
             }
         });
@@ -274,5 +289,11 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
             registrar.unregisterService(cytoPanelComponent, CytoPanelComponent.class);
             panelVisible = false;
         }
+    }
+
+    void fail(IOException e,
+              String string) {
+        // TODO Auto-generated method stub
+        e.printStackTrace();
     }
 }
