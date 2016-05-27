@@ -19,10 +19,17 @@ public class UiUtil {
         return panel;
     }
 
-    private static File getFileAWT(Component parent, String title, File initialFile, final String typeDescription, final Set<String> extensions, FileSelectionMode mode) throws IOException {
+    private static File getFileAWT(Component parent,
+                                   String title,
+                                   File initialFile,
+                                   final String typeDescription,
+                                   final Set<String> extensions,
+                                   FileSelectionMode mode)
+            throws IOException {
         // Use AWT dialog for Mac since it lets us use Finder's file chooser
         final String fileDialogForDirectories = System.getProperty("apple.awt.fileDialogForDirectories");
-        System.setProperty("apple.awt.fileDialogForDirectories", mode == FileSelectionMode.OPEN_DIRECTORY ? "true" : "false");
+        System.setProperty("apple.awt.fileDialogForDirectories",
+                           mode == FileSelectionMode.OPEN_DIRECTORY ? "true" : "false");
         try {
             FileDialog dialog;
             switch (mode) {
@@ -38,11 +45,12 @@ public class UiUtil {
             }
             dialog.setFilenameFilter(new FilenameFilter() {
                 @Override
-                public boolean accept(File directory, String name) {
+                public boolean accept(File directory,
+                                      String name) {
                     if (extensions.size() == 0) {
                         return true;
                     }
-                    
+
                     String[] parts = name.split("[.]"); //$NON-NLS-1$
                     String lastPart = parts[parts.length - 1];
                     for (String extension : extensions) {
@@ -79,8 +87,14 @@ public class UiUtil {
             System.setProperty("apple.awt.fileDialogForDirectories", fileDialogForDirectories);
         }
     }
-    
-    private static File getFileSwing(Component parent, String title, File initialFile, final String typeDescription, final Set<String> extensions, FileSelectionMode mode) throws IOException {
+
+    private static File getFileSwing(Component parent,
+                                     String title,
+                                     File initialFile,
+                                     final String typeDescription,
+                                     final Set<String> extensions,
+                                     FileSelectionMode mode)
+            throws IOException {
         JFileChooser chooser = new JFileChooser(initialFile);
         chooser.setDialogTitle(title);
         chooser.setSelectedFile(initialFile);
@@ -88,7 +102,8 @@ public class UiUtil {
             chooser.setFileFilter(new FileFilter() {
                 @Override
                 public boolean accept(File file) {
-                    String[] parts = file.getName().split("[.]"); //$NON-NLS-1$
+                    String[] parts = file.getName()
+                                         .split("[.]"); //$NON-NLS-1$
                     String lastPart = parts[parts.length - 1];
                     for (String extension : extensions) {
                         if (extension.equalsIgnoreCase(lastPart)) {
@@ -126,8 +141,14 @@ public class UiUtil {
         }
         return chooser.getSelectedFile();
     }
-    
-    public static File getFile(Component parent, String title, File initialFile, final String typeDescription, final Set<String> extensions, FileSelectionMode mode) throws IOException {
+
+    public static File getFile(Component parent,
+                               String title,
+                               File initialFile,
+                               final String typeDescription,
+                               final Set<String> extensions,
+                               FileSelectionMode mode)
+            throws IOException {
         if (isMacOSX()) {
             // Use Finder instead of Swing for Mac.
             return getFileAWT(parent, title, initialFile, typeDescription, extensions, mode);
@@ -135,7 +156,7 @@ public class UiUtil {
             return getFileSwing(parent, title, initialFile, typeDescription, extensions, mode);
         }
     }
-    
+
     public static Frame getFrame(Component parent) {
         while (parent != null) {
             if (parent instanceof Frame) {
@@ -145,16 +166,14 @@ public class UiUtil {
         }
         return null;
     }
-    
+
     public static boolean isMacOSX() {
         String osName = System.getProperty("os.name"); //$NON-NLS-1$
         return osName.startsWith("Mac OS X"); //$NON-NLS-1$
     }
-    
+
     public enum FileSelectionMode {
-        OPEN_FILE,
-        SAVE_FILE,
-        OPEN_DIRECTORY,
+        OPEN_FILE, SAVE_FILE, OPEN_DIRECTORY,
     }
 
 }

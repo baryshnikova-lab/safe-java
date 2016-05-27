@@ -16,6 +16,9 @@ import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
+import org.cytoscape.view.vizmap.VisualMappingFunctionFactory;
+import org.cytoscape.view.vizmap.VisualMappingManager;
+import org.cytoscape.view.vizmap.VisualStyleFactory;
 import org.cytoscape.work.ServiceProperties;
 import org.cytoscape.work.swing.DialogTaskManager;
 import org.osgi.framework.BundleContext;
@@ -30,8 +33,16 @@ public class CyActivator extends AbstractCyActivator {
         CyServiceRegistrar registrar = getService(context, CyServiceRegistrar.class);
         CySwingApplication application = getService(context, CySwingApplication.class);
         DialogTaskManager taskManager = getService(context, DialogTaskManager.class);
+        VisualMappingManager visualMappingManager = getService(context, VisualMappingManager.class);
+        VisualStyleFactory visualStyleFactory = getService(context, VisualStyleFactory.class);
 
-        SafeController safeController = new SafeController(registrar, application, taskManager, applicationManager);
+        VisualMappingFunctionFactory continuousMappingFactory = getService(context, VisualMappingFunctionFactory.class,
+                                                                           "(mapping.type=continuous)");
+
+        StyleFactory styleFactory = new StyleFactory(visualStyleFactory, continuousMappingFactory);
+
+        SafeController safeController = new SafeController(registrar, application, taskManager, applicationManager,
+                                                           visualMappingManager, styleFactory);
 
         Map<String, String> safeActionProperties = new MapBuilder().put("inMenuBar", "true")
                                                                    .put("preferredMenu", ServiceProperties.APPS_MENU)

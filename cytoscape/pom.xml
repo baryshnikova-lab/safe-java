@@ -61,6 +61,7 @@
 						<Bundle-Version>${project.version}</Bundle-Version>
 						<Export-Package>!${bundle.namespace}.*</Export-Package>
 						<Private-Package>${bundle.namespace}.*</Private-Package>
+						<Import-Package>sun.misc;resolution:=optional, *</Import-Package>
 						<Bundle-Activator>${bundle.namespace}.CyActivator</Bundle-Activator>
 						<Embed-Dependency>*;scope=!runtime|test|provided;type=!pom;inline=false</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

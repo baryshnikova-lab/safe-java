@@ -16,9 +16,12 @@ import edu.princeton.safe.internal.TabDelimitedAnnotationParser;
 public class SafeTask extends AbstractTask {
 
     private SafeSession session;
+    private SafeController controller;
 
-    public SafeTask(SafeSession session) {
+    public SafeTask(SafeSession session,
+                    SafeController controller) {
         this.session = session;
+        this.controller = controller;
     }
 
     @Override
@@ -60,7 +63,10 @@ public class SafeTask extends AbstractTask {
             monitor.showMessage(Level.INFO, String.format("Nodes not annotated: %d", totalMissingNodes));
             monitor.showMessage(Level.INFO,
                                 String.format("Ids of nodes not annotated: %s", String.join(", ", missingNodes)));
+
+            controller.setAttributes(annotationProvider);
         }
+
     }
 
 }
