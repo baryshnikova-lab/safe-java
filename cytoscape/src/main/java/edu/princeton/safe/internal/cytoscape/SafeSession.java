@@ -21,7 +21,8 @@ public class SafeSession {
     BackgroundMethod backgroundMethod;
     boolean isDistanceThresholdAbsolute;
     int quantitativeIterations;
-    private EnrichmentLandscape enrichmentLandscape;
+    EnrichmentLandscape enrichmentLandscape;
+    boolean forceUndirectedEdges;
 
     public SafeSession() {
         // TODO: Expose as setting
@@ -106,5 +107,13 @@ public class SafeSession {
 
     public void setEnrichmentLandscape(EnrichmentLandscape landscape) {
         this.enrichmentLandscape = landscape;
+    }
+
+    public boolean getForceUndirectedEdges() {
+        return forceUndirectedEdges;
+    }
+    
+    public void setForceUndirectedEdges(boolean force) {
+        forceUndirectedEdges = force;
     }
 }

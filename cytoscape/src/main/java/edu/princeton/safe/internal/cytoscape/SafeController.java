@@ -21,6 +21,7 @@ import java.util.stream.IntStream;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -120,16 +121,25 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     DefaultComboBoxModel<String> nodeIdsModel;
 
     JTextField annotationPath;
+
     List<AttributeRow> attributes;
     ListTableModel<AttributeRow> attributeTableModel;
+
     JComboBox<NameValuePair<AnalysisMethod>> analysisMethods;
+
     JComboBox<NameValuePair<Factory<DistanceMetric>>> distanceMetrics;
     JFormattedTextField distanceThreshold;
+
     JComboBox<NameValuePair<BackgroundMethod>> backgroundMethods;
+
     JComboBox<NameValuePair<Factory<RestrictionMethod>>> neighborhoodFilteringMethod;
+
     JFormattedTextField minimumLandscapeSize;
+
     JComboBox<NameValuePair<Factory<GroupingMethod>>> similarityMetric;
     JFormattedTextField similarityThreshold;
+
+    JCheckBox forceUndirectedEdges;
 
     public SafeController(CyServiceRegistrar registrar,
                           CySwingApplication application,
@@ -179,6 +189,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                 session.nameColumn = CyRootNetwork.SHARED_NAME;
                 session.idColumn = CyRootNetwork.SHARED_NAME;
                 session.distanceThreshold = 0.5;
+                session.forceUndirectedEdges = true;
 
                 sessionsBySuid.put(suid, session);
 
@@ -243,6 +254,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
             step1Button.setEnabled(session != null);
 
             distanceThreshold.setValue(session.getDistanceThreshold());
+            forceUndirectedEdges.setSelected(session.getForceUndirectedEdges());
         }
     }
 
@@ -390,6 +402,8 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                                                                   new NameValuePair<>("All nodes in annotation standard",
                                                                                       BackgroundMethod.Annotation) });
 
+        forceUndirectedEdges = new JCheckBox("Assume edges are undirected");
+
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisMethods, "wrap");
 
@@ -401,6 +415,8 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
         panel.add(new JLabel("Background"));
         panel.add(backgroundMethods, "wrap");
+
+        panel.add(forceUndirectedEdges, "skip 1, wrap");
 
         step1Button = createStep1Button();
         panel.add(step1Button, "span 2, tag apply, wrap");
@@ -513,18 +529,14 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                          return;
                      }
 
-                     int[] rows = table.getSelectedRows();
-                     System.out.printf("Selected: %s\n", Arrays.stream(rows)
-                                                               .map(i -> sorter.convertRowIndexToModel(i))
-                                                               .mapToObj(i -> String.valueOf(i))
-                                                               .collect(Collectors.joining(", ")));
-
                      EnrichmentLandscape landscape = session.getEnrichmentLandscape();
                      List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
                      LongScatterSet set = new LongScatterSet();
                      AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
                      int totalAttributes = annotationProvider.getAttributeCount();
                      double threshold = Neighborhood.getEnrichmentThreshold(totalAttributes);
+
+                     int[] rows = table.getSelectedRows();
                      Arrays.stream(rows)
                            .map(i -> sorter.convertRowIndexToModel(i))
                            .flatMap(new IntFunction<IntStream>() {
