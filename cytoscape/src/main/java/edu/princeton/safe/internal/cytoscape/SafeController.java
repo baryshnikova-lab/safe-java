@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -122,12 +124,12 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     ListTableModel<AttributeRow> attributeTableModel;
     JComboBox<NameValuePair<AnalysisMethod>> analysisMethods;
     JComboBox<NameValuePair<Factory<DistanceMetric>>> distanceMetrics;
-    JTextField distanceThreshold;
+    JFormattedTextField distanceThreshold;
     JComboBox<NameValuePair<BackgroundMethod>> backgroundMethods;
     JComboBox<NameValuePair<Factory<RestrictionMethod>>> neighborhoodFilteringMethod;
-    JTextField minimumLandscapeSize;
+    JFormattedTextField minimumLandscapeSize;
     JComboBox<NameValuePair<Factory<GroupingMethod>>> similarityMetric;
-    JTextField similarityThreshold;
+    JFormattedTextField similarityThreshold;
 
     public SafeController(CyServiceRegistrar registrar,
                           CySwingApplication application,
@@ -176,6 +178,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                 session.networkView = view;
                 session.nameColumn = CyRootNetwork.SHARED_NAME;
                 session.idColumn = CyRootNetwork.SHARED_NAME;
+                session.distanceThreshold = 0.5;
 
                 sessionsBySuid.put(suid, session);
 
@@ -238,6 +241,8 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
             this.session = session;
             updateColumnList();
             step1Button.setEnabled(session != null);
+
+            distanceThreshold.setValue(session.getDistanceThreshold());
         }
     }
 
@@ -378,7 +383,8 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                                                                 new NameValuePair<Factory<DistanceMetric>>("Unweighted",
                                                                                                            () -> new UnweightedDistanceMetric()) });
 
-        distanceThreshold = new JTextField();
+        distanceThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
+
         backgroundMethods = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("All nodes in network",
                                                                                       BackgroundMethod.Network),
                                                                   new NameValuePair<>("All nodes in annotation standard",
@@ -409,7 +415,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
         neighborhoodFilteringMethod = new JComboBox<>(new NameValuePair[] { new NameValuePair<Factory<RestrictionMethod>>("Radius-based",
                                                                                                                           () -> new RadiusBasedRestrictionMethod(getDistanceThreshold())) });
-        minimumLandscapeSize = new JTextField();
+        minimumLandscapeSize = new JFormattedTextField(NumberFormat.getIntegerInstance());
 
         addSubsection(panel, "Filter Attributes");
         panel.add(new JLabel("Neighborhood filtering method"));
@@ -423,7 +429,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                                                                  new NameValuePair<Factory<GroupingMethod>>("Pearson",
                                                                                                             () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
                                                                                                                                                  DistanceMethod.CORRELATION)) });
-        similarityThreshold = new JTextField();
+        similarityThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
 
         addSubsection(panel, "Group Attributes");
         panel.add(new JLabel("Similarity metric"));
@@ -445,7 +451,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     }
 
     double getDistanceThreshold() {
-        return 65;
+        return ((Number) distanceThreshold.getValue()).doubleValue();
     }
 
     double getClusterThreshold() {
