@@ -12,6 +12,7 @@ import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 
+import com.carrotsearch.hppc.LongIntMap;
 import com.carrotsearch.hppc.LongIntScatterMap;
 
 import edu.princeton.safe.io.NetworkConsumer;
@@ -29,6 +30,7 @@ public class CyNetworkParser implements NetworkParser {
     int totalSkippedNodes;
     int totalEdges;
     int totalSkippedEdges;
+    LongIntMap nodesBySuid;
 
     public CyNetworkParser(CyNetworkView view,
                            String nameColumn,
@@ -48,7 +50,7 @@ public class CyNetworkParser implements NetworkParser {
                           .anyMatch(e -> e.getModel()
                                           .isDirected());
 
-        LongIntScatterMap nodesBySuid = new LongIntScatterMap();
+        nodesBySuid = new LongIntScatterMap();
         int[] index = { 0 };
         Collection<View<CyNode>> nodes = view.getNodeViews();
         consumer.startNodes();
@@ -125,6 +127,10 @@ public class CyNetworkParser implements NetworkParser {
 
     int getEdgeCount() {
         return totalEdges;
+    }
+
+    LongIntMap getNodeMappings() {
+        return nodesBySuid;
     }
 
     @FunctionalInterface

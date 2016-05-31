@@ -9,15 +9,15 @@ import java.util.stream.IntStream;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.model.Neighborhood;
-import edu.princeton.safe.model.SafeResult;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 public abstract class DistanceBasedRestrictionMethod implements RestrictionMethod {
 
-    protected abstract boolean isIncluded(SafeResult result,
+    protected abstract boolean isIncluded(EnrichmentLandscape result,
                                           double[] distances);
 
     @Override
-    public void applyRestriction(SafeResult result) {
+    public void applyRestriction(EnrichmentLandscape result) {
         AnnotationProvider annotationProvider = result.getAnnotationProvider();
         int totalAttributes = annotationProvider.getAttributeCount();
         double threshold = Neighborhood.getEnrichmentThreshold(totalAttributes);
@@ -31,11 +31,11 @@ public abstract class DistanceBasedRestrictionMethod implements RestrictionMetho
                  .forEach(new IntConsumer() {
                      @Override
                      public void accept(int j) {
-                         result.setTop(j, SafeResult.TYPE_HIGHEST,
+                         result.setTop(j, EnrichmentLandscape.TYPE_HIGHEST,
                                             isIncluded(result, neighborhoods,
                                                        n -> n.getEnrichmentScore(j) > threshold));
                          if (!isBinary) {
-                             result.setTop(j, SafeResult.TYPE_LOWEST,
+                             result.setTop(j, EnrichmentLandscape.TYPE_LOWEST,
                                                 isIncluded(result, neighborhoods,
                                                            n -> Neighborhood.computeEnrichmentScore(1
                                                                    - n.getPValue(j)) > threshold));
@@ -44,7 +44,7 @@ public abstract class DistanceBasedRestrictionMethod implements RestrictionMetho
                  });
     }
 
-    boolean isIncluded(SafeResult result,
+    boolean isIncluded(EnrichmentLandscape result,
                        List<? extends Neighborhood> neighborhoods,
                        Predicate<Neighborhood> filter) {
         int[] nodes = neighborhoods.stream()

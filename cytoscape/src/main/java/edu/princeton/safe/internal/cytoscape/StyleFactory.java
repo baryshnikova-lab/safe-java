@@ -23,12 +23,14 @@ public class StyleFactory {
 
     VisualStyle createAttributeBrowserStyle() {
         VisualStyle style = visualStyleFactory.createVisualStyle("SAFE Attribute Browser");
-        
+
         style.setDefaultValue(BasicVisualLexicon.NETWORK_BACKGROUND_PAINT, Color.BLACK);
         style.setDefaultValue(BasicVisualLexicon.NODE_SIZE, 30D);
         style.setDefaultValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ELLIPSE);
-        
-        ContinuousMapping<Double, Paint> fillFunction = (ContinuousMapping<Double, Paint>) continuousMappingFactory.createVisualMappingFunction("SAFE Highlight", Double.class, BasicVisualLexicon.NODE_FILL_COLOR);
+
+        ContinuousMapping<Double, Paint> fillFunction = (ContinuousMapping<Double, Paint>) continuousMappingFactory.createVisualMappingFunction("SAFE Highlight",
+                                                                                                                                                Double.class,
+                                                                                                                                                BasicVisualLexicon.NODE_FILL_COLOR);
         fillFunction.addPoint(0D, new BoundaryRangeValues<>(Color.BLACK, Color.BLACK, Color.WHITE));
         fillFunction.addPoint(1D, new BoundaryRangeValues<>(Color.BLACK, Color.WHITE, Color.WHITE));
         style.addVisualMappingFunction(fillFunction);

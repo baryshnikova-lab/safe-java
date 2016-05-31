@@ -1,9 +1,9 @@
 package edu.princeton.safe;
 
-import edu.princeton.safe.model.SafeResult;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 @FunctionalInterface
 public interface RestrictionMethod {
 
-    void applyRestriction(SafeResult result);
+    void applyRestriction(EnrichmentLandscape result);
 }

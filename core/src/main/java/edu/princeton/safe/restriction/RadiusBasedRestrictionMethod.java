@@ -1,7 +1,7 @@
 package edu.princeton.safe.restriction;
 
 import edu.princeton.safe.internal.Util;
-import edu.princeton.safe.model.SafeResult;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 public class RadiusBasedRestrictionMethod extends DistanceBasedRestrictionMethod {
 
@@ -12,7 +12,7 @@ public class RadiusBasedRestrictionMethod extends DistanceBasedRestrictionMethod
     }
 
     @Override
-    protected boolean isIncluded(SafeResult result,
+    protected boolean isIncluded(EnrichmentLandscape result,
                                  double[] distances) {
 
         double radius = Util.percentile(distances, distancePercentile);

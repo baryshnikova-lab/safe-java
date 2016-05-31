@@ -1,11 +1,11 @@
 package edu.princeton.safe;
 
 import edu.princeton.safe.model.DomainDetails;
-import edu.princeton.safe.model.SafeResult;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 public interface GroupingMethod {
 
-    DomainDetails group(SafeResult result,
+    DomainDetails group(EnrichmentLandscape result,
                         int typeIndex);
 
 }

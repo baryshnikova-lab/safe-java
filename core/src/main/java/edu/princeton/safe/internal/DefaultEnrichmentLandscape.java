@@ -6,9 +6,9 @@ import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.model.DomainDetails;
 import edu.princeton.safe.model.Neighborhood;
-import edu.princeton.safe.model.SafeResult;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
-public class DefaultSafeResult implements SafeResult {
+public class DefaultEnrichmentLandscape implements EnrichmentLandscape {
 
     NetworkProvider networkProvider;
     AnnotationProvider annotationProvider;
@@ -18,8 +18,8 @@ public class DefaultSafeResult implements SafeResult {
 
     boolean[][] isTop;
 
-    public DefaultSafeResult(AnnotationProvider annotationProvider,
-                             int totalTypes) {
+    public DefaultEnrichmentLandscape(AnnotationProvider annotationProvider,
+                                      int totalTypes) {
         this.annotationProvider = annotationProvider;
         int totalAttributes = annotationProvider.getAttributeCount();
         isTop = new boolean[totalTypes][totalAttributes];

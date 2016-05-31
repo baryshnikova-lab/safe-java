@@ -40,4 +40,8 @@ public class ConsoleProgressReporter implements ProgressReporter {
         System.out.println();
     }
 
+    @Override
+    public void finishNeighborhood(int nodeIndex) {
+    }
+
 }

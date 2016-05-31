@@ -24,7 +24,7 @@ import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.model.DomainDetails;
 import edu.princeton.safe.model.Neighborhood;
-import edu.princeton.safe.model.SafeResult;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 public class ClusterBasedGroupingMethod implements GroupingMethod {
 
@@ -38,7 +38,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
     }
 
     @Override
-    public DomainDetails group(SafeResult result,
+    public DomainDetails group(EnrichmentLandscape result,
                                int typeIndex) {
 
         AnnotationProvider annotationProvider = result.getAnnotationProvider();
@@ -171,7 +171,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         }
     }
 
-    static double[][] computeScores(SafeResult result,
+    static double[][] computeScores(EnrichmentLandscape result,
                                     int totalAttributes,
                                     IntArrayList attributeIndexes,
                                     int typeIndex) {

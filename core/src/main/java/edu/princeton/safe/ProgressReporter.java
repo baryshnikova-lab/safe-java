@@ -1,7 +1,9 @@
 package edu.princeton.safe;
 
 public interface ProgressReporter {
-    void neighborhoodScore(int nodeIndex, int attributeIndex, double score);
+    void neighborhoodScore(int nodeIndex,
+                           int attributeIndex,
+                           double score);
 
     boolean supportsParallel();
 
@@ -9,4 +11,6 @@ public interface ProgressReporter {
                                 AnnotationProvider annotationProvider);
 
     void finishNeighborhoodScore();
+
+    void finishNeighborhood(int nodeIndex);
 }

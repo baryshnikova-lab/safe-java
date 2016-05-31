@@ -73,7 +73,7 @@ public class PerformanceTest {
         System.out.println(threshold);
 
         int totalTypes = 2;
-        DefaultSafeResult result = new DefaultSafeResult(annotationProvider, totalTypes);
+        DefaultEnrichmentLandscape result = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
         result.maximumDistanceThreshold = threshold;
         result.neighborhoods = neighborhoods;
 
@@ -152,7 +152,7 @@ public class PerformanceTest {
         System.out.println(threshold);
 
         int totalTypes = 1;
-        DefaultSafeResult result = new DefaultSafeResult(annotationProvider, totalTypes);
+        DefaultEnrichmentLandscape result = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
         result.maximumDistanceThreshold = threshold;
         result.neighborhoods = neighborhoods;
 

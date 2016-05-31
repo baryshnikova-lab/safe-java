@@ -71,4 +71,8 @@ public class FileProgressReporter implements ProgressReporter {
     public boolean supportsParallel() {
         return false;
     }
+
+    @Override
+    public void finishNeighborhood(int nodeIndex) {
+    }
 }

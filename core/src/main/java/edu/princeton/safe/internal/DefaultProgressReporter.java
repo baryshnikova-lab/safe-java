@@ -46,4 +46,8 @@ public class DefaultProgressReporter implements ProgressReporter {
         children.add(reporter);
     }
 
+    @Override
+    public void finishNeighborhood(int nodeIndex) {
+    }
+
 }

@@ -25,7 +25,7 @@ import edu.princeton.safe.Safe;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
 import edu.princeton.safe.model.DomainDetails;
 import edu.princeton.safe.model.Neighborhood;
-import edu.princeton.safe.model.SafeResult;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 public class ParallelSafe implements Safe {
 
@@ -71,11 +71,17 @@ public class ParallelSafe implements Safe {
     @Override
     public void apply() {
         int totalTypes = annotationProvider.isBinary() ? 1 : 2;
-        DefaultSafeResult result = new DefaultSafeResult(annotationProvider, totalTypes);
-        computeDistances(result);
+        DefaultEnrichmentLandscape result = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
+        computeDistances(networkProvider, annotationProvider, distanceMetric, isDistanceThresholdAbsolute,
+                         distanceThreshold, result);
 
         computeNeighborhoods(result, networkProvider, annotationProvider);
-        computeEnrichment(result);
+
+        int quantitativeIterations = 1000;
+        int randomSeed = 0;
+        computeEnrichment(networkProvider, annotationProvider, backgroundMethod, quantitativeIterations, randomSeed,
+                          progressReporter, result);
+
         computeUnimodality(result, restrictionMethod);
         computeGroups(annotationProvider, result, groupingMethod);
 
@@ -84,7 +90,7 @@ public class ParallelSafe implements Safe {
         outputMethod.apply(result);
     }
 
-    static void computeUnimodality(DefaultSafeResult result,
+    static void computeUnimodality(DefaultEnrichmentLandscape result,
                                    RestrictionMethod restrictionMethod) {
 
         if (restrictionMethod != null) {
@@ -106,32 +112,38 @@ public class ParallelSafe implements Safe {
                  });
     }
 
-    static void applyColors(DefaultSafeResult result) {
+    static void applyColors(DefaultEnrichmentLandscape result) {
+
         // TODO Auto-generated method stub
         // assign unique color to each domain
         // compute color for each node
     }
 
     static void computeGroups(AnnotationProvider annotationProvider,
-                              DefaultSafeResult result,
+                              DefaultEnrichmentLandscape result,
                               GroupingMethod method) {
         // TODO Compute other types
-        DomainDetails details = method.group(result, SafeResult.TYPE_HIGHEST);
+        DomainDetails details = method.group(result, EnrichmentLandscape.TYPE_HIGHEST);
         result.domains = details;
     }
 
-    void computeEnrichment(DefaultSafeResult result) {
+    static void computeEnrichment(NetworkProvider networkProvider,
+                                  AnnotationProvider annotationProvider,
+                                  BackgroundMethod backgroundMethod,
+                                  int quantitativeIterations,
+                                  int randomSeed,
+                                  ProgressReporter progressReporter,
+                                  DefaultEnrichmentLandscape result) {
         if (annotationProvider.isBinary()) {
             computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter, result.neighborhoods,
                                     backgroundMethod);
         } else {
-            int totalPermutations = 1000;
-            int seed = 0;
-            RandomGenerator generator = new Well44497b(seed);
+            RandomGenerator generator = new Well44497b(randomSeed);
 
             int totalNodes = networkProvider.getNodeCount();
             NeighborhoodScoringMethod scoringMethod = new RandomizedMemberScoringMethod(annotationProvider, generator,
-                                                                                        totalPermutations, totalNodes);
+                                                                                        quantitativeIterations,
+                                                                                        totalNodes);
             computeQuantitativeEnrichment(networkProvider, annotationProvider, scoringMethod, progressReporter,
                                           result.neighborhoods);
         }
@@ -218,6 +230,7 @@ public class ParallelSafe implements Safe {
         stream.forEach(new Consumer<Neighborhood>() {
             @Override
             public void accept(Neighborhood neighborhood) {
+                int nodeIndex = neighborhood.getNodeIndex();
                 int neighborhoodSize = neighborhood.getMemberCount();
                 for (int j = 0; j < annotationProvider.getAttributeCount(); j++) {
                     int totalNodesForFunction = nodeCount.apply(j);
@@ -231,15 +244,15 @@ public class ParallelSafe implements Safe {
                     neighborhood.setPValue(j, p);
 
                     double score = Neighborhood.computeEnrichmentScore(p);
-                    int nodeIndex = neighborhood.getNodeIndex();
                     progressReporter.neighborhoodScore(nodeIndex, j, score);
                 }
+                progressReporter.finishNeighborhood(nodeIndex);
             }
         });
         progressReporter.finishNeighborhoodScore();
     }
 
-    static void computeNeighborhoods(DefaultSafeResult result,
+    static void computeNeighborhoods(DefaultEnrichmentLandscape result,
                                      NetworkProvider networkProvider,
                                      AnnotationProvider annotationProvider) {
 
@@ -256,7 +269,12 @@ public class ParallelSafe implements Safe {
         return Util.percentile(distances, percentileIndex);
     }
 
-    void computeDistances(DefaultSafeResult result) {
+    static void computeDistances(NetworkProvider networkProvider,
+                                 AnnotationProvider annotationProvider,
+                                 DistanceMetric distanceMetric,
+                                 boolean isDistanceThresholdAbsolute,
+                                 double distanceThreshold,
+                                 DefaultEnrichmentLandscape result) {
         if (result.neighborhoods != null) {
             return;
         }

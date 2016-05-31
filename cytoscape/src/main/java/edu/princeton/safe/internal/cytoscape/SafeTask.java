@@ -9,9 +9,11 @@ import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskMonitor.Level;
 
 import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.internal.DefaultEnrichmentLandscapeBuilder;
 import edu.princeton.safe.internal.DenseAnnotationProvider;
 import edu.princeton.safe.internal.SparseNetworkProvider;
 import edu.princeton.safe.internal.TabDelimitedAnnotationParser;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 public class SafeTask extends AbstractTask {
 
@@ -47,12 +49,15 @@ public class SafeTask extends AbstractTask {
         monitor.showMessage(Level.INFO, String.format("Edges imported: %d", parser.getEdgeCount()));
         monitor.showMessage(Level.INFO, String.format("Edges skipped: %d", parser.getSkippedEdgeCount()));
 
+        controller.setNodeMappings(parser.getNodeMappings());
+
         monitor.setStatusMessage("Loading annotations...");
 
+        AnnotationProvider annotationProvider;
         File annotationFile = session.getAnnotationFile();
         if (annotationFile != null) {
             TabDelimitedAnnotationParser annotationParser = new TabDelimitedAnnotationParser(annotationFile.getAbsolutePath());
-            AnnotationProvider annotationProvider = new DenseAnnotationProvider(networkProvider, annotationParser);
+            annotationProvider = new DenseAnnotationProvider(networkProvider, annotationParser);
             Set<String> missingNodes = annotationParser.getMissingNodes();
             int totalMissingNodes = missingNodes.size();
             int totalAnnotatedNodes = annotationProvider.getNetworkNodeCount() - totalMissingNodes;
@@ -63,10 +68,22 @@ public class SafeTask extends AbstractTask {
             monitor.showMessage(Level.INFO, String.format("Nodes not annotated: %d", totalMissingNodes));
             monitor.showMessage(Level.INFO,
                                 String.format("Ids of nodes not annotated: %s", String.join(", ", missingNodes)));
-
-            controller.setAttributes(annotationProvider);
+        } else {
+            throw new RuntimeException();
         }
 
+        DefaultEnrichmentLandscapeBuilder builder = new DefaultEnrichmentLandscapeBuilder();
+        EnrichmentLandscape result = builder.setNetworkProvider(networkProvider)
+                                            .setAnnotationProvider(annotationProvider)
+                                            .setDistanceMetric(session.getDistanceMetric())
+                                            .setDistanceThresholdAbsolute(session.isDistanceThresholdAbsolute())
+                                            .setDistanceThreshold(session.getDistanceThreshold())
+                                            .setBackgroundMethod(session.getBackgroundMethod())
+                                            .setQuantitativeIterations(session.getQuantitativeIterations())
+                                            .setProgressReporter(new CyProgressReporter(monitor))
+                                            .build();
+
+        controller.setEnrichmentLandscape(result);
     }
 
 }
