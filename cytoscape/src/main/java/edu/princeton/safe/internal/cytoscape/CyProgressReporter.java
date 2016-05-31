@@ -36,7 +36,8 @@ public class CyProgressReporter implements ProgressReporter {
 
         counter = new AtomicInteger();
         expectedTotal = networkProvider.getNodeCount();
-        monitor.setStatusMessage(String.format("Computing enrichment landscape: %d/%d", 0, expectedTotal));
+        monitor.setStatusMessage("Computing enrichment landscape...");
+        monitor.setProgress(0);
     }
 
     @Override
@@ -46,6 +47,6 @@ public class CyProgressReporter implements ProgressReporter {
     @Override
     public void finishNeighborhood(int nodeIndex) {
         int count = counter.incrementAndGet();
-        monitor.setStatusMessage(String.format("Computing enrichment landscape: %d/%d", count, expectedTotal));
+        monitor.setProgress((double) count / expectedTotal);
     }
 }
