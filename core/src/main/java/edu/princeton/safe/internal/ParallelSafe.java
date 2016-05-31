@@ -163,6 +163,7 @@ public class ParallelSafe implements Safe {
         stream.forEach(new Consumer<Neighborhood>() {
             @Override
             public void accept(Neighborhood neighborhood) {
+                int nodeIndex = neighborhood.getNodeIndex();
                 for (int j = 0; j < annotationProvider.getAttributeCount(); j++) {
                     final int attributeIndex = j;
                     double[] neighborhoodScore = { 0 };
@@ -191,9 +192,9 @@ public class ParallelSafe implements Safe {
                     neighborhood.setPValue(j, p);
 
                     double score = Neighborhood.computeEnrichmentScore(p);
-                    int nodeIndex = neighborhood.getNodeIndex();
                     progressReporter.neighborhoodScore(nodeIndex, j, score);
                 }
+                progressReporter.finishNeighborhood(nodeIndex);
             }
         });
         progressReporter.finishNeighborhoodScore();
