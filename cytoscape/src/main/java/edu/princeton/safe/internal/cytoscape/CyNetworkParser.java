@@ -26,6 +26,7 @@ public class CyNetworkParser implements NetworkParser {
     String nameColumn;
     String idColumn;
     String weightColumn;
+    boolean forceUndirected;
 
     int totalSkippedNodes;
     int totalEdges;
@@ -41,6 +42,7 @@ public class CyNetworkParser implements NetworkParser {
         this.nameColumn = nameColumn;
         this.idColumn = idColumn;
         this.weightColumn = weightColumn;
+        forceUndirected = true;
     }
 
     @Override
@@ -102,7 +104,12 @@ public class CyNetworkParser implements NetworkParser {
                      }
 
                      CyRow row = network.getRow(edge);
-                     consumer.edge(fromIndex, toIndex, weight.get(row));
+                     double edgeWeight = weight.get(row);
+                     consumer.edge(fromIndex, toIndex, edgeWeight);
+
+                     if (isDirected() && !edge.isDirected()) {
+                         consumer.edge(toIndex, fromIndex, edgeWeight);
+                     }
                      totalEdges++;
                  }
              });
@@ -114,7 +121,7 @@ public class CyNetworkParser implements NetworkParser {
 
     @Override
     public boolean isDirected() {
-        return isDirected;
+        return isDirected && !forceUndirected;
     }
 
     int getSkippedNodeCount() {
