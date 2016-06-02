@@ -12,6 +12,10 @@ import org.cytoscape.view.vizmap.mappings.BoundaryRangeValues;
 import org.cytoscape.view.vizmap.mappings.ContinuousMapping;
 
 public class StyleFactory {
+    public static final String HIGHLIGHT_COLUMN = "SAFE Highlight";
+
+    public static final String ATTRIBUTE_BROWSER_STYLE = "SAFE Attribute Browser";
+
     VisualStyleFactory visualStyleFactory;
     VisualMappingFunctionFactory continuousMappingFactory;
 
@@ -22,17 +26,28 @@ public class StyleFactory {
     }
 
     VisualStyle createAttributeBrowserStyle() {
-        VisualStyle style = visualStyleFactory.createVisualStyle("SAFE Attribute Browser");
+
+        Color negative = new Color(0, 204, 255);
+        Color zero = Color.BLACK;
+        Color positive = new Color(255, 204, 0);
+
+        VisualStyle style = visualStyleFactory.createVisualStyle(ATTRIBUTE_BROWSER_STYLE);
 
         style.setDefaultValue(BasicVisualLexicon.NETWORK_BACKGROUND_PAINT, Color.BLACK);
+
         style.setDefaultValue(BasicVisualLexicon.NODE_SIZE, 30D);
         style.setDefaultValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ELLIPSE);
+        style.setDefaultValue(BasicVisualLexicon.NODE_FILL_COLOR, zero);
 
-        ContinuousMapping<Double, Paint> fillFunction = (ContinuousMapping<Double, Paint>) continuousMappingFactory.createVisualMappingFunction("SAFE Highlight",
+        style.setDefaultValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+
+        ContinuousMapping<Double, Paint> fillFunction = (ContinuousMapping<Double, Paint>) continuousMappingFactory.createVisualMappingFunction(HIGHLIGHT_COLUMN,
                                                                                                                                                 Double.class,
                                                                                                                                                 BasicVisualLexicon.NODE_FILL_COLOR);
-        fillFunction.addPoint(0D, new BoundaryRangeValues<>(Color.BLACK, Color.BLACK, Color.WHITE));
-        fillFunction.addPoint(1D, new BoundaryRangeValues<>(Color.BLACK, Color.WHITE, Color.WHITE));
+
+        fillFunction.addPoint(-1D, new BoundaryRangeValues<>(negative, negative, negative));
+        fillFunction.addPoint(0D, new BoundaryRangeValues<>(zero, zero, zero));
+        fillFunction.addPoint(1D, new BoundaryRangeValues<>(positive, positive, positive));
         style.addVisualMappingFunction(fillFunction);
         return style;
     }

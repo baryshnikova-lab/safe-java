@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
 import javax.swing.BorderFactory;
@@ -32,6 +30,7 @@ import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
@@ -45,7 +44,7 @@ import org.cytoscape.application.swing.CytoPanel;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelComponent2;
 import org.cytoscape.application.swing.CytoPanelState;
-import org.cytoscape.model.CyIdentifiable;
+import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.model.CyTable;
@@ -70,7 +69,6 @@ import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongIntMap;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
-import com.carrotsearch.hppc.LongScatterSet;
 
 import edu.princeton.safe.AnalysisMethod;
 import edu.princeton.safe.AnnotationProvider;
@@ -277,7 +275,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                          T value) {
 
         if (value == null) {
-            comboBox.setSelectedIndex(-1);
+            comboBox.setSelectedIndex(0);
             return;
         }
 
@@ -295,7 +293,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                          Identifiable value) {
 
         if (value == null) {
-            comboBox.setSelectedIndex(-1);
+            comboBox.setSelectedIndex(0);
             return;
         }
 
@@ -328,12 +326,9 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                                .equals(String.class))
                  .map(c -> c.getName())
                  .sorted(String.CASE_INSENSITIVE_ORDER)
-                 .forEach(new Consumer<String>() {
-                     @Override
-                     public void accept(String name) {
-                         nodeNamesModel.addElement(name);
-                         nodeIdsModel.addElement(name);
-                     }
+                 .forEach(name -> {
+                     nodeNamesModel.addElement(name);
+                     nodeIdsModel.addElement(name);
                  });
 
             nodeNames.setSelectedItem(session.getNameColumn());
@@ -440,15 +435,15 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                                                                 new NameValuePair<>("Highest and lowest",
                                                                                     AnalysisMethod.HighestAndLowest) });
 
-        distanceMetrics = new JComboBox<>(new NameValuePair[] { new NameValuePair<Factory<DistanceMetric>>("Map-based",
-                                                                                                           new Factory<>("map",
-                                                                                                                         () -> new MapBasedDistanceMetric())),
-                                                                new NameValuePair<Factory<DistanceMetric>>("Edge-weighted",
-                                                                                                           new Factory<>("edge",
-                                                                                                                         () -> new EdgeWeightedDistanceMetric())),
-                                                                new NameValuePair<Factory<DistanceMetric>>("Unweighted",
-                                                                                                           new Factory<>("unweighted",
-                                                                                                                         () -> new UnweightedDistanceMetric())) });
+        distanceMetrics = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Map-based",
+                                                                                    new Factory<>("map",
+                                                                                                  () -> new MapBasedDistanceMetric())),
+                                                                new NameValuePair<>("Edge-weighted",
+                                                                                    new Factory<>("edge",
+                                                                                                  () -> new EdgeWeightedDistanceMetric())),
+                                                                new NameValuePair<>("Unweighted",
+                                                                                    new Factory<>("unweighted",
+                                                                                                  () -> new UnweightedDistanceMetric())) });
 
         distanceThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
 
@@ -484,9 +479,9 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         panel.add(new JSeparator(), "span 2, growx, hmin 10, wrap");
         addSection(panel, "Step 3: Build Composite Map");
 
-        neighborhoodFilteringMethod = new JComboBox<>(new NameValuePair[] { new NameValuePair<Factory<RestrictionMethod>>("Radius-based",
-                                                                                                                          new Factory<>("radius",
-                                                                                                                                        () -> new RadiusBasedRestrictionMethod(getDistanceThreshold()))) });
+        neighborhoodFilteringMethod = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Radius-based",
+                                                                                                new Factory<>("radius",
+                                                                                                              () -> new RadiusBasedRestrictionMethod(getDistanceThreshold()))) });
         minimumLandscapeSize = new JFormattedTextField(NumberFormat.getIntegerInstance());
 
         addSubsection(panel, "Filter Attributes");
@@ -495,14 +490,14 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         panel.add(new JLabel("Min. landscape size"));
         panel.add(minimumLandscapeSize, "growx, wmax 200, wrap");
 
-        similarityMetric = new JComboBox<>(new NameValuePair[] { new NameValuePair<Factory<GroupingMethod>>("Jaccard",
-                                                                                                            new Factory<>("jaccard",
-                                                                                                                          () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
-                                                                                                                                                               DistanceMethod.JACCARD))),
-                                                                 new NameValuePair<Factory<GroupingMethod>>("Pearson",
-                                                                                                            new Factory<>("pearson",
-                                                                                                                          () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
-                                                                                                                                                               DistanceMethod.CORRELATION))) });
+        similarityMetric = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Jaccard",
+                                                                                     new Factory<>("jaccard",
+                                                                                                   () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
+                                                                                                                                        DistanceMethod.JACCARD))),
+                                                                 new NameValuePair<>("Pearson",
+                                                                                     new Factory<>("pearson",
+                                                                                                   () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
+                                                                                                                                        DistanceMethod.CORRELATION))) });
         similarityThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
 
         addSubsection(panel, "Group Attributes");
@@ -589,37 +584,56 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
                      EnrichmentLandscape landscape = session.getEnrichmentLandscape();
                      List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
-                     LongScatterSet set = new LongScatterSet();
                      AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
-                     int totalAttributes = annotationProvider.getAttributeCount();
-                     double threshold = Neighborhood.getEnrichmentThreshold(totalAttributes);
+
+                     AttributeScoringFunction scoringFunction;
+                     if (annotationProvider.isBinary()) {
+                         scoringFunction = (n,
+                                            j) -> n.getEnrichmentScore(j);
+                     } else {
+                         scoringFunction = (n,
+                                            j) -> {
+                             double score1 = n.getEnrichmentScore(j);
+                             double score2 = Neighborhood.computeEnrichmentScore(1 - n.getPValue(j));
+                             if (score2 > score1) {
+                                 return -score2;
+                             }
+                             return score1;
+                         };
+                     }
 
                      IntLongMap nodeMappings = session.getNodeMappings();
-                     int[] rows = table.getSelectedRows();
-                     Arrays.stream(rows)
-                           .map(i -> sorter.convertRowIndexToModel(i))
-                           .flatMap(new IntFunction<IntStream>() {
-                               public IntStream apply(int attributeIndex) {
-                                   return neighborhoods.stream()
-                                                       .filter(n -> n.getEnrichmentScore(attributeIndex) > threshold)
-                                                       .mapToInt(n -> n.getNodeIndex());
-                               }
-                           })
-                           .mapToLong(i -> nodeMappings.get(i))
-                           .forEach(i -> set.add(i));
 
                      CyNetworkView view = session.getNetworkView();
                      CyNetwork network = view.getModel();
-                     CyTable table = network.getDefaultNodeTable();
+                     CyTable nodeTable = network.getDefaultNodeTable();
 
-                     for (CyRow row : table.getAllRows()) {
-                         Long id = row.get(CyIdentifiable.SUID, Long.class);
-                         row.set(CyNetwork.SELECTED, set.contains(id));
-                     }
+                     checkSafeColumns(nodeTable);
+
+                     int[] rows = table.getSelectedRows();
+                     neighborhoods.stream()
+                                  .forEach(n -> {
+                                      double score = Arrays.stream(rows)
+                                                           .map(i -> sorter.convertRowIndexToModel(i))
+                                                           .mapToDouble(i -> scoringFunction.get(n, i))
+                                                           .reduce(0, (x,
+                                                                       y) -> Math.abs(x) > Math.abs(y) ? x : y);
+                                      long suid = nodeMappings.get(n.getNodeIndex());
+                                      CyRow row = nodeTable.getRow(suid);
+                                      row.set(StyleFactory.HIGHLIGHT_COLUMN, score);
+                                  });
+
+                     setAttributeBrowserStyle(view);
                  }
              });
 
         return filteredTable.getPanel();
+    }
+
+    @FunctionalInterface
+    static interface AttributeScoringFunction {
+        double get(Neighborhood neighborhood,
+                   int attributeIndex);
     }
 
     public void showPanel() {
@@ -687,17 +701,48 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         }
     }
 
-    void setAttributeBrowserStyle() {
+    void setAttributeBrowserStyle(CyNetworkView view) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> setAttributeBrowserStyle(view));
+            return;
+        }
+
+        if (attributeBrowserStyle == null) {
+            attributeBrowserStyle = visualMappingManager.getAllVisualStyles()
+                                                        .stream()
+                                                        .filter(s -> s.getTitle()
+                                                                      .equals(StyleFactory.ATTRIBUTE_BROWSER_STYLE))
+                                                        .findFirst()
+                                                        .orElse(null);
+        }
+
         if (attributeBrowserStyle == null) {
             attributeBrowserStyle = styleFactory.createAttributeBrowserStyle();
             visualMappingManager.addVisualStyle(attributeBrowserStyle);
         }
 
-        VisualStyle style = visualMappingManager.getCurrentVisualStyle();
-        if (style == attributeBrowserStyle) {
+        visualMappingManager.setVisualStyle(attributeBrowserStyle, view);
+        attributeBrowserStyle.apply(view);
+        view.updateView();
+        repaint();
+    }
+
+    private void repaint() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> repaint());
             return;
         }
-        visualMappingManager.setCurrentVisualStyle(attributeBrowserStyle);
+
+        application.getJFrame()
+                   .repaint();
+    }
+
+    void checkSafeColumns(CyTable table) {
+        CyColumn column = table.getColumn(StyleFactory.HIGHLIGHT_COLUMN);
+        if (column != null) {
+            return;
+        }
+        table.createColumn(StyleFactory.HIGHLIGHT_COLUMN, Double.class, false, 0D);
     }
 
     @FunctionalInterface
