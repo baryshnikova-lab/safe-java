@@ -1,8 +1,14 @@
 package edu.princeton.safe.internal.cytoscape;
 
 import java.io.File;
+import java.util.function.Consumer;
 
 import org.cytoscape.view.model.CyNetworkView;
+
+import com.carrotsearch.hppc.IntLongMap;
+import com.carrotsearch.hppc.IntLongScatterMap;
+import com.carrotsearch.hppc.LongIntMap;
+import com.carrotsearch.hppc.cursors.LongIntCursor;
 
 import edu.princeton.safe.AnalysisMethod;
 import edu.princeton.safe.DistanceMetric;
@@ -23,6 +29,7 @@ public class SafeSession {
     int quantitativeIterations;
     EnrichmentLandscape enrichmentLandscape;
     boolean forceUndirectedEdges;
+    IntLongMap suidsByNodeIndex;
 
     public SafeSession() {
         // TODO: Expose as setting
@@ -112,8 +119,18 @@ public class SafeSession {
     public boolean getForceUndirectedEdges() {
         return forceUndirectedEdges;
     }
-    
+
     public void setForceUndirectedEdges(boolean force) {
         forceUndirectedEdges = force;
+    }
+
+    public void setNodeMappings(LongIntMap nodeMappings) {
+        suidsByNodeIndex = new IntLongScatterMap(nodeMappings.size());
+        nodeMappings.forEach((Consumer<? super LongIntCursor>) (LongIntCursor c) -> suidsByNodeIndex.put(c.value,
+                                                                                                         c.key));
+    }
+
+    public IntLongMap getNodeMappings() {
+        return suidsByNodeIndex;
     }
 }

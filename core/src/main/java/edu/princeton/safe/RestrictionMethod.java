@@ -2,8 +2,6 @@ package edu.princeton.safe;
 
 import edu.princeton.safe.model.EnrichmentLandscape;
 
-@FunctionalInterface
-public interface RestrictionMethod {
-
+public interface RestrictionMethod extends Identifiable {
     void applyRestriction(EnrichmentLandscape result);
 }

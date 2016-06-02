@@ -11,11 +11,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.swing.BorderFactory;
@@ -67,17 +67,16 @@ import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.swing.DialogTaskManager;
 
 import com.carrotsearch.hppc.IntLongMap;
-import com.carrotsearch.hppc.IntLongScatterMap;
 import com.carrotsearch.hppc.LongIntMap;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 import com.carrotsearch.hppc.LongScatterSet;
-import com.carrotsearch.hppc.cursors.LongIntCursor;
 
 import edu.princeton.safe.AnalysisMethod;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.DistanceMetric;
 import edu.princeton.safe.GroupingMethod;
+import edu.princeton.safe.Identifiable;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.distance.EdgeWeightedDistanceMetric;
 import edu.princeton.safe.distance.MapBasedDistanceMetric;
@@ -105,7 +104,6 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     VisualStyle attributeBrowserStyle;
 
     LongObjectMap<SafeSession> sessionsBySuid;
-    IntLongMap suidsByNodeIndex;
     SafeSession session;
     Object sessionMutex = new Object();
 
@@ -252,9 +250,63 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
             this.session = session;
             updateColumnList();
             step1Button.setEnabled(session != null);
+            if (session == null) {
+                return;
+            }
+
+            File annotationFile = session.getAnnotationFile();
+            if (annotationFile == null) {
+                annotationPath.setText("");
+            } else {
+                annotationPath.setText(annotationFile.getPath());
+            }
+
+            setSelected(analysisMethods, session.getAnalysisMethod());
+            setSelected(distanceMetrics, session.getDistanceMetric());
+            setSelected(backgroundMethods, session.getBackgroundMethod());
 
             distanceThreshold.setValue(session.getDistanceThreshold());
+
             forceUndirectedEdges.setSelected(session.getForceUndirectedEdges());
+
+            setEnrichmentLandscape(session.getEnrichmentLandscape());
+        }
+    }
+
+    <T> void setSelected(JComboBox<NameValuePair<T>> comboBox,
+                         T value) {
+
+        if (value == null) {
+            comboBox.setSelectedIndex(-1);
+            return;
+        }
+
+        OptionalInt index = IntStream.range(0, comboBox.getItemCount())
+                                     .filter(i -> comboBox.getItemAt(i)
+                                                          .getValue()
+                                                          .equals(value))
+                                     .findFirst();
+        if (index.isPresent()) {
+            comboBox.setSelectedIndex(index.getAsInt());
+        }
+    }
+
+    <T> void setSelected(JComboBox<NameValuePair<Factory<T>>> comboBox,
+                         Identifiable value) {
+
+        if (value == null) {
+            comboBox.setSelectedIndex(-1);
+            return;
+        }
+
+        OptionalInt index = IntStream.range(0, comboBox.getItemCount())
+                                     .filter(i -> comboBox.getItemAt(i)
+                                                          .getValue()
+                                                          .getId()
+                                                          .equals(value.getId()))
+                                     .findFirst();
+        if (index.isPresent()) {
+            comboBox.setSelectedIndex(index.getAsInt());
         }
     }
 
@@ -389,11 +441,14 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                                                                                     AnalysisMethod.HighestAndLowest) });
 
         distanceMetrics = new JComboBox<>(new NameValuePair[] { new NameValuePair<Factory<DistanceMetric>>("Map-based",
-                                                                                                           () -> new MapBasedDistanceMetric()),
+                                                                                                           new Factory<>("map",
+                                                                                                                         () -> new MapBasedDistanceMetric())),
                                                                 new NameValuePair<Factory<DistanceMetric>>("Edge-weighted",
-                                                                                                           () -> new EdgeWeightedDistanceMetric()),
+                                                                                                           new Factory<>("edge",
+                                                                                                                         () -> new EdgeWeightedDistanceMetric())),
                                                                 new NameValuePair<Factory<DistanceMetric>>("Unweighted",
-                                                                                                           () -> new UnweightedDistanceMetric()) });
+                                                                                                           new Factory<>("unweighted",
+                                                                                                                         () -> new UnweightedDistanceMetric())) });
 
         distanceThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
 
@@ -430,7 +485,8 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         addSection(panel, "Step 3: Build Composite Map");
 
         neighborhoodFilteringMethod = new JComboBox<>(new NameValuePair[] { new NameValuePair<Factory<RestrictionMethod>>("Radius-based",
-                                                                                                                          () -> new RadiusBasedRestrictionMethod(getDistanceThreshold())) });
+                                                                                                                          new Factory<>("radius",
+                                                                                                                                        () -> new RadiusBasedRestrictionMethod(getDistanceThreshold()))) });
         minimumLandscapeSize = new JFormattedTextField(NumberFormat.getIntegerInstance());
 
         addSubsection(panel, "Filter Attributes");
@@ -440,11 +496,13 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         panel.add(minimumLandscapeSize, "growx, wmax 200, wrap");
 
         similarityMetric = new JComboBox<>(new NameValuePair[] { new NameValuePair<Factory<GroupingMethod>>("Jaccard",
-                                                                                                            () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
-                                                                                                                                                 DistanceMethod.JACCARD)),
+                                                                                                            new Factory<>("jaccard",
+                                                                                                                          () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
+                                                                                                                                                               DistanceMethod.JACCARD))),
                                                                  new NameValuePair<Factory<GroupingMethod>>("Pearson",
-                                                                                                            () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
-                                                                                                                                                 DistanceMethod.CORRELATION)) });
+                                                                                                            new Factory<>("pearson",
+                                                                                                                          () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
+                                                                                                                                                               DistanceMethod.CORRELATION))) });
         similarityThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
 
         addSubsection(panel, "Group Attributes");
@@ -536,6 +594,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                      int totalAttributes = annotationProvider.getAttributeCount();
                      double threshold = Neighborhood.getEnrichmentThreshold(totalAttributes);
 
+                     IntLongMap nodeMappings = session.getNodeMappings();
                      int[] rows = table.getSelectedRows();
                      Arrays.stream(rows)
                            .map(i -> sorter.convertRowIndexToModel(i))
@@ -546,7 +605,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                                                        .mapToInt(n -> n.getNodeIndex());
                                }
                            })
-                           .mapToLong(i -> suidsByNodeIndex.get(i))
+                           .mapToLong(i -> nodeMappings.get(i))
                            .forEach(i -> set.add(i));
 
                      CyNetworkView view = session.getNetworkView();
@@ -601,22 +660,31 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
     public void setEnrichmentLandscape(EnrichmentLandscape landscape) {
         session.setEnrichmentLandscape(landscape);
+        updateEnrichmentLandscape();
+    }
 
+    void updateEnrichmentLandscape() {
         attributes.clear();
+        try {
+            EnrichmentLandscape landscape = session.getEnrichmentLandscape();
+            if (landscape == null) {
+                return;
+            }
 
-        AnnotationProvider provider = landscape.getAnnotationProvider();
-        double threshold = Neighborhood.getEnrichmentThreshold(provider.getAttributeCount());
+            AnnotationProvider provider = landscape.getAnnotationProvider();
+            double threshold = Neighborhood.getEnrichmentThreshold(provider.getAttributeCount());
 
-        IntLongMapper mapper = i -> landscape.getNeighborhoods()
-                                             .stream()
-                                             .filter(n -> n.getEnrichmentScore(i) > threshold)
-                                             .count();
+            IntLongMapper mapper = i -> landscape.getNeighborhoods()
+                                                 .stream()
+                                                 .filter(n -> n.getEnrichmentScore(i) > threshold)
+                                                 .count();
 
-        IntStream.range(0, provider.getAttributeCount())
-                 .mapToObj(i -> new AttributeRow(i, provider.getAttributeLabel(i), mapper.map(i)))
-                 .forEach(r -> attributes.add(r));
-
-        attributeTableModel.fireTableDataChanged();
+            IntStream.range(0, provider.getAttributeCount())
+                     .mapToObj(i -> new AttributeRow(i, provider.getAttributeLabel(i), mapper.map(i)))
+                     .forEach(r -> attributes.add(r));
+        } finally {
+            attributeTableModel.fireTableDataChanged();
+        }
     }
 
     void setAttributeBrowserStyle() {
@@ -638,13 +706,30 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     }
 
     @FunctionalInterface
-    static interface Factory<T> {
+    static interface FactoryMethod<T> {
         T create();
     }
 
+    static class Factory<T> {
+        String id;
+        FactoryMethod<T> method;
+
+        public Factory(String id,
+                       FactoryMethod<T> method) {
+            this.id = id;
+            this.method = method;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public T create() {
+            return method.create();
+        }
+    }
+
     public void setNodeMappings(LongIntMap nodeMappings) {
-        suidsByNodeIndex = new IntLongScatterMap(nodeMappings.size());
-        nodeMappings.forEach((Consumer<? super LongIntCursor>) (LongIntCursor c) -> suidsByNodeIndex.put(c.value,
-                                                                                                         c.key));
+        session.setNodeMappings(nodeMappings);
     }
 }

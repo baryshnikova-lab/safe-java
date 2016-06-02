@@ -28,6 +28,8 @@ import edu.princeton.safe.model.EnrichmentLandscape;
 
 public class ClusterBasedGroupingMethod implements GroupingMethod {
 
+    public static final String ID = "cluster";
+
     double threshold;
     DistanceMethod distanceMethod;
 
@@ -35,6 +37,11 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
                                       DistanceMethod distanceMethod) {
         this.threshold = threshold;
         this.distanceMethod = distanceMethod;
+    }
+
+    @Override
+    public String getId() {
+        return ID;
     }
 
     @Override
