@@ -6,7 +6,7 @@ import edu.princeton.safe.model.EnrichmentLandscape;
 public class RadiusBasedRestrictionMethod extends DistanceBasedRestrictionMethod {
 
     public static final String ID = "radius";
-    
+
     double distancePercentile;
 
     public RadiusBasedRestrictionMethod(double distancePercentile) {
@@ -21,7 +21,7 @@ public class RadiusBasedRestrictionMethod extends DistanceBasedRestrictionMethod
         return radius <= 2 * result.getMaximumDistanceThreshold();
 
     }
-    
+
     @Override
     public String getId() {
         return ID;
