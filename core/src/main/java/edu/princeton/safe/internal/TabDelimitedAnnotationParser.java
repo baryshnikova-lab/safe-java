@@ -72,14 +72,11 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
                 } else {
                     notSeen.remove(label);
 
-                    indexes.forEach(new Consumer<IntCursor>() {
-                        @Override
-                        public void accept(IntCursor cursor) {
-                            int nodeIndex = cursor.value;
-                            for (int j = 1; j < parts.length; j++) {
-                                double value = Double.parseDouble(parts[j]);
-                                consumer.value(nodeIndex, j - 1, value);
-                            }
+                    indexes.forEach((Consumer<? super IntCursor>) (cursor) -> {
+                        int nodeIndex = cursor.value;
+                        for (int j = 1; j < parts.length; j++) {
+                            double value = Double.parseDouble(parts[j]);
+                            consumer.value(nodeIndex, j - 1, value);
                         }
                     });
                 }

@@ -25,13 +25,11 @@ public class SparseNeighborhood extends DefaultNeighborhood {
 
     @Override
     void applyDistanceThreshold(double maximumDistanceThreshold) {
-        distances.forEach(new Consumer<IntDoubleCursor>() {
-            public void accept(IntDoubleCursor cursor) {
-                if (Double.isNaN(cursor.value) || cursor.value > maximumDistanceThreshold) {
-                    return;
-                }
-                addMember(cursor.key);
-            };
+        distances.forEach((Consumer<? super IntDoubleCursor>) (cursor) -> {
+            if (Double.isNaN(cursor.value) || cursor.value > maximumDistanceThreshold) {
+                return;
+            }
+            addMember(cursor.key);
         });
     }
 

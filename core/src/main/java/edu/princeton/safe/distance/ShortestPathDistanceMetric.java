@@ -1,7 +1,6 @@
 package edu.princeton.safe.distance;
 
 import java.util.List;
-import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -46,12 +45,9 @@ public abstract class ShortestPathDistanceMetric implements DistanceMetric {
         int totalNodes = networkProvider.getNodeCount();
         IntStream.range(0, totalNodes)
                  .parallel()
-                 .forEach(new IntConsumer() {
-                     @Override
-                     public void accept(int fromIndex) {
-                         ShortestPathResult shortest = dijkstra(networkProvider, transformed, fromIndex);
-                         computeDistances(shortest, fromIndex, consumer);
-                     }
+                 .forEach(fromIndex -> {
+                     ShortestPathResult shortest = dijkstra(networkProvider, transformed, fromIndex);
+                     computeDistances(shortest, fromIndex, consumer);
                  });
     }
 
@@ -89,17 +85,13 @@ public abstract class ShortestPathDistanceMetric implements DistanceMetric {
             int nextIndex = nodes.removeMin()
                                  .getData();
             final int fromIndex = nextIndex;
-            networkProvider.forEachNeighbor(fromIndex, new IntConsumer() {
-                @Override
-                public void accept(int toIndex) {
-                    double oldWeight = result.distances[toIndex];
-                    double newWeight = result.distances[fromIndex] + weight.get(fromIndex, toIndex);
-                    if (newWeight < oldWeight) {
-                        result.distances[toIndex] = newWeight;
-                        result.predecessors[toIndex] = fromIndex;
-                        nodes.decreaseKey(heapNodes[toIndex], newWeight);
-                    }
-
+            networkProvider.forEachNeighbor(fromIndex, toIndex -> {
+                double oldWeight = result.distances[toIndex];
+                double newWeight = result.distances[fromIndex] + weight.get(fromIndex, toIndex);
+                if (newWeight < oldWeight) {
+                    result.distances[toIndex] = newWeight;
+                    result.predecessors[toIndex] = fromIndex;
+                    nodes.decreaseKey(heapNodes[toIndex], newWeight);
                 }
             });
         }
@@ -125,15 +117,12 @@ public abstract class ShortestPathDistanceMetric implements DistanceMetric {
         for (int i = 0; i < totalNodes; i++) {
             for (int j = 0; j < totalNodes; j++) {
                 final int fromIndex = j;
-                networkProvider.forEachNeighbor(fromIndex, new IntConsumer() {
-                    @Override
-                    public void accept(int toIndex) {
-                        double weight = networkProvider.getWeight(fromIndex, toIndex);
-                        double distance = result.distances[fromIndex] + weight;
-                        if (distance < result.distances[toIndex]) {
-                            result.distances[toIndex] = distance;
-                            result.predecessors[toIndex] = fromIndex;
-                        }
+                networkProvider.forEachNeighbor(fromIndex, toIndex -> {
+                    double weight = networkProvider.getWeight(fromIndex, toIndex);
+                    double distance = result.distances[fromIndex] + weight;
+                    if (distance < result.distances[toIndex]) {
+                        result.distances[toIndex] = distance;
+                        result.predecessors[toIndex] = fromIndex;
                     }
                 });
             }
@@ -152,14 +141,11 @@ public abstract class ShortestPathDistanceMetric implements DistanceMetric {
         // Check for negative cycle
         for (int j = 0; j < totalNodes; j++) {
             final int fromIndex = j;
-            networkProvider.forEachNeighbor(fromIndex, new IntConsumer() {
-                @Override
-                public void accept(int toIndex) {
-                    double weight = networkProvider.getWeight(fromIndex, toIndex);
-                    double distance = result.distances[fromIndex] + weight;
-                    if (distance < result.distances[toIndex]) {
-                        throw new RuntimeException("Negative cycle detected in network");
-                    }
+            networkProvider.forEachNeighbor(fromIndex, toIndex -> {
+                double weight = networkProvider.getWeight(fromIndex, toIndex);
+                double distance = result.distances[fromIndex] + weight;
+                if (distance < result.distances[toIndex]) {
+                    throw new RuntimeException("Negative cycle detected in network");
                 }
             });
         }

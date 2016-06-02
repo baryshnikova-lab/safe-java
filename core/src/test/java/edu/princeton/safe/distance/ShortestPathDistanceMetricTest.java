@@ -6,8 +6,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import edu.princeton.safe.NetworkProvider;
-import edu.princeton.safe.distance.MapBasedDistanceMetric;
-import edu.princeton.safe.distance.ShortestPathDistanceMetric.NodeDistanceConsumer;
 import edu.princeton.safe.distance.ShortestPathDistanceMetric.ShortestPathResult;
 import edu.princeton.safe.internal.SparseNetworkProvider;
 import edu.princeton.safe.io.NetworkConsumer;
@@ -64,14 +62,10 @@ public class ShortestPathDistanceMetricTest {
 
         metric.johnson(networkProvider, (int u,
                                          int v) -> networkProvider.getWeight(u, v),
-                       new NodeDistanceConsumer() {
-                           @Override
-                           public void accept(int fromIndex,
-                                              int toIndex,
-                                              double distance) {
-
-                               Assert.assertEquals(expected[fromIndex][toIndex], distance, DEFAULT_DELTA);
-                           }
+                       (fromIndex,
+                        toIndex,
+                        distance) -> {
+                           Assert.assertEquals(expected[fromIndex][toIndex], distance, DEFAULT_DELTA);
                        });
     }
 
@@ -98,14 +92,10 @@ public class ShortestPathDistanceMetricTest {
 
         metric.johnson(networkProvider, (int u,
                                          int v) -> networkProvider.getWeight(u, v),
-                       new NodeDistanceConsumer() {
-                           @Override
-                           public void accept(int fromIndex,
-                                              int toIndex,
-                                              double distance) {
-
-                               Assert.assertEquals(expected[fromIndex][toIndex], distance, DEFAULT_DELTA);
-                           }
+                       (fromIndex,
+                        toIndex,
+                        distance) -> {
+                           Assert.assertEquals(expected[fromIndex][toIndex], distance, DEFAULT_DELTA);
                        });
     }
 

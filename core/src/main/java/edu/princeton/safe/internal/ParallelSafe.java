@@ -1,8 +1,6 @@
 package edu.princeton.safe.internal;
 
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -24,8 +22,8 @@ import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.Safe;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
 import edu.princeton.safe.model.DomainDetails;
-import edu.princeton.safe.model.Neighborhood;
 import edu.princeton.safe.model.EnrichmentLandscape;
+import edu.princeton.safe.model.Neighborhood;
 
 public class ParallelSafe implements Safe {
 
@@ -102,13 +100,10 @@ public class ParallelSafe implements Safe {
                                     .getAttributeCount();
 
         IntStream.range(0, result.isTop.length)
-                 .forEach(new IntConsumer() {
-                     @Override
-                     public void accept(int typeIndex) {
-                         IntStream.range(0, totalAttributes)
-                                  .forEach(i -> result.setTop(i, typeIndex, true));
-                         return;
-                     }
+                 .forEach(typeIndex -> {
+                     IntStream.range(0, totalAttributes)
+                              .forEach(i -> result.setTop(i, typeIndex, true));
+                     return;
                  });
     }
 
@@ -160,42 +155,35 @@ public class ParallelSafe implements Safe {
             stream = stream.parallel();
         }
         progressReporter.startNeighborhoodScore(networkProvider, annotationProvider);
-        stream.forEach(new Consumer<Neighborhood>() {
-            @Override
-            public void accept(Neighborhood neighborhood) {
-                int nodeIndex = neighborhood.getNodeIndex();
-                for (int j = 0; j < annotationProvider.getAttributeCount(); j++) {
-                    final int attributeIndex = j;
-                    double[] neighborhoodScore = { 0 };
+        stream.forEach(neighborhood -> {
+            int nodeIndex = neighborhood.getNodeIndex();
+            for (int j = 0; j < annotationProvider.getAttributeCount(); j++) {
+                final int attributeIndex = j;
+                double[] neighborhoodScore = { 0 };
 
-                    neighborhood.forEachMemberIndex(new IntConsumer() {
-                        @Override
-                        public void accept(int index) {
-                            double value = annotationProvider.getValue(index, attributeIndex);
-                            if (!Double.isNaN(value)) {
-                                neighborhoodScore[0] += value;
-                            }
-                        }
-                    });
-
-                    double[] randomScores = scoringMethod.computeRandomizedScores(neighborhood, j);
-                    SummaryStatistics statistics = new SummaryStatistics();
-                    for (int r = 0; r < randomScores.length; r++) {
-                        if (!Double.isNaN(randomScores[r])) {
-                            statistics.addValue(randomScores[r]);
-                        }
+                neighborhood.forEachMemberIndex(index -> {
+                    double value = annotationProvider.getValue(index, attributeIndex);
+                    if (!Double.isNaN(value)) {
+                        neighborhoodScore[0] += value;
                     }
+                });
 
-                    double p = 1
-                            - Probability.normal(statistics.getMean(), statistics.getVariance(), neighborhoodScore[0]);
-
-                    neighborhood.setPValue(j, p);
-
-                    double score = Neighborhood.computeEnrichmentScore(p);
-                    progressReporter.neighborhoodScore(nodeIndex, j, score);
+                double[] randomScores = scoringMethod.computeRandomizedScores(neighborhood, j);
+                SummaryStatistics statistics = new SummaryStatistics();
+                for (int r = 0; r < randomScores.length; r++) {
+                    if (!Double.isNaN(randomScores[r])) {
+                        statistics.addValue(randomScores[r]);
+                    }
                 }
-                progressReporter.finishNeighborhood(nodeIndex);
+
+                double p = 1 - Probability.normal(statistics.getMean(), statistics.getVariance(), neighborhoodScore[0]);
+
+                neighborhood.setPValue(j, p);
+
+                double score = Neighborhood.computeEnrichmentScore(p);
+                progressReporter.neighborhoodScore(nodeIndex, j, score);
             }
+            progressReporter.finishNeighborhood(nodeIndex);
         });
         progressReporter.finishNeighborhoodScore();
     }
@@ -228,27 +216,24 @@ public class ParallelSafe implements Safe {
         }
 
         progressReporter.startNeighborhoodScore(networkProvider, annotationProvider);
-        stream.forEach(new Consumer<Neighborhood>() {
-            @Override
-            public void accept(Neighborhood neighborhood) {
-                int nodeIndex = neighborhood.getNodeIndex();
-                int neighborhoodSize = neighborhood.getMemberCount();
-                for (int j = 0; j < annotationProvider.getAttributeCount(); j++) {
-                    int totalNodesForFunction = nodeCount.apply(j);
-                    int totalNeighborhoodNodesForFunction = neighborhood.getMemberCountForAttribute(j,
-                                                                                                    annotationProvider);
+        stream.forEach(neighborhood -> {
+            int nodeIndex = neighborhood.getNodeIndex();
+            int neighborhoodSize = neighborhood.getMemberCount();
+            for (int j = 0; j < annotationProvider.getAttributeCount(); j++) {
+                int totalNodesForFunction = nodeCount.apply(j);
+                int totalNeighborhoodNodesForFunction = neighborhood.getMemberCountForAttribute(j, annotationProvider);
 
-                    HypergeometricDistribution distribution = new HypergeometricDistribution(null, totalNodes,
-                                                                                             totalNodesForFunction,
-                                                                                             neighborhoodSize);
-                    double p = 1.0 - distribution.cumulativeProbability(totalNeighborhoodNodesForFunction - 1);
-                    neighborhood.setPValue(j, p);
+                HypergeometricDistribution distribution = new HypergeometricDistribution(null, totalNodes,
+                                                                                         totalNodesForFunction,
+                                                                                         neighborhoodSize);
+                double p = 1.0 - distribution.cumulativeProbability(totalNeighborhoodNodesForFunction - 1);
+                neighborhood.setPValue(j, p);
 
-                    double score = Neighborhood.computeEnrichmentScore(p);
-                    progressReporter.neighborhoodScore(nodeIndex, j, score);
-                }
-                progressReporter.finishNeighborhood(nodeIndex);
+                double score = Neighborhood.computeEnrichmentScore(p);
+                progressReporter.neighborhoodScore(nodeIndex, j, score);
             }
+            progressReporter.finishNeighborhood(nodeIndex);
+
         });
         progressReporter.finishNeighborhoodScore();
     }

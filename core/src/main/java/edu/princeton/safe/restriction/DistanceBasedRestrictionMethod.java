@@ -2,14 +2,13 @@ package edu.princeton.safe.restriction;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.IntConsumer;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.RestrictionMethod;
-import edu.princeton.safe.model.Neighborhood;
 import edu.princeton.safe.model.EnrichmentLandscape;
+import edu.princeton.safe.model.Neighborhood;
 
 public abstract class DistanceBasedRestrictionMethod implements RestrictionMethod {
 
@@ -28,18 +27,13 @@ public abstract class DistanceBasedRestrictionMethod implements RestrictionMetho
 
         IntStream.range(0, totalAttributes)
                  .parallel()
-                 .forEach(new IntConsumer() {
-                     @Override
-                     public void accept(int j) {
-                         result.setTop(j, EnrichmentLandscape.TYPE_HIGHEST,
-                                            isIncluded(result, neighborhoods,
-                                                       n -> n.getEnrichmentScore(j) > threshold));
-                         if (!isBinary) {
-                             result.setTop(j, EnrichmentLandscape.TYPE_LOWEST,
-                                                isIncluded(result, neighborhoods,
-                                                           n -> Neighborhood.computeEnrichmentScore(1
-                                                                   - n.getPValue(j)) > threshold));
-                         }
+                 .forEach(j -> {
+                     result.setTop(j, EnrichmentLandscape.TYPE_HIGHEST,
+                                   isIncluded(result, neighborhoods, n -> n.getEnrichmentScore(j) > threshold));
+                     if (!isBinary) {
+                         result.setTop(j, EnrichmentLandscape.TYPE_LOWEST,
+                                       isIncluded(result, neighborhoods, n -> Neighborhood.computeEnrichmentScore(1
+                                               - n.getPValue(j)) > threshold));
                      }
                  });
     }

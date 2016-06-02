@@ -1,7 +1,5 @@
 package edu.princeton.safe.internal.scoring;
 
-import java.util.function.IntConsumer;
-
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
 
@@ -40,15 +38,12 @@ public class RandomizedMemberScoringMethod implements NeighborhoodScoringMethod 
 
         int totalPermutations = permutations.length;
         double[] scores = new double[totalPermutations];
-        neighborhood.forEachMemberIndex(new IntConsumer() {
-            @Override
-            public void accept(int index) {
-                for (int i = 0; i < totalPermutations; i++) {
-                    int randomIndex = permutations[i][index];
-                    double value = annotationProvider.getValue(randomIndex, attributeIndex);
-                    if (!Double.isNaN(value)) {
-                        scores[i] += value;
-                    }
+        neighborhood.forEachMemberIndex(index -> {
+            for (int i = 0; i < totalPermutations; i++) {
+                int randomIndex = permutations[i][index];
+                double value = annotationProvider.getValue(randomIndex, attributeIndex);
+                if (!Double.isNaN(value)) {
+                    scores[i] += value;
                 }
             }
         });

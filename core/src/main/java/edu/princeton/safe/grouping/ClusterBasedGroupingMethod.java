@@ -3,7 +3,6 @@ package edu.princeton.safe.grouping;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
@@ -23,8 +22,8 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.model.DomainDetails;
-import edu.princeton.safe.model.Neighborhood;
 import edu.princeton.safe.model.EnrichmentLandscape;
+import edu.princeton.safe.model.Neighborhood;
 
 public class ClusterBasedGroupingMethod implements GroupingMethod {
 
@@ -188,14 +187,11 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         double[][] scores = new double[filteredAttributes][];
         IntStream.range(0, filteredAttributes)
                  .parallel()
-                 .forEach(new IntConsumer() {
-                     @Override
-                     public void accept(int filteredIndex) {
-                         int attributeIndex = attributeIndexes.get(filteredIndex);
-                         scores[filteredIndex] = neighborhoods.stream()
-                                                              .mapToDouble(n -> n.getEnrichmentScore(attributeIndex))
-                                                              .toArray();
-                     }
+                 .forEach(filteredIndex -> {
+                     int attributeIndex = attributeIndexes.get(filteredIndex);
+                     scores[filteredIndex] = neighborhoods.stream()
+                                                          .mapToDouble(n -> n.getEnrichmentScore(attributeIndex))
+                                                          .toArray();
                  });
         return scores;
     }
@@ -251,14 +247,11 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
 
         IntStream.range(0, totalRows)
                  .parallel()
-                 .forEach(new IntConsumer() {
-                     @Override
-                     public void accept(int i) {
-                         for (int j = i + 1; j < totalRows; j++) {
-                             int resultIndex = getIndex(totalRows, i, j);
-                             double value = method.apply(distances[i], distances[j]);
-                             result[resultIndex] = value;
-                         }
+                 .forEach(i -> {
+                     for (int j = i + 1; j < totalRows; j++) {
+                         int resultIndex = getIndex(totalRows, i, j);
+                         double value = method.apply(distances[i], distances[j]);
+                         result[resultIndex] = value;
                      }
                  });
         return result;
