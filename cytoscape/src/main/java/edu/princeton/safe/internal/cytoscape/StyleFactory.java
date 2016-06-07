@@ -28,7 +28,7 @@ public class StyleFactory {
     VisualStyle createAttributeBrowserStyle() {
 
         Color negative = new Color(0, 204, 255);
-        Color zero = Color.BLACK;
+        Color zero = new Color(51, 51, 51);
         Color positive = new Color(255, 204, 0);
 
         VisualStyle style = visualStyleFactory.createVisualStyle(ATTRIBUTE_BROWSER_STYLE);
