@@ -1,20 +1,13 @@
 package edu.princeton.safe.internal.cytoscape;
 
-import java.awt.Component;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
-import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -27,14 +20,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.events.SetCurrentNetworkViewEvent;
@@ -44,9 +31,7 @@ import org.cytoscape.application.swing.CytoPanel;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelComponent2;
 import org.cytoscape.application.swing.CytoPanelState;
-import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyNetwork;
-import org.cytoscape.model.CyRow;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.model.events.ColumnCreatedEvent;
 import org.cytoscape.model.events.ColumnCreatedListener;
@@ -61,20 +46,14 @@ import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedEvent;
 import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
-import org.cytoscape.view.vizmap.VisualMappingManager;
-import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.swing.DialogTaskManager;
 
-import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongIntMap;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 
-import edu.princeton.safe.AnalysisMethod;
-import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.DistanceMetric;
 import edu.princeton.safe.GroupingMethod;
-import edu.princeton.safe.Identifiable;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.distance.EdgeWeightedDistanceMetric;
 import edu.princeton.safe.distance.MapBasedDistanceMetric;
@@ -84,7 +63,6 @@ import edu.princeton.safe.grouping.DistanceMethod;
 import edu.princeton.safe.internal.BackgroundMethod;
 import edu.princeton.safe.internal.cytoscape.UiUtil.FileSelectionMode;
 import edu.princeton.safe.model.EnrichmentLandscape;
-import edu.princeton.safe.model.Neighborhood;
 import edu.princeton.safe.restriction.RadiusBasedRestrictionMethod;
 import net.miginfocom.swing.MigLayout;
 
@@ -95,11 +73,8 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     CySwingApplication application;
     DialogTaskManager taskManager;
     CyApplicationManager applicationManager;
-    VisualMappingManager visualMappingManager;
-    StyleFactory styleFactory;
 
     CytoPanelComponent2 cytoPanelComponent;
-    VisualStyle attributeBrowserStyle;
 
     LongObjectMap<SafeSession> sessionsBySuid;
     SafeSession session;
@@ -118,11 +93,6 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
     JTextField annotationPath;
 
-    List<AttributeRow> attributes;
-    ListTableModel<AttributeRow> attributeTableModel;
-
-    JComboBox<NameValuePair<AnalysisMethod>> analysisMethods;
-
     JComboBox<NameValuePair<Factory<DistanceMetric>>> distanceMetrics;
     JFormattedTextField distanceThreshold;
 
@@ -137,19 +107,19 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
     JCheckBox forceUndirectedEdges;
 
+    AttributeBrowserController attributeBrowser;
+
     public SafeController(CyServiceRegistrar registrar,
                           CySwingApplication application,
                           DialogTaskManager taskManager,
                           CyApplicationManager applicationManager,
-                          VisualMappingManager visualMappingManager,
-                          StyleFactory styleFactory) {
+                          AttributeBrowserController attributeBrowser) {
 
         this.registrar = registrar;
         this.application = application;
         this.taskManager = taskManager;
         this.applicationManager = applicationManager;
-        this.visualMappingManager = visualMappingManager;
-        this.styleFactory = styleFactory;
+        this.attributeBrowser = attributeBrowser;
 
         sessionsBySuid = new LongObjectHashMap<>();
 
@@ -259,52 +229,15 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                 annotationPath.setText(annotationFile.getPath());
             }
 
-            setSelected(analysisMethods, session.getAnalysisMethod());
-            setSelected(distanceMetrics, session.getDistanceMetric());
-            setSelected(backgroundMethods, session.getBackgroundMethod());
+            SafeUtil.setSelected(distanceMetrics, session.getDistanceMetric());
+            SafeUtil.setSelected(backgroundMethods, session.getBackgroundMethod());
 
             distanceThreshold.setValue(session.getDistanceThreshold());
 
             forceUndirectedEdges.setSelected(session.getForceUndirectedEdges());
 
+            attributeBrowser.setSession(session);
             setEnrichmentLandscape(session.getEnrichmentLandscape());
-        }
-    }
-
-    <T> void setSelected(JComboBox<NameValuePair<T>> comboBox,
-                         T value) {
-
-        if (value == null) {
-            comboBox.setSelectedIndex(0);
-            return;
-        }
-
-        OptionalInt index = IntStream.range(0, comboBox.getItemCount())
-                                     .filter(i -> comboBox.getItemAt(i)
-                                                          .getValue()
-                                                          .equals(value))
-                                     .findFirst();
-        if (index.isPresent()) {
-            comboBox.setSelectedIndex(index.getAsInt());
-        }
-    }
-
-    <T> void setSelected(JComboBox<NameValuePair<Factory<T>>> comboBox,
-                         Identifiable value) {
-
-        if (value == null) {
-            comboBox.setSelectedIndex(0);
-            return;
-        }
-
-        OptionalInt index = IntStream.range(0, comboBox.getItemCount())
-                                     .filter(i -> comboBox.getItemAt(i)
-                                                          .getValue()
-                                                          .getId()
-                                                          .equals(value.getId()))
-                                     .findFirst();
-        if (index.isPresent()) {
-            comboBox.setSelectedIndex(index.getAsInt());
         }
     }
 
@@ -366,9 +299,6 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                 session.setIdColumn((String) nodeIds.getSelectedItem());
                 session.setAnnotationFile(new File(annotationPath.getText()));
 
-                NameValuePair<AnalysisMethod> analysisPair = (NameValuePair<AnalysisMethod>) analysisMethods.getSelectedItem();
-                session.setAnalysisMethod(analysisPair.getValue());
-
                 NameValuePair<Factory<DistanceMetric>> distancePair = (NameValuePair<Factory<DistanceMetric>>) distanceMetrics.getSelectedItem();
                 session.setDistanceMetric(distancePair.getValue()
                                                       .create());
@@ -378,31 +308,13 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                 NameValuePair<BackgroundMethod> backgroundPair = (NameValuePair<BackgroundMethod>) backgroundMethods.getSelectedItem();
                 session.setBackgroundMethod(backgroundPair.getValue());
 
+                attributeBrowser.applyToSession();
+
                 SafeTaskFactory factory = new SafeTaskFactory(session, SafeController.this);
                 taskManager.execute(factory.createTaskIterator());
             }
         });
         return button;
-    }
-
-    void addSection(JPanel panel,
-                    String title) {
-        addSection(panel, title, "center");
-    }
-
-    void addSubsection(JPanel panel,
-                       String title) {
-        addSection(panel, title, "leading");
-    }
-
-    void addSection(JPanel panel,
-                    String title,
-                    String alignment) {
-        JLabel label = new JLabel(title);
-        label.setFont(label.getFont()
-                           .deriveFont(Font.BOLD));
-
-        panel.add(label, "alignx " + alignment + ", span 2, wrap");
     }
 
     @SuppressWarnings("unchecked")
@@ -416,7 +328,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         nodeNames = new JComboBox<>(nodeNamesModel);
         nodeIds = new JComboBox<>(nodeIdsModel);
 
-        addSection(panel, "Step 1: Build Enrichment Landscapes");
+        SafeUtil.addSection(panel, "Step 1: Build Enrichment Landscapes");
         panel.add(new JLabel("Node names"));
         panel.add(nodeNames, "wrap");
 
@@ -429,11 +341,6 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         panel.add(new JLabel("Annotation file"));
         panel.add(annotationPath, "growx, wmax 200, split 2");
         panel.add(chooseAnnotationFileButton, "wrap");
-
-        analysisMethods = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Highest", AnalysisMethod.Highest),
-                                                                new NameValuePair<>("Lowest", AnalysisMethod.Lowest),
-                                                                new NameValuePair<>("Highest and lowest",
-                                                                                    AnalysisMethod.HighestAndLowest) });
 
         distanceMetrics = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Map-based",
                                                                                     new Factory<>("map",
@@ -454,9 +361,6 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
         forceUndirectedEdges = new JCheckBox("Assume edges are undirected");
 
-        panel.add(new JLabel("Values to consider"));
-        panel.add(analysisMethods, "wrap");
-
         panel.add(new JLabel("Distance metric"));
         panel.add(distanceMetrics, "wrap");
 
@@ -472,19 +376,19 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         panel.add(step1Button, "span 2, tag apply, wrap");
 
         panel.add(new JSeparator(), "span 2, growx, hmin 10, wrap");
-        addSection(panel, "Step 2: Preview Enrichment Landscapes");
+        SafeUtil.addSection(panel, "Step 2: Preview Enrichment Landscapes");
 
-        panel.add(createAttributePanel(), "span 2, grow, hmin 100, hmax 200, wrap");
+        panel.add(attributeBrowser.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
 
         panel.add(new JSeparator(), "span 2, growx, hmin 10, wrap");
-        addSection(panel, "Step 3: Build Composite Map");
+        SafeUtil.addSection(panel, "Step 3: Build Composite Map");
 
         neighborhoodFilteringMethod = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Radius-based",
                                                                                                 new Factory<>("radius",
                                                                                                               () -> new RadiusBasedRestrictionMethod(getDistanceThreshold()))) });
         minimumLandscapeSize = new JFormattedTextField(NumberFormat.getIntegerInstance());
 
-        addSubsection(panel, "Filter Attributes");
+        SafeUtil.addSubsection(panel, "Filter Attributes");
         panel.add(new JLabel("Neighborhood filtering method"));
         panel.add(neighborhoodFilteringMethod, "wrap");
         panel.add(new JLabel("Min. landscape size"));
@@ -500,7 +404,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                                                                                                                                         DistanceMethod.CORRELATION))) });
         similarityThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
 
-        addSubsection(panel, "Group Attributes");
+        SafeUtil.addSubsection(panel, "Group Attributes");
         panel.add(new JLabel("Similarity metric"));
         panel.add(similarityMetric, "wrap");
         panel.add(new JLabel("Similarity threshold"));
@@ -525,115 +429,6 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
     double getClusterThreshold() {
         return Double.parseDouble(similarityThreshold.getText());
-    }
-
-    @SuppressWarnings("serial")
-    Component createAttributePanel() {
-        attributes = new ArrayList<>();
-        attributeTableModel = new ListTableModel<AttributeRow>(attributes) {
-            @Override
-            public int getColumnCount() {
-                return 2;
-            }
-
-            @Override
-            public Object getValueAt(int rowIndex,
-                                     int columnIndex) {
-                if (rowIndex < 0 || rowIndex >= rows.size()) {
-                    return null;
-                }
-                AttributeRow row = rows.get(rowIndex);
-
-                switch (columnIndex) {
-                case 0:
-                    return row.name;
-                case 1:
-                    return row.totalSignificant;
-                }
-                return null;
-            }
-
-            @Override
-            public String getColumnName(int column) {
-                switch (column) {
-                case 0:
-                    return "Attribute";
-                case 1:
-                    return "Significant";
-                }
-                return null;
-            }
-        };
-
-        FilteredTable<AttributeRow> filteredTable = new FilteredTable<>(attributeTableModel);
-
-        TableRowSorter<TableModel> sorter = filteredTable.getSorter();
-        sorter.setComparator(0, String.CASE_INSENSITIVE_ORDER);
-        sorter.setComparator(1, (Long x,
-                                 Long y) -> (int) (y - x));
-
-        JTable table = filteredTable.getTable();
-        table.getSelectionModel()
-             .addListSelectionListener(new ListSelectionListener() {
-
-                 @Override
-                 public void valueChanged(ListSelectionEvent e) {
-                     if (e.getValueIsAdjusting()) {
-                         return;
-                     }
-
-                     EnrichmentLandscape landscape = session.getEnrichmentLandscape();
-                     List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
-                     AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
-
-                     AttributeScoringFunction scoringFunction;
-                     if (annotationProvider.isBinary()) {
-                         scoringFunction = (n,
-                                            j) -> n.getEnrichmentScore(j);
-                     } else {
-                         scoringFunction = (n,
-                                            j) -> {
-                             double score1 = n.getEnrichmentScore(j);
-                             double score2 = Neighborhood.computeEnrichmentScore(1 - n.getPValue(j));
-                             if (score2 > score1) {
-                                 return -score2;
-                             }
-                             return score1;
-                         };
-                     }
-
-                     IntLongMap nodeMappings = session.getNodeMappings();
-
-                     CyNetworkView view = session.getNetworkView();
-                     CyNetwork network = view.getModel();
-                     CyTable nodeTable = network.getDefaultNodeTable();
-
-                     checkSafeColumns(nodeTable);
-
-                     int[] rows = table.getSelectedRows();
-                     neighborhoods.stream()
-                                  .forEach(n -> {
-                                      double score = Arrays.stream(rows)
-                                                           .map(i -> sorter.convertRowIndexToModel(i))
-                                                           .mapToDouble(i -> scoringFunction.get(n, i))
-                                                           .reduce(0, (x,
-                                                                       y) -> Math.abs(x) > Math.abs(y) ? x : y);
-                                      long suid = nodeMappings.get(n.getNodeIndex());
-                                      CyRow row = nodeTable.getRow(suid);
-                                      row.set(StyleFactory.HIGHLIGHT_COLUMN, score);
-                                  });
-
-                     setAttributeBrowserStyle(view);
-                 }
-             });
-
-        return filteredTable.getPanel();
-    }
-
-    @FunctionalInterface
-    static interface AttributeScoringFunction {
-        double get(Neighborhood neighborhood,
-                   int attributeIndex);
     }
 
     public void showPanel() {
@@ -674,75 +469,11 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
     public void setEnrichmentLandscape(EnrichmentLandscape landscape) {
         session.setEnrichmentLandscape(landscape);
-        updateEnrichmentLandscape();
+        attributeBrowser.updateEnrichmentLandscape();
     }
 
-    void updateEnrichmentLandscape() {
-        attributes.clear();
-        try {
-            EnrichmentLandscape landscape = session.getEnrichmentLandscape();
-            if (landscape == null) {
-                return;
-            }
-
-            AnnotationProvider provider = landscape.getAnnotationProvider();
-            double threshold = Neighborhood.getEnrichmentThreshold(provider.getAttributeCount());
-
-            IntLongMapper mapper = i -> landscape.getNeighborhoods()
-                                                 .stream()
-                                                 .filter(n -> n.getEnrichmentScore(i) > threshold)
-                                                 .count();
-
-            IntStream.range(0, provider.getAttributeCount())
-                     .mapToObj(i -> new AttributeRow(i, provider.getAttributeLabel(i), mapper.map(i)))
-                     .forEach(r -> attributes.add(r));
-        } finally {
-            attributeTableModel.fireTableDataChanged();
-        }
-    }
-
-    void setAttributeBrowserStyle(CyNetworkView view) {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> setAttributeBrowserStyle(view));
-            return;
-        }
-
-        if (attributeBrowserStyle == null) {
-            attributeBrowserStyle = visualMappingManager.getAllVisualStyles()
-                                                        .stream()
-                                                        .filter(s -> s.getTitle()
-                                                                      .equals(StyleFactory.ATTRIBUTE_BROWSER_STYLE))
-                                                        .findFirst()
-                                                        .orElse(null);
-        }
-
-        if (attributeBrowserStyle == null) {
-            attributeBrowserStyle = styleFactory.createAttributeBrowserStyle();
-            visualMappingManager.addVisualStyle(attributeBrowserStyle);
-        }
-
-        visualMappingManager.setVisualStyle(attributeBrowserStyle, view);
-        attributeBrowserStyle.apply(view);
-        view.updateView();
-        repaint();
-    }
-
-    private void repaint() {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> repaint());
-            return;
-        }
-
-        application.getJFrame()
-                   .repaint();
-    }
-
-    void checkSafeColumns(CyTable table) {
-        CyColumn column = table.getColumn(StyleFactory.HIGHLIGHT_COLUMN);
-        if (column != null) {
-            return;
-        }
-        table.createColumn(StyleFactory.HIGHLIGHT_COLUMN, Double.class, false, 0D);
+    public void setNodeMappings(LongIntMap nodeMappings) {
+        session.setNodeMappings(nodeMappings);
     }
 
     @FunctionalInterface
@@ -772,9 +503,5 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         public T create() {
             return method.create();
         }
-    }
-
-    public void setNodeMappings(LongIntMap nodeMappings) {
-        session.setNodeMappings(nodeMappings);
     }
 }
