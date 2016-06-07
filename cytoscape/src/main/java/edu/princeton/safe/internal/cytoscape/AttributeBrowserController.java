@@ -74,7 +74,7 @@ public class AttributeBrowserController {
     @SuppressWarnings({ "serial" })
     Component createPanel() {
         JPanel panel = UiUtil.createJPanel();
-        panel.setLayout(new MigLayout("fillx", "[grow 0, right]rel[left]"));
+        panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
 
         analysisMethods = new JComboBox<>();
 

@@ -15,15 +15,15 @@ import edu.princeton.safe.internal.SparseNetworkProvider;
 import edu.princeton.safe.internal.TabDelimitedAnnotationParser;
 import edu.princeton.safe.model.EnrichmentLandscape;
 
-public class SafeTask extends AbstractTask {
+public class ImportTask extends AbstractTask {
 
-    private SafeSession session;
-    private SafeController controller;
+    SafeSession session;
+    ImportTaskConsumer consumer;
 
-    public SafeTask(SafeSession session,
-                    SafeController controller) {
+    public ImportTask(SafeSession session,
+                      ImportTaskConsumer consumer) {
         this.session = session;
-        this.controller = controller;
+        this.consumer = consumer;
     }
 
     @Override
@@ -49,7 +49,7 @@ public class SafeTask extends AbstractTask {
         monitor.showMessage(Level.INFO, String.format("Edges imported: %d", parser.getEdgeCount()));
         monitor.showMessage(Level.INFO, String.format("Edges skipped: %d", parser.getSkippedEdgeCount()));
 
-        controller.setNodeMappings(parser.getNodeMappings());
+        consumer.consume(parser.getNodeMappings());
 
         monitor.setStatusMessage("Loading annotations...");
 
@@ -83,7 +83,7 @@ public class SafeTask extends AbstractTask {
                                             .setProgressReporter(new CyProgressReporter(monitor))
                                             .build();
 
-        controller.setEnrichmentLandscape(result);
+        consumer.consume(result);
     }
 
 }

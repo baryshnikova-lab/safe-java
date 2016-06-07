@@ -30,6 +30,8 @@ public class SafeSession {
     EnrichmentLandscape enrichmentLandscape;
     boolean forceUndirectedEdges;
     IntObjectMap<Long> suidsByNodeIndex;
+    private int minimumLandscapeSize;
+    private double similarityThreshold;
 
     public SafeSession() {
         // TODO: Expose as setting
@@ -133,4 +135,21 @@ public class SafeSession {
     public IntObjectMap<Long> getNodeMappings() {
         return suidsByNodeIndex;
     }
+
+    public int getMinimumLandscapeSize() {
+        return minimumLandscapeSize;
+    }
+
+    public void setMinimumLandscapeSize(int minimum) {
+        minimumLandscapeSize = minimum;
+    }
+
+    public double getSimilarityThreshold() {
+        return similarityThreshold;
+    }
+
+    public void setSimilarityThreshold(double threshold) {
+        similarityThreshold = threshold;
+    }
+
 }

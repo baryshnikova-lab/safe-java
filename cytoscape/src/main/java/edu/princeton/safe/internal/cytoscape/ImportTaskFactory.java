@@ -3,20 +3,20 @@ package edu.princeton.safe.internal.cytoscape;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 
-public class SafeTaskFactory implements TaskFactory {
+public class ImportTaskFactory implements TaskFactory {
 
     private SafeSession session;
-    private SafeController controller;
+    private ImportTaskConsumer consumer;
 
-    public SafeTaskFactory(SafeSession session,
-                           SafeController controller) {
+    public ImportTaskFactory(SafeSession session,
+                             ImportTaskConsumer consumer) {
         this.session = session;
-        this.controller = controller;
+        this.consumer = consumer;
     }
 
     @Override
     public TaskIterator createTaskIterator() {
-        return new TaskIterator(new SafeTask(session, controller));
+        return new TaskIterator(new ImportTask(session, consumer));
     }
 
     @Override
