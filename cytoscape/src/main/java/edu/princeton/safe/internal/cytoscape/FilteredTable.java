@@ -28,9 +28,6 @@ public class FilteredTable<T> {
     private TableRowSorter<TableModel> sorter;
 
     public FilteredTable(ListTableModel<T> model) {
-        JPanel panel = UiUtil.createJPanel();
-        panel.setLayout(new MigLayout("fill, insets 0", "[min!, grow 0][grow]", "[][grow]"));
-
         queryField = new JTextField();
 
         table = new JTable(model);
@@ -78,6 +75,9 @@ public class FilteredTable<T> {
                        });
 
         JScrollPane scrollPane = new JScrollPane(table);
+
+        JPanel panel = UiUtil.createJPanel();
+        panel.setLayout(new MigLayout("fill, insets 0", "[min!, grow 0][grow]", "[][grow]"));
 
         panel.add(new JLabel("Query"));
         panel.add(queryField, "growx, wrap");

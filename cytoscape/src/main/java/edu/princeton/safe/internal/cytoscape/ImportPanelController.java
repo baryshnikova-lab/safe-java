@@ -32,7 +32,6 @@ import edu.princeton.safe.distance.EdgeWeightedDistanceMetric;
 import edu.princeton.safe.distance.MapBasedDistanceMetric;
 import edu.princeton.safe.distance.UnweightedDistanceMetric;
 import edu.princeton.safe.internal.BackgroundMethod;
-import edu.princeton.safe.internal.cytoscape.SafeController.Factory;
 import edu.princeton.safe.internal.cytoscape.UiUtil.FileSelectionMode;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import net.miginfocom.swing.MigLayout;

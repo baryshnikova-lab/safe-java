@@ -10,12 +10,12 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 
 import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyTable;
 
 import edu.princeton.safe.Identifiable;
-import edu.princeton.safe.internal.cytoscape.SafeController.Factory;
 
 public class SafeUtil {
 
@@ -44,7 +44,11 @@ public class SafeUtil {
         label.setFont(label.getFont()
                            .deriveFont(Font.BOLD));
 
-        panel.add(label, "alignx " + alignment + ", span 2, wrap");
+        panel.add(label, "alignx " + alignment + ", span, wrap");
+    }
+
+    public static void addSeparator(JPanel panel) {
+        panel.add(new JSeparator(), "span, growx, hmin 10, wrap");
     }
 
     public static <T> void setSelected(JComboBox<NameValuePair<T>> comboBox,

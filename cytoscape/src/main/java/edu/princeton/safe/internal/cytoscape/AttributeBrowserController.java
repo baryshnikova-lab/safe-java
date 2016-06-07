@@ -28,7 +28,6 @@ import com.carrotsearch.hppc.IntObjectMap;
 
 import edu.princeton.safe.AnalysisMethod;
 import edu.princeton.safe.AnnotationProvider;
-import edu.princeton.safe.internal.cytoscape.SafeController.IntLongMapper;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 import net.miginfocom.swing.MigLayout;
@@ -71,18 +70,50 @@ public class AttributeBrowserController {
         return panel;
     }
 
-    @SuppressWarnings({ "serial" })
     Component createPanel() {
+        analysisMethods = new JComboBox<>();
+        attributes = new ArrayList<>();
+        attributeTableModel = createAttributeTableModel();
+
+        FilteredTable<AttributeRow> filteredTable = new FilteredTable<>(attributeTableModel);
+
+        TableRowSorter<TableModel> sorter = filteredTable.getSorter();
+        configureSorter(sorter);
+
+        JTable table = filteredTable.getTable();
+        table.getSelectionModel()
+             .addListSelectionListener(createListSelectionListener(table, sorter));
+
+        analysisMethods.addActionListener((e) -> {
+            updateSelectedAttributes(sorter, table.getSelectedRows());
+        });
+
         JPanel panel = UiUtil.createJPanel();
         panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
-
-        analysisMethods = new JComboBox<>();
-
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisMethods, "wrap");
+        panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
 
-        attributes = new ArrayList<>();
-        attributeTableModel = new ListTableModel<AttributeRow>(attributes) {
+        return panel;
+    }
+
+    ListSelectionListener createListSelectionListener(JTable table,
+                                                      TableRowSorter<TableModel> sorter) {
+        return new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting()) {
+                    return;
+                }
+
+                updateSelectedAttributes(sorter, table.getSelectedRows());
+            }
+        };
+    }
+
+    @SuppressWarnings("serial")
+    private ListTableModel<AttributeRow> createAttributeTableModel() {
+        ListTableModel<AttributeRow> model = new ListTableModel<AttributeRow>(attributes) {
             @Override
             public int getColumnCount() {
                 return 2;
@@ -117,34 +148,13 @@ public class AttributeBrowserController {
             }
         };
 
-        FilteredTable<AttributeRow> filteredTable = new FilteredTable<>(attributeTableModel);
+        return model;
+    }
 
-        TableRowSorter<TableModel> sorter = filteredTable.getSorter();
+    void configureSorter(TableRowSorter<TableModel> sorter) {
         sorter.setComparator(0, String.CASE_INSENSITIVE_ORDER);
         sorter.setComparator(1, (Long x,
                                  Long y) -> (int) (y - x));
-
-        JTable table = filteredTable.getTable();
-        table.getSelectionModel()
-             .addListSelectionListener(new ListSelectionListener() {
-
-                 @Override
-                 public void valueChanged(ListSelectionEvent e) {
-                     if (e.getValueIsAdjusting()) {
-                         return;
-                     }
-
-                     updateSelectedAttributes(sorter, table.getSelectedRows());
-                 }
-             });
-
-        panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
-
-        analysisMethods.addActionListener((e) -> {
-            updateSelectedAttributes(sorter, table.getSelectedRows());
-        });
-
-        return panel;
     }
 
     AttributeScoringFunction getScoringFunction() {
@@ -242,7 +252,6 @@ public class AttributeBrowserController {
         }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     void updateEnrichmentLandscape() {
         attributes.clear();
         try {
@@ -252,18 +261,7 @@ public class AttributeBrowserController {
             }
 
             AnnotationProvider provider = landscape.getAnnotationProvider();
-
-            NameValuePair[] model;
-            if (provider.isBinary()) {
-                model = new NameValuePair[] { new NameValuePair<>("Highest", AnalysisMethod.Highest) };
-            } else {
-                model = new NameValuePair[] { new NameValuePair<>("Highest", AnalysisMethod.Highest),
-                                              new NameValuePair<>("Lowest", AnalysisMethod.Lowest),
-                                              new NameValuePair<>("Highest and lowest",
-                                                                  AnalysisMethod.HighestAndLowest) };
-            }
-
-            analysisMethods.setModel(new DefaultComboBoxModel<>(model));
+            updateAnalysisMethods(provider);
 
             double threshold = Neighborhood.getEnrichmentThreshold(provider.getAttributeCount());
 
@@ -278,6 +276,20 @@ public class AttributeBrowserController {
         } finally {
             attributeTableModel.fireTableDataChanged();
         }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    void updateAnalysisMethods(AnnotationProvider provider) {
+        NameValuePair[] model;
+        if (provider.isBinary()) {
+            model = new NameValuePair[] { new NameValuePair<>("Highest", AnalysisMethod.Highest) };
+        } else {
+            model = new NameValuePair[] { new NameValuePair<>("Highest and lowest", AnalysisMethod.HighestAndLowest),
+                                          new NameValuePair<>("Highest", AnalysisMethod.Highest),
+                                          new NameValuePair<>("Lowest", AnalysisMethod.Lowest) };
+        }
+
+        analysisMethods.setModel(new DefaultComboBoxModel<>(model));
     }
 
     @FunctionalInterface

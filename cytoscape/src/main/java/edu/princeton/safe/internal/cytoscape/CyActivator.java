@@ -43,9 +43,13 @@ public class CyActivator extends AbstractCyActivator {
 
         AttributeBrowserController attributeBrowser = new AttributeBrowserController(visualMappingManager,
                                                                                      styleFactory);
+
         ImportPanelController importPanel = new ImportPanelController(application, taskManager, attributeBrowser);
+
+        CompositeMapController compositeMapPanel = new CompositeMapController();
+
         SafeController safeController = new SafeController(registrar, application, applicationManager, importPanel,
-                                                           attributeBrowser);
+                                                           attributeBrowser, compositeMapPanel);
 
         Map<String, String> safeActionProperties = new MapBuilder().put("inMenuBar", "true")
                                                                    .put("preferredMenu", ServiceProperties.APPS_MENU)

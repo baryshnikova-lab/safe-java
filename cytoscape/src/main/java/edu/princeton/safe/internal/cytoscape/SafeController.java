@@ -1,13 +1,9 @@
 package edu.princeton.safe.internal.cytoscape;
 
 import java.awt.Component;
-import java.text.NumberFormat;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
-import javax.swing.JComboBox;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -40,11 +36,6 @@ import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 
-import edu.princeton.safe.GroupingMethod;
-import edu.princeton.safe.RestrictionMethod;
-import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
-import edu.princeton.safe.grouping.DistanceMethod;
-import edu.princeton.safe.restriction.RadiusBasedRestrictionMethod;
 import net.miginfocom.swing.MigLayout;
 
 public class SafeController implements SetCurrentNetworkViewListener, NetworkViewAboutToBeDestroyedListener,
@@ -53,6 +44,10 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     CyServiceRegistrar registrar;
     CySwingApplication application;
     CyApplicationManager applicationManager;
+
+    ImportPanelController importPanel;
+    AttributeBrowserController attributeBrowser;
+    CompositeMapController compositeMapPanel;
 
     CytoPanelComponent2 cytoPanelComponent;
 
@@ -65,21 +60,12 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
     Component panel;
 
-    JComboBox<NameValuePair<Factory<RestrictionMethod>>> neighborhoodFilteringMethod;
-
-    JFormattedTextField minimumLandscapeSize;
-
-    JComboBox<NameValuePair<Factory<GroupingMethod>>> similarityMetric;
-    JFormattedTextField similarityThreshold;
-
-    ImportPanelController importPanel;
-    AttributeBrowserController attributeBrowser;
-
     public SafeController(CyServiceRegistrar registrar,
                           CySwingApplication application,
                           CyApplicationManager applicationManager,
                           ImportPanelController importPanel,
-                          AttributeBrowserController attributeBrowser) {
+                          AttributeBrowserController attributeBrowser,
+                          CompositeMapController compositeMapPanel) {
 
         this.registrar = registrar;
         this.application = application;
@@ -87,6 +73,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
         this.importPanel = importPanel;
         this.attributeBrowser = attributeBrowser;
+        this.compositeMapPanel = compositeMapPanel;
 
         sessionsBySuid = new LongObjectHashMap<>();
     }
@@ -189,13 +176,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
             updateColumnList();
             attributeBrowser.setSession(session);
             importPanel.setSession(session);
-            if (session == null) {
-                return;
-            }
-
-            minimumLandscapeSize.setValue(session.getMinimumLandscapeSize());
-
-            similarityThreshold.setValue(session.getSimilarityThreshold());
+            compositeMapPanel.setSession(session);
         }
     }
 
@@ -214,49 +195,23 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         return panel;
     }
 
-    @SuppressWarnings("unchecked")
     Component createPanel() {
         JPanel panel = UiUtil.createJPanel();
-        panel.setLayout(new MigLayout("fillx", "[grow 0, right]rel[left]"));
+        panel.setLayout(new MigLayout("fillx"));
 
         SafeUtil.addSection(panel, "Step 1: Build Enrichment Landscapes");
 
-        panel.add(importPanel.getPanel(), "span 2, grow, wrap");
+        panel.add(importPanel.getPanel(), "grow, wrap");
 
-        panel.add(new JSeparator(), "span 2, growx, hmin 10, wrap");
+        SafeUtil.addSeparator(panel);
         SafeUtil.addSection(panel, "Step 2: Preview Enrichment Landscapes");
 
-        panel.add(attributeBrowser.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
+        panel.add(attributeBrowser.getPanel(), "grow, hmin 100, hmax 200, wrap");
 
-        panel.add(new JSeparator(), "span 2, growx, hmin 10, wrap");
+        panel.add(new JSeparator(), "span, growx, hmin 10, wrap");
         SafeUtil.addSection(panel, "Step 3: Build Composite Map");
 
-        neighborhoodFilteringMethod = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Radius-based",
-                                                                                                new Factory<>("radius",
-                                                                                                              () -> new RadiusBasedRestrictionMethod(getDistanceThreshold()))) });
-        minimumLandscapeSize = new JFormattedTextField(NumberFormat.getIntegerInstance());
-
-        SafeUtil.addSubsection(panel, "Filter Attributes");
-        panel.add(new JLabel("Neighborhood filtering method"));
-        panel.add(neighborhoodFilteringMethod, "wrap");
-        panel.add(new JLabel("Min. landscape size"));
-        panel.add(minimumLandscapeSize, "growx, wmax 200, wrap");
-
-        similarityMetric = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Jaccard",
-                                                                                     new Factory<>("jaccard",
-                                                                                                   () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
-                                                                                                                                        DistanceMethod.JACCARD))),
-                                                                 new NameValuePair<>("Pearson",
-                                                                                     new Factory<>("pearson",
-                                                                                                   () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
-                                                                                                                                        DistanceMethod.CORRELATION))) });
-        similarityThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
-
-        SafeUtil.addSubsection(panel, "Group Attributes");
-        panel.add(new JLabel("Similarity metric"));
-        panel.add(similarityMetric, "wrap");
-        panel.add(new JLabel("Similarity threshold"));
-        panel.add(similarityThreshold, "growx, wmax 200, wrap");
+        panel.add(compositeMapPanel.getPanel(), "grow, wrap");
 
         JScrollPane container = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -269,14 +224,6 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         }
 
         return container;
-    }
-
-    double getDistanceThreshold() {
-        return 65;
-    }
-
-    double getClusterThreshold() {
-        return Double.parseDouble(similarityThreshold.getText());
     }
 
     public void showPanel() {
@@ -311,35 +258,6 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
             }
             registrar.unregisterService(cytoPanelComponent, CytoPanelComponent.class);
             panelVisible = false;
-        }
-    }
-
-    @FunctionalInterface
-    static interface IntLongMapper {
-        long map(int value);
-    }
-
-    @FunctionalInterface
-    static interface FactoryMethod<T> {
-        T create();
-    }
-
-    static class Factory<T> {
-        String id;
-        FactoryMethod<T> method;
-
-        public Factory(String id,
-                       FactoryMethod<T> method) {
-            this.id = id;
-            this.method = method;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public T create() {
-            return method.create();
         }
     }
 }
