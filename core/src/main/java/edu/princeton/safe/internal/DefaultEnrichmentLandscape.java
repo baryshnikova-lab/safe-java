@@ -14,7 +14,7 @@ public class DefaultEnrichmentLandscape implements EnrichmentLandscape {
     AnnotationProvider annotationProvider;
     double maximumDistanceThreshold;
     List<DefaultNeighborhood> neighborhoods;
-    DomainDetails domains;
+    DefaultDomainDetails domains;
 
     boolean[][] isTop;
 

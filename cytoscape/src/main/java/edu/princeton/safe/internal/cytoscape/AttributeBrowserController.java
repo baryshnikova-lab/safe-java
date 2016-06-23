@@ -14,6 +14,8 @@ import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -28,6 +30,8 @@ import com.carrotsearch.hppc.IntObjectMap;
 
 import edu.princeton.safe.AnalysisMethod;
 import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.internal.ScoringFunction;
+import edu.princeton.safe.internal.SignificancePredicate;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 import net.miginfocom.swing.MigLayout;
@@ -40,7 +44,9 @@ public class AttributeBrowserController {
     SafeSession session;
     List<AttributeRow> attributes;
     ListTableModel<AttributeRow> attributeTableModel;
+    JTable table;
     VisualStyle attributeBrowserStyle;
+    TableColumn optionalColumn;
 
     Component panel;
     JComboBox<NameValuePair<AnalysisMethod>> analysisMethods;
@@ -84,7 +90,23 @@ public class AttributeBrowserController {
         table.getSelectionModel()
              .addListSelectionListener(createListSelectionListener(table, sorter));
 
+        TableColumnModel columnModel = table.getColumnModel();
+
         analysisMethods.addActionListener((e) -> {
+            updateAnalysisMethod();
+
+            int columnCount = table.getColumnCount();
+            AnalysisMethod analysisMethod = session.getAnalysisMethod();
+            if (analysisMethod == AnalysisMethod.HighestAndLowest && columnCount != 3) {
+                columnModel.addColumn(optionalColumn);
+            }
+
+            if (analysisMethod != AnalysisMethod.HighestAndLowest && columnCount == 3) {
+                optionalColumn = columnModel.getColumn(2);
+                columnModel.removeColumn(optionalColumn);
+            }
+            configureSorter(sorter);
+
             updateSelectedAttributes(sorter, table.getSelectedRows());
         });
 
@@ -111,12 +133,25 @@ public class AttributeBrowserController {
         };
     }
 
+    @SuppressWarnings("unchecked")
+    void updateAnalysisMethod() {
+        NameValuePair<AnalysisMethod> pair = (NameValuePair<AnalysisMethod>) analysisMethods.getSelectedItem();
+        if (pair == null) {
+            return;
+        }
+
+        AnalysisMethod method = pair.getValue();
+        session.setAnalysisMethod(method);
+
+        attributeTableModel.fireTableStructureChanged();
+    }
+
     @SuppressWarnings("serial")
-    private ListTableModel<AttributeRow> createAttributeTableModel() {
+    ListTableModel<AttributeRow> createAttributeTableModel() {
         ListTableModel<AttributeRow> model = new ListTableModel<AttributeRow>(attributes) {
             @Override
             public int getColumnCount() {
-                return 2;
+                return 3;
             }
 
             @Override
@@ -125,13 +160,32 @@ public class AttributeBrowserController {
                 if (rowIndex < 0 || rowIndex >= rows.size()) {
                     return null;
                 }
+
                 AttributeRow row = rows.get(rowIndex);
+                AnalysisMethod analysisMethod = session.getAnalysisMethod();
 
                 switch (columnIndex) {
                 case 0:
                     return row.name;
                 case 1:
-                    return row.totalSignificant;
+                    switch (analysisMethod) {
+                    case Highest:
+                    case HighestAndLowest:
+                        return row.totalHighest;
+                    case Lowest:
+                        return row.totalLowest;
+                    default:
+                        return null;
+                    }
+                case 2:
+                    switch (analysisMethod) {
+                    case HighestAndLowest:
+                        return row.totalLowest;
+                    case Highest:
+                    case Lowest:
+                    default:
+                        return null;
+                    }
                 }
                 return null;
             }
@@ -142,9 +196,30 @@ public class AttributeBrowserController {
                 case 0:
                     return "Attribute";
                 case 1:
+                    if (session != null) {
+                        AnalysisMethod analysisMethod = session.getAnalysisMethod();
+                        if (analysisMethod == AnalysisMethod.HighestAndLowest) {
+                            return "Highest";
+                        }
+                    }
                     return "Significant";
+                case 2:
+                    return "Lowest";
                 }
                 return null;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                switch (columnIndex) {
+                case 0:
+                    return String.class;
+                case 1:
+                case 2:
+                    return Long.class;
+                default:
+                    return null;
+                }
             }
         };
 
@@ -153,11 +228,9 @@ public class AttributeBrowserController {
 
     void configureSorter(TableRowSorter<TableModel> sorter) {
         sorter.setComparator(0, String.CASE_INSENSITIVE_ORDER);
-        sorter.setComparator(1, (Long x,
-                                 Long y) -> (int) (y - x));
     }
 
-    AttributeScoringFunction getScoringFunction() {
+    ScoringFunction getScoringFunction() {
         AnalysisMethod method = session.getAnalysisMethod();
         if (method == null) {
             return null;
@@ -165,16 +238,15 @@ public class AttributeBrowserController {
 
         switch (method) {
         case Highest:
-            return (n,
-                    j) -> n.getEnrichmentScore(j);
+            return Neighborhood.HIGHEST_SCORE;
         case Lowest:
             return (n,
-                    j) -> -Neighborhood.computeEnrichmentScore(1 - n.getPValue(j));
+                    j) -> -Neighborhood.LOWEST_SCORE.get(n, j);
         case HighestAndLowest:
             return (n,
                     j) -> {
-                double score1 = n.getEnrichmentScore(j);
-                double score2 = Neighborhood.computeEnrichmentScore(1 - n.getPValue(j));
+                double score1 = Neighborhood.HIGHEST_SCORE.get(n, j);
+                double score2 = Neighborhood.LOWEST_SCORE.get(n, j);
                 if (score2 > score1) {
                     return -score2;
                 }
@@ -185,18 +257,10 @@ public class AttributeBrowserController {
         }
     }
 
-    @SuppressWarnings("unchecked")
     void updateSelectedAttributes(TableRowSorter<TableModel> sorter,
                                   int[] rows) {
 
-        NameValuePair<AnalysisMethod> pair = (NameValuePair<AnalysisMethod>) analysisMethods.getSelectedItem();
-        if (pair == null) {
-            return;
-        }
-
-        session.setAnalysisMethod(pair.getValue());
-
-        AttributeScoringFunction scoringFunction = getScoringFunction();
+        ScoringFunction scoringFunction = getScoringFunction();
         if (scoringFunction == null) {
             return;
         }
@@ -263,18 +327,33 @@ public class AttributeBrowserController {
             AnnotationProvider provider = landscape.getAnnotationProvider();
             updateAnalysisMethods(provider);
 
-            double threshold = Neighborhood.getEnrichmentThreshold(provider.getAttributeCount());
+            int totalAttributes = provider.getAttributeCount();
 
-            IntLongMapper mapper = i -> landscape.getNeighborhoods()
-                                                 .stream()
-                                                 .filter(n -> n.getEnrichmentScore(i) > threshold)
-                                                 .count();
+            SignificancePredicate isHighest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_HIGHEST,
+                                                                                    totalAttributes);
+
+            SignificancePredicate isLowest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_LOWEST,
+                                                                                   totalAttributes);
 
             IntStream.range(0, provider.getAttributeCount())
-                     .mapToObj(i -> new AttributeRow(i, provider.getAttributeLabel(i), mapper.map(i)))
+                     .mapToObj(i -> {
+                         AttributeRow row = new AttributeRow(i, provider.getAttributeLabel(i), 0, 0);
+                         row.totalHighest = landscape.getNeighborhoods()
+                                                     .stream()
+                                                     .filter(n -> isHighest.test(n, i))
+                                                     .count();
+                         if (!provider.isBinary()) {
+                             row.totalLowest = landscape.getNeighborhoods()
+                                                        .stream()
+                                                        .filter(n -> isLowest.test(n, i))
+                                                        .count();
+                         }
+                         return row;
+                     })
                      .forEach(r -> attributes.add(r));
         } finally {
             attributeTableModel.fireTableDataChanged();
+            attributeTableModel.fireTableStructureChanged();
         }
     }
 
@@ -290,12 +369,7 @@ public class AttributeBrowserController {
         }
 
         analysisMethods.setModel(new DefaultComboBoxModel<>(model));
-    }
-
-    @FunctionalInterface
-    static interface AttributeScoringFunction {
-        double get(Neighborhood neighborhood,
-                   int attributeIndex);
+        updateAnalysisMethod();
     }
 
 }

@@ -21,7 +21,8 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.GroupingMethod;
-import edu.princeton.safe.model.DomainDetails;
+import edu.princeton.safe.internal.ScoringFunction;
+import edu.princeton.safe.io.DomainConsumer;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 
@@ -44,8 +45,9 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
     }
 
     @Override
-    public DomainDetails group(EnrichmentLandscape result,
-                               int typeIndex) {
+    public void group(EnrichmentLandscape result,
+                      int typeIndex,
+                      DomainConsumer consumer) {
 
         AnnotationProvider annotationProvider = result.getAnnotationProvider();
         int totalAttributes = annotationProvider.getAttributeCount();
@@ -57,6 +59,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
             }
         }
         int totalFiltered = filteredIndexes.size();
+        System.out.printf("Top Attributes: %d\n", totalFiltered);
 
         System.out.println("Scores...");
         double[][] scores = computeScores(result, totalAttributes, filteredIndexes, typeIndex);
@@ -74,23 +77,19 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         int[] parents = computeParents(linkages, totalFiltered, linkageThreshold);
         List<IntArrayList> clusters = computeClusters(parents);
 
-        DefaultDomainDetails details = new DefaultDomainDetails();
-        details.domainsByAttribute = new int[totalAttributes];
-        details.totalDomains = clusters.size();
-
-        // Map each attribute to cluster index (or -1 if attribute does not
-        // belong to cluster)
-        for (int i = 0; i < totalAttributes; i++) {
-            details.domainsByAttribute[i] = -1;
-        }
+        // Populate domains with attribute indexes.
         for (IntArrayList cluster : clusters) {
-            for (IntCursor cursor : cluster) {
-                details.domainsByAttribute[filteredIndexes.get(cursor.value)] = filteredIndexes.get(cursor.index);
+            if (cluster.isEmpty()) {
+                continue;
             }
-            System.out.printf("%d\t%s\n", cluster.size(), cluster.toString());
+            consumer.startDomain(typeIndex);
+            for (IntCursor cursor : cluster) {
+                int attributeIndex = filteredIndexes.get(cursor.value);
+                consumer.attribute(attributeIndex);
+                ;
+            }
+            consumer.endDomain();
         }
-
-        return details;
     }
 
     static List<IntArrayList> computeClusters(int[] parents) {
@@ -182,6 +181,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
                                     IntArrayList attributeIndexes,
                                     int typeIndex) {
 
+        ScoringFunction score = Neighborhood.getScoringFunction(typeIndex);
         List<? extends Neighborhood> neighborhoods = result.getNeighborhoods();
         int filteredAttributes = attributeIndexes.size();
         double[][] scores = new double[filteredAttributes][];
@@ -190,7 +190,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
                  .forEach(filteredIndex -> {
                      int attributeIndex = attributeIndexes.get(filteredIndex);
                      scores[filteredIndex] = neighborhoods.stream()
-                                                          .mapToDouble(n -> n.getEnrichmentScore(attributeIndex))
+                                                          .mapToDouble(n -> score.get(n, attributeIndex))
                                                           .toArray();
                  });
         return scores;
@@ -275,20 +275,4 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         void endCluster();
     }
 
-    static class DefaultDomainDetails implements DomainDetails {
-
-        int[] domainsByAttribute;
-        int totalDomains;
-
-        @Override
-        public int getDomainIndex(int attributeIndex) {
-            return domainsByAttribute[attributeIndex];
-        }
-
-        @Override
-        public int getTotalDomains() {
-            return totalDomains;
-        }
-
-    }
 }

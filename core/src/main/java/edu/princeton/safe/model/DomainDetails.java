@@ -1,9 +1,9 @@
 package edu.princeton.safe.model;
 
+import java.util.List;
+
 public interface DomainDetails {
 
-    int getDomainIndex(int attributeIndex);
-
-    int getTotalDomains();
+    List<? extends Domain> getDomains(int typeIndex);
 
 }

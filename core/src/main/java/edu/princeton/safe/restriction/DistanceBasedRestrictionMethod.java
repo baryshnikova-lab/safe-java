@@ -7,6 +7,7 @@ import java.util.stream.IntStream;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.RestrictionMethod;
+import edu.princeton.safe.internal.SignificancePredicate;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 
@@ -19,21 +20,23 @@ public abstract class DistanceBasedRestrictionMethod implements RestrictionMetho
     public void applyRestriction(EnrichmentLandscape result) {
         AnnotationProvider annotationProvider = result.getAnnotationProvider();
         int totalAttributes = annotationProvider.getAttributeCount();
-        double threshold = Neighborhood.getEnrichmentThreshold(totalAttributes);
 
         List<? extends Neighborhood> neighborhoods = result.getNeighborhoods();
 
         boolean isBinary = annotationProvider.isBinary();
+        SignificancePredicate isHighest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_HIGHEST,
+                                                                                totalAttributes);
+        SignificancePredicate isLowest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_LOWEST,
+                                                                               totalAttributes);
 
         IntStream.range(0, totalAttributes)
                  .parallel()
                  .forEach(j -> {
                      result.setTop(j, EnrichmentLandscape.TYPE_HIGHEST,
-                                   isIncluded(result, neighborhoods, n -> n.getEnrichmentScore(j) > threshold));
+                                   isIncluded(result, neighborhoods, n -> isHighest.test(n, j)));
                      if (!isBinary) {
                          result.setTop(j, EnrichmentLandscape.TYPE_LOWEST,
-                                       isIncluded(result, neighborhoods, n -> Neighborhood.computeEnrichmentScore(1
-                                               - n.getPValue(j)) > threshold));
+                                       isIncluded(result, neighborhoods, n -> isLowest.test(n, j)));
                      }
                  });
     }

@@ -80,7 +80,7 @@ public class PerformanceTest {
         time("Neighborhoods", () -> ParallelSafe.computeNeighborhoods(result, networkProvider, annotationProvider),
              computeRepeats);
 
-        int totalPermutations = 1000;
+        int totalPermutations = 100;
         int seed = 0;
         RandomGenerator generator = new Well44497b(seed);
         NeighborhoodScoringMethod scoringMethod = new RandomizedMemberScoringMethod(annotationProvider, generator,
@@ -98,7 +98,10 @@ public class PerformanceTest {
         time("Unimodality", () -> ParallelSafe.computeUnimodality(result, restrictionMethod), computeRepeats);
 
         GroupingMethod groupingMethod = new ClusterBasedGroupingMethod(0.75, DistanceMethod.JACCARD);
-        time("Grouping", () -> ParallelSafe.computeGroups(annotationProvider, result, groupingMethod), computeRepeats);
+        time("Grouping", () -> ParallelSafe.computeGroups(result, groupingMethod), computeRepeats);
+
+        int minimumLandscapeSize = 10;
+        time("Colors", () -> ParallelSafe.applyColors(result, minimumLandscapeSize), computeRepeats);
     }
 
     @Test
@@ -171,6 +174,9 @@ public class PerformanceTest {
         time("Unimodality", () -> ParallelSafe.computeUnimodality(result, restrictionMethod), computeRepeats);
 
         GroupingMethod groupingMethod = new ClusterBasedGroupingMethod(0.75, DistanceMethod.JACCARD);
-        time("Grouping", () -> ParallelSafe.computeGroups(annotationProvider, result, groupingMethod), computeRepeats);
+        time("Grouping", () -> ParallelSafe.computeGroups(result, groupingMethod), computeRepeats);
+
+        int minimumLandscapeSize = 10;
+        time("Colors", () -> ParallelSafe.applyColors(result, minimumLandscapeSize), computeRepeats);
     }
 }

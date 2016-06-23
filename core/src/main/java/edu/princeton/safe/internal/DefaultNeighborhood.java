@@ -18,9 +18,6 @@ public abstract class DefaultNeighborhood implements Neighborhood {
     double[] pValues;
     double[] enrichmentScores;
 
-    boolean isHighest;
-    boolean isLowest;
-
     public DefaultNeighborhood(int nodeIndex,
                                int totalAttributes) {
         this.nodeIndex = nodeIndex;
@@ -85,26 +82,6 @@ public abstract class DefaultNeighborhood implements Neighborhood {
     @Override
     public double getEnrichmentScore(int attributeIndex) {
         return enrichmentScores[attributeIndex];
-    }
-
-    @Override
-    public boolean isHighest() {
-        return isHighest;
-    }
-
-    @Override
-    public void setHighest(boolean significant) {
-        isHighest = significant;
-    }
-
-    @Override
-    public boolean isLowest() {
-        return isLowest;
-    }
-
-    @Override
-    public void setLowest(boolean significant) {
-        isLowest = significant;
     }
 
     @Override

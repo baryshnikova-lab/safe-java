@@ -1,11 +1,12 @@
 package edu.princeton.safe;
 
-import edu.princeton.safe.model.DomainDetails;
+import edu.princeton.safe.io.DomainConsumer;
 import edu.princeton.safe.model.EnrichmentLandscape;
 
 public interface GroupingMethod extends Identifiable {
 
-    DomainDetails group(EnrichmentLandscape result,
-                        int typeIndex);
+    void group(EnrichmentLandscape result,
+               int typeIndex,
+               DomainConsumer consumer);
 
 }
