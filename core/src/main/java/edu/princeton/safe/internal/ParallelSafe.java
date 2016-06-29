@@ -418,6 +418,9 @@ public class ParallelSafe implements Safe {
                                                                                          totalNodesForFunction,
                                                                                          neighborhoodSize);
                 double p = 1.0 - distribution.cumulativeProbability(totalNeighborhoodNodesForFunction - 1);
+                if (Double.isFinite(p) && p < 0) {
+                    p = 0;
+                }
                 neighborhood.setPValue(j, p);
 
                 double score = Neighborhood.computeEnrichmentScore(p);
