@@ -39,17 +39,24 @@ public class CyActivator extends AbstractCyActivator {
         VisualMappingFunctionFactory continuousMappingFactory = getService(context, VisualMappingFunctionFactory.class,
                                                                            "(mapping.type=continuous)");
 
-        StyleFactory styleFactory = new StyleFactory(visualStyleFactory, continuousMappingFactory);
+        VisualMappingFunctionFactory passthroughMappingFactory = getService(context, VisualMappingFunctionFactory.class,
+                                                                            "(mapping.type=passthrough)");
+
+        StyleFactory styleFactory = new StyleFactory(visualStyleFactory, continuousMappingFactory,
+                                                     passthroughMappingFactory);
 
         AttributeBrowserController attributeBrowser = new AttributeBrowserController(visualMappingManager,
                                                                                      styleFactory);
 
         ImportPanelController importPanel = new ImportPanelController(application, taskManager, attributeBrowser);
 
-        CompositeMapController compositeMapPanel = new CompositeMapController();
+        CompositeMapController compositeMapPanel = new CompositeMapController(taskManager, visualMappingManager,
+                                                                              styleFactory);
 
         SafeController safeController = new SafeController(registrar, application, applicationManager, importPanel,
                                                            attributeBrowser, compositeMapPanel);
+        importPanel.setSafeController(safeController);
+        compositeMapPanel.setSafeController(safeController);
 
         Map<String, String> safeActionProperties = new MapBuilder().put("inMenuBar", "true")
                                                                    .put("preferredMenu", ServiceProperties.APPS_MENU)

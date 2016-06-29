@@ -76,14 +76,14 @@ public class DefaultEnrichmentLandscapeBuilder implements EnrichmentLandscapeBui
     @Override
     public EnrichmentLandscape build() {
         int totalTypes = annotationProvider.isBinary() ? 1 : 2;
-        DefaultEnrichmentLandscape result = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
+        DefaultEnrichmentLandscape landscape = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
         ParallelSafe.computeDistances(networkProvider, annotationProvider, distanceMetric, isDistanceThresholdAbsolute,
-                                      distanceThreshold, result);
+                                      distanceThreshold, landscape);
 
-        ParallelSafe.computeNeighborhoods(result, networkProvider, annotationProvider);
+        ParallelSafe.computeNeighborhoods(landscape, networkProvider, annotationProvider);
         ParallelSafe.computeEnrichment(networkProvider, annotationProvider, backgroundMethod, quantitativeIterations,
-                                       randomSeed, progressReporter, result);
-        return result;
+                                       randomSeed, progressReporter, landscape);
+        return landscape;
     }
 
 }

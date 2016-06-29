@@ -1,5 +1,7 @@
 package edu.princeton.safe.internal.cytoscape;
 
+import edu.princeton.safe.FactoryMethod;
+
 public class Factory<T> {
     String id;
     FactoryMethod<T> method;

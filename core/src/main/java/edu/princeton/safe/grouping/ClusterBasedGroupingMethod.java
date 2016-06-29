@@ -21,8 +21,10 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.GroupingMethod;
+import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.internal.ScoringFunction;
 import edu.princeton.safe.io.DomainConsumer;
+import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 
@@ -45,38 +47,41 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
     }
 
     @Override
-    public void group(EnrichmentLandscape result,
+    public void group(EnrichmentLandscape landscape,
+                      CompositeMap compositeMap,
                       int typeIndex,
-                      DomainConsumer consumer) {
+                      DomainConsumer consumer,
+                      ProgressReporter progressReporter) {
 
-        AnnotationProvider annotationProvider = result.getAnnotationProvider();
+        AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
         int totalAttributes = annotationProvider.getAttributeCount();
 
         IntArrayList filteredIndexes = new IntArrayList();
         for (int i = 0; i < totalAttributes; i++) {
-            if (result.isTop(i, typeIndex)) {
+            if (compositeMap.isTop(i, typeIndex)) {
                 filteredIndexes.add(i);
             }
         }
         int totalFiltered = filteredIndexes.size();
-        System.out.printf("Top Attributes: %d\n", totalFiltered);
+        progressReporter.setStatus("Top attributes: %d", totalFiltered);
 
-        System.out.println("Scores...");
-        double[][] scores = computeScores(result, totalAttributes, filteredIndexes, typeIndex);
-        System.out.println("pdist...");
+        progressReporter.setStatus("Computing attribute distances...");
+        double[][] scores = computeScores(landscape, totalAttributes, filteredIndexes, typeIndex);
+        progressReporter.setStatus("Computing dissimilarity matrix...");
         double[] distances = pdist(scores, distanceMethod);
 
-        System.out.println("Linkages...");
+        progressReporter.setStatus("Computing cluster linkages...");
         List<Linkage> linkages = computeLinkages(distances, totalFiltered);
         double height = getHeight(linkages);
 
-        System.out.printf("Height: %f\n", height);
-        System.out.printf("Linkages: %d\n", linkages.size());
+        progressReporter.setStatus("Cluster tree height: %f", height);
+        progressReporter.setStatus("Total linkages: %d", linkages.size());
 
         double linkageThreshold = height * threshold;
         int[] parents = computeParents(linkages, totalFiltered, linkageThreshold);
         List<IntArrayList> clusters = computeClusters(parents);
 
+        progressReporter.setStatus("Assigning clusters...");
         // Populate domains with attribute indexes.
         for (IntArrayList cluster : clusters) {
             if (cluster.isEmpty()) {
@@ -124,12 +129,12 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         for (int i = 0; i < parents.length; i++) {
             parents[i] = -1;
         }
-        ListIterator<Linkage> iterator = linkages.listIterator(linkages.size());
-        while (iterator.hasPrevious()) {
-            Linkage linkage = iterator.previous();
+        ListIterator<Linkage> iterator = linkages.listIterator();
+        while (iterator.hasNext()) {
+            Linkage linkage = iterator.next();
             // HAC produces some weird linkages where some nodes are
             // self-merged. We should filter these out.
-            if (linkage.o1 == linkage.o2 || linkage.dissimilarity > threshold) {
+            if (linkage.o1 == linkage.o2 || linkage.dissimilarity >= threshold) {
                 continue;
             }
             int parent = Math.min(linkage.o1, linkage.o2);

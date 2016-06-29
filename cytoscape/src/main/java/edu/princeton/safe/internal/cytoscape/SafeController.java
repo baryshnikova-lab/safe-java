@@ -1,6 +1,8 @@
 package edu.princeton.safe.internal.cytoscape;
 
 import java.awt.Component;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
@@ -36,6 +38,8 @@ import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 
+import edu.princeton.safe.model.CompositeMap;
+import edu.princeton.safe.model.EnrichmentLandscape;
 import net.miginfocom.swing.MigLayout;
 
 public class SafeController implements SetCurrentNetworkViewListener, NetworkViewAboutToBeDestroyedListener,
@@ -48,6 +52,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     ImportPanelController importPanel;
     AttributeBrowserController attributeBrowser;
     CompositeMapController compositeMapPanel;
+    List<SafeResultConsumer> resultConsumers;
 
     CytoPanelComponent2 cytoPanelComponent;
 
@@ -74,8 +79,21 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         this.importPanel = importPanel;
         this.attributeBrowser = attributeBrowser;
         this.compositeMapPanel = compositeMapPanel;
+        resultConsumers = new ArrayList<>();
 
         sessionsBySuid = new LongObjectHashMap<>();
+    }
+
+    public void setEnrichmentLandscape(EnrichmentLandscape landscape) {
+        resultConsumers.forEach(c -> c.acceptEnrichmentLandscape(landscape));
+    }
+
+    public void setCompositeMap(CompositeMap map) {
+        resultConsumers.forEach(c -> c.acceptCompositeMap(map));
+    }
+
+    public void addConsumer(SafeResultConsumer consumer) {
+        resultConsumers.add(consumer);
     }
 
     @Override
@@ -119,7 +137,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         session.setDistanceThreshold(0.5);
         session.setForceUndirectedEdges(true);
         session.setMinimumLandscapeSize(10);
-        session.setSimilarityThreshold(0.5);
+        session.setSimilarityThreshold(0.75);
 
         return session;
     }

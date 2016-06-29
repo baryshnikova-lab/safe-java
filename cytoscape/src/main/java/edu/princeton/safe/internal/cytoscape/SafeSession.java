@@ -12,7 +12,10 @@ import com.carrotsearch.hppc.cursors.LongIntCursor;
 
 import edu.princeton.safe.AnalysisMethod;
 import edu.princeton.safe.DistanceMetric;
+import edu.princeton.safe.GroupingMethod;
+import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.internal.BackgroundMethod;
+import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 
 public class SafeSession {
@@ -30,8 +33,12 @@ public class SafeSession {
     EnrichmentLandscape enrichmentLandscape;
     boolean forceUndirectedEdges;
     IntObjectMap<Long> suidsByNodeIndex;
-    private int minimumLandscapeSize;
-    private double similarityThreshold;
+    int minimumLandscapeSize;
+    double similarityThreshold;
+    GroupingMethod groupingMethod;
+    RestrictionMethod restrictionMethod;
+    int analysisType;
+    CompositeMap compositeMap;
 
     public SafeSession() {
         // TODO: Expose as setting
@@ -150,6 +157,34 @@ public class SafeSession {
 
     public void setSimilarityThreshold(double threshold) {
         similarityThreshold = threshold;
+    }
+
+    public GroupingMethod getGroupingMethod() {
+        return groupingMethod;
+    }
+
+    public void setGroupingMethod(GroupingMethod method) {
+        groupingMethod = method;
+    }
+
+    public RestrictionMethod getRestrictionMethod() {
+        return restrictionMethod;
+    }
+
+    public void setRestrictionMethod(RestrictionMethod method) {
+        restrictionMethod = method;
+    }
+
+    public int getAnalysisType() {
+        return analysisType;
+    }
+
+    public CompositeMap getCompositeMap() {
+        return compositeMap;
+    }
+
+    public void setCompositeMap(CompositeMap map) {
+        compositeMap = map;
     }
 
 }

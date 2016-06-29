@@ -7,6 +7,7 @@ import org.cytoscape.work.TaskMonitor;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.NetworkProvider;
 import edu.princeton.safe.ProgressReporter;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 public class CyProgressReporter implements ProgressReporter {
 
@@ -48,5 +49,37 @@ public class CyProgressReporter implements ProgressReporter {
     public void finishNeighborhood(int nodeIndex) {
         int count = counter.incrementAndGet();
         monitor.setProgress((double) count / expectedTotal);
+    }
+
+    @Override
+    public void startUnimodality(AnnotationProvider annotationProvider) {
+        counter = new AtomicInteger();
+        expectedTotal = annotationProvider.getAttributeCount();
+        monitor.setStatusMessage("Computing enrichment landscape...");
+        monitor.setProgress(0);
+    }
+
+    @Override
+    public void isUnimodal(int attributeIndex,
+                           int typeIndex,
+                           boolean isIncluded) {
+
+        if (typeIndex != EnrichmentLandscape.TYPE_HIGHEST) {
+            return;
+        }
+        int count = counter.incrementAndGet();
+        monitor.setProgress((double) count / expectedTotal);
+    }
+
+    @Override
+    public void finishUnimodality() {
+    }
+
+    @Override
+    public void setStatus(String format,
+                          Object... parameters) {
+
+        String message = String.format(format, parameters);
+        monitor.setStatusMessage(message);
     }
 }

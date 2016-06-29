@@ -282,9 +282,17 @@ public class AttributeBrowserController {
                                               .mapToDouble(i -> scoringFunction.get(n, i))
                                               .reduce(0, (x,
                                                           y) -> Math.abs(x) > Math.abs(y) ? x : y);
+
+                         if (!Double.isFinite(score)) {
+                             score = 0;
+                         }
+
                          Long suid = nodeMappings.get(n.getNodeIndex());
                          CyRow row = nodeTable.getRow(suid);
                          row.set(StyleFactory.HIGHLIGHT_COLUMN, score);
+
+                         double brightness = Math.abs(score);
+                         row.set(StyleFactory.BRIGHTNESSS_COLUMN, brightness);
                      });
 
         setAttributeBrowserStyle(view);
@@ -326,6 +334,7 @@ public class AttributeBrowserController {
 
             AnnotationProvider provider = landscape.getAnnotationProvider();
             updateAnalysisMethods(provider);
+            updateAnalysisMethod();
 
             int totalAttributes = provider.getAttributeCount();
 
@@ -351,9 +360,9 @@ public class AttributeBrowserController {
                          return row;
                      })
                      .forEach(r -> attributes.add(r));
+
         } finally {
             attributeTableModel.fireTableDataChanged();
-            attributeTableModel.fireTableStructureChanged();
         }
     }
 
@@ -369,7 +378,7 @@ public class AttributeBrowserController {
         }
 
         analysisMethods.setModel(new DefaultComboBoxModel<>(model));
-        updateAnalysisMethod();
+        SafeUtil.setSelected(analysisMethods, session.getAnalysisMethod());
     }
 
 }

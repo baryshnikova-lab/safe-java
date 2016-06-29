@@ -9,7 +9,9 @@ public class RadiusBasedRestrictionMethod extends DistanceBasedRestrictionMethod
 
     double distancePercentile;
 
-    public RadiusBasedRestrictionMethod(double distancePercentile) {
+    public RadiusBasedRestrictionMethod(int minimumLandscapeSize,
+                                        double distancePercentile) {
+        super(minimumLandscapeSize);
         this.distancePercentile = distancePercentile;
     }
 

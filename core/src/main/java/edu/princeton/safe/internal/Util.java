@@ -37,9 +37,9 @@ public class Util {
         return defaultPercentile.evaluate(values, threshold);
     }
 
-    public static int[] hslToRgb(double h,
-                                 double s,
-                                 double l) {
+    public static double[] hslToRgb(double h,
+                                    double s,
+                                    double l) {
         // Adapted from http://stackoverflow.com/a/9493060
         double r;
         double g;
@@ -56,8 +56,7 @@ public class Util {
             g = hue2Rgb(p, q, h);
             b = hue2Rgb(p, q, h - 1.0 / 3);
         }
-        int[] result = { (int) Math.round(r * 255), (int) Math.round(g * 255), (int) Math.round(b * 255) };
-        return result;
+        return new double[] { r, g, b };
     }
 
     private static double hue2Rgb(double p,
@@ -87,5 +86,28 @@ public class Util {
             result[i] = (int) Math.round(v2[i] * t + v1[i] * (1 - t));
         }
         return result;
+    }
+
+    public static double[] multiply(double factor,
+                                    double[] vector) {
+        double[] result = new double[vector.length];
+        for (int i = 0; i < vector.length; i++) {
+            result[i] = vector[i] * factor;
+        }
+        return result;
+    }
+
+    public static void addInPlace(double[] vector,
+                                  double[] target) {
+        for (int i = 0; i < target.length; i++) {
+            target[i] += vector[i];
+        }
+    }
+
+    public static void divideInPlace(double denominator,
+                                     double[] target) {
+        for (int i = 0; i < target.length; i++) {
+            target[i] /= denominator;
+        }
     }
 }

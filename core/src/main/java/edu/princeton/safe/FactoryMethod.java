@@ -1,4 +1,4 @@
-package edu.princeton.safe.internal.cytoscape;
+package edu.princeton.safe;
 
 @FunctionalInterface
 public interface FactoryMethod<T> {

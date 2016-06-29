@@ -48,6 +48,36 @@ public class DefaultProgressReporter implements ProgressReporter {
 
     @Override
     public void finishNeighborhood(int nodeIndex) {
+        children.stream()
+                .forEach(c -> c.finishNeighborhood(nodeIndex));
     }
 
+    @Override
+    public void startUnimodality(AnnotationProvider annotationProvider) {
+        children.stream()
+                .forEach(c -> c.startUnimodality(annotationProvider));
+    }
+
+    @Override
+    public void isUnimodal(int attributeIndex,
+                           int typeIndex,
+                           boolean isIncluded) {
+
+        children.stream()
+                .forEach(c -> c.isUnimodal(attributeIndex, typeIndex, isIncluded));
+    }
+
+    @Override
+    public void finishUnimodality() {
+        children.stream()
+                .forEach(c -> c.finishUnimodality());
+    }
+
+    @Override
+    public void setStatus(String format,
+                          Object... parameters) {
+
+        children.stream()
+                .forEach(c -> c.setStatus(format, parameters));
+    }
 }

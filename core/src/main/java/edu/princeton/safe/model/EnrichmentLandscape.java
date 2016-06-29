@@ -3,6 +3,7 @@ package edu.princeton.safe.model;
 import java.util.List;
 
 import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.CompositeMapBuilder;
 import edu.princeton.safe.NetworkProvider;
 
 public interface EnrichmentLandscape {
@@ -18,13 +19,6 @@ public interface EnrichmentLandscape {
 
     NetworkProvider getNetworkProvider();
 
-    DomainDetails getDomainDetails();
-
-    boolean isTop(int attributeIndex,
-                  int typeIndex);
-
-    void setTop(int attributeIndex,
-                int typeIndex,
-                boolean isTop);
+    CompositeMapBuilder getCompositeMapBuilder();
 
 }

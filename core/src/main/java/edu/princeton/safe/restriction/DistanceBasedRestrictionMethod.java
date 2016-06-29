@@ -2,63 +2,85 @@ package edu.princeton.safe.restriction;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.internal.SignificancePredicate;
+import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 
 public abstract class DistanceBasedRestrictionMethod implements RestrictionMethod {
 
+    int minimumLandscapeSize;
+
+    public DistanceBasedRestrictionMethod(int minimumLandscapeSize) {
+        this.minimumLandscapeSize = minimumLandscapeSize;
+    }
+
     protected abstract boolean isIncluded(EnrichmentLandscape result,
                                           double[] distances);
 
     @Override
-    public void applyRestriction(EnrichmentLandscape result) {
-        AnnotationProvider annotationProvider = result.getAnnotationProvider();
+    public void applyRestriction(EnrichmentLandscape landscape,
+                                 CompositeMap compositeMap,
+                                 ProgressReporter progressReporter) {
+
+        AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
         int totalAttributes = annotationProvider.getAttributeCount();
 
-        List<? extends Neighborhood> neighborhoods = result.getNeighborhoods();
+        List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
 
         boolean isBinary = annotationProvider.isBinary();
-        SignificancePredicate isHighest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_HIGHEST,
-                                                                                totalAttributes);
-        SignificancePredicate isLowest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_LOWEST,
-                                                                               totalAttributes);
-
+        SignificancePredicate highest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_HIGHEST,
+                                                                              totalAttributes);
+        SignificancePredicate lowest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_LOWEST,
+                                                                             totalAttributes);
+        progressReporter.startUnimodality(annotationProvider);
         IntStream.range(0, totalAttributes)
                  .parallel()
                  .forEach(j -> {
-                     result.setTop(j, EnrichmentLandscape.TYPE_HIGHEST,
-                                   isIncluded(result, neighborhoods, n -> isHighest.test(n, j)));
+                     boolean isHighest = isIncluded(landscape, neighborhoods, highest, j);
+                     compositeMap.setTop(j, EnrichmentLandscape.TYPE_HIGHEST, isHighest);
+                     progressReporter.isUnimodal(j, EnrichmentLandscape.TYPE_HIGHEST, isHighest);
+
                      if (!isBinary) {
-                         result.setTop(j, EnrichmentLandscape.TYPE_LOWEST,
-                                       isIncluded(result, neighborhoods, n -> isLowest.test(n, j)));
+                         boolean isLowest = isIncluded(landscape, neighborhoods, lowest, j);
+                         compositeMap.setTop(j, EnrichmentLandscape.TYPE_LOWEST, isLowest);
+                         progressReporter.isUnimodal(j, EnrichmentLandscape.TYPE_LOWEST, isLowest);
                      }
                  });
+        progressReporter.finishUnimodality();
     }
 
     boolean isIncluded(EnrichmentLandscape result,
                        List<? extends Neighborhood> neighborhoods,
-                       Predicate<Neighborhood> filter) {
+                       SignificancePredicate isSignificant,
+                       int attributeIndex) {
+
+        // Indexes of nodes significantly enriched for given attribute
         int[] nodes = neighborhoods.stream()
-                                   .filter(filter)
+                                   .filter(n -> isSignificant.test(n, attributeIndex))
                                    .mapToInt(n -> n.getNodeIndex())
                                    .toArray();
+
+        if (nodes.length < 5 || nodes.length < minimumLandscapeSize) {
+            return false;
+        }
 
         double[] distances = new double[nodes.length * nodes.length];
         int i = 0;
         for (int n = 0; n < nodes.length; n++) {
             for (int m = 0; m < nodes.length; m++) {
-                distances[i] = neighborhoods.get(n)
-                                            .getNodeDistance(m);
+                distances[i] = neighborhoods.get(nodes[n])
+                                            .getNodeDistance(nodes[m]);
+                i++;
             }
         }
         Arrays.sort(distances);
-        return isIncluded(result, distances);
-
+        boolean isUnimodal = isIncluded(result, distances);
+        return isUnimodal;
     }
 }

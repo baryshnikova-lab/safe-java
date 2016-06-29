@@ -6,17 +6,18 @@ import java.util.List;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.io.DomainConsumer;
 import edu.princeton.safe.model.Domain;
-import edu.princeton.safe.model.DomainDetails;
+import edu.princeton.safe.model.CompositeMap;
 
-public class DefaultDomainDetails implements DomainDetails {
+public class DefaultCompositeMap implements CompositeMap {
 
     List<DefaultDomain>[] domainsByType;
     DomainConsumer consumer;
     DefaultDomain[][] topDomain;
     double[][] cumulativeOpacity;
+    boolean[][] isTop;
 
     @SuppressWarnings("unchecked")
-    public DefaultDomainDetails(AnnotationProvider provider) {
+    public DefaultCompositeMap(AnnotationProvider provider) {
         int totalTypes = provider.isBinary() ? 1 : 2;
         domainsByType = new List[totalTypes];
 
@@ -24,12 +25,28 @@ public class DefaultDomainDetails implements DomainDetails {
         topDomain = new DefaultDomain[totalTypes][totalNodes];
         cumulativeOpacity = new double[totalTypes][totalNodes];
 
+        int totalAttributes = provider.getAttributeCount();
+        isTop = new boolean[totalTypes][totalAttributes];
+
         consumer = new DefaultDomainConsumer();
     }
 
     @Override
     public List<? extends Domain> getDomains(int typeIndex) {
         return domainsByType[typeIndex];
+    }
+
+    @Override
+    public boolean isTop(int attributeIndex,
+                         int typeIndex) {
+        return isTop[typeIndex][attributeIndex];
+    }
+
+    @Override
+    public void setTop(int attributeIndex,
+                       int typeIndex,
+                       boolean value) {
+        isTop[typeIndex][attributeIndex] = value;
     }
 
     void addDomain(int typeIndex,

@@ -80,4 +80,41 @@ public class ClusterBasedGroupingMethodTest {
         Assert.assertTrue(cluster34.contains(4));
 
     }
+
+    @Test
+    public void testClustering2() {
+        int n = 16;
+        double[][] distances = new double[n][n];
+        for (int k = 0; k < 4; k++) {
+            int offset = k * 4;
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    distances[offset + i][offset + j] = 1;
+                }
+            }
+        }
+
+        double[] d = pdist(distances, DistanceMethod.JACCARD);
+        List<Linkage> linkages = computeLinkages(d, n);
+        int[] parents = computeParents(linkages, n, 0.5);
+        List<IntArrayList> clusters = computeClusters(parents);
+        Assert.assertEquals(4, clusters.size());
+    }
+
+    @Test
+    public void testClustering3() {
+        int n = 16;
+        double[][] distances = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < i; j++) {
+                distances[i][j] = 1;
+            }
+        }
+
+        double[] d = pdist(distances, DistanceMethod.JACCARD);
+        List<Linkage> linkages = computeLinkages(d, n);
+        int[] parents = computeParents(linkages, n, 0.5);
+        List<IntArrayList> clusters = computeClusters(parents);
+        Assert.assertEquals(1, clusters.size());
+    }
 }

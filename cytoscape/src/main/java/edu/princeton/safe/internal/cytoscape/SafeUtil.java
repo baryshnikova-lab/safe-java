@@ -21,10 +21,19 @@ public class SafeUtil {
 
     public static void checkSafeColumns(CyTable table) {
         CyColumn column = table.getColumn(StyleFactory.HIGHLIGHT_COLUMN);
-        if (column != null) {
-            return;
+        if (column == null) {
+            table.createColumn(StyleFactory.HIGHLIGHT_COLUMN, Double.class, false, 0D);
         }
-        table.createColumn(StyleFactory.HIGHLIGHT_COLUMN, Double.class, false, 0D);
+
+        column = table.getColumn(StyleFactory.COLOR_COLUMN);
+        if (column == null) {
+            table.createColumn(StyleFactory.COLOR_COLUMN, String.class, false, null);
+        }
+
+        column = table.getColumn(StyleFactory.BRIGHTNESSS_COLUMN);
+        if (column == null) {
+            table.createColumn(StyleFactory.BRIGHTNESSS_COLUMN, Double.class, false, 0D);
+        }
     }
 
     public static void addSection(JPanel panel,

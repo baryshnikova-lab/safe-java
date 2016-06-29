@@ -13,4 +13,15 @@ public interface ProgressReporter {
     void finishNeighborhoodScore();
 
     void finishNeighborhood(int nodeIndex);
+
+    void isUnimodal(int attributeIndex,
+                    int typeIndex,
+                    boolean isIncluded);
+
+    void setStatus(String format,
+                   Object... parameters);
+
+    void startUnimodality(AnnotationProvider annotationProvider);
+
+    void finishUnimodality();
 }

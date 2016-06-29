@@ -75,4 +75,23 @@ public class FileProgressReporter implements ProgressReporter {
     @Override
     public void finishNeighborhood(int nodeIndex) {
     }
+
+    @Override
+    public void startUnimodality(AnnotationProvider annotationProvider) {
+    }
+
+    @Override
+    public void isUnimodal(int attributeIndex,
+                           int typeIndex,
+                           boolean isIncluded) {
+    }
+
+    @Override
+    public void finishUnimodality() {
+    }
+
+    @Override
+    public void setStatus(String format,
+                          Object... parameters) {
+    }
 }

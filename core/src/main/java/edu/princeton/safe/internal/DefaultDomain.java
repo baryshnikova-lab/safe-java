@@ -18,6 +18,11 @@ public class DefaultDomain implements Domain {
     }
 
     @Override
+    public int getIndex() {
+        return index;
+    }
+
+    @Override
     public void forEachAttribute(IntConsumer action) {
         attributeIndexes.forEach((Consumer<? super IntCursor>) (IntCursor c) -> action.accept(c.value));
     }

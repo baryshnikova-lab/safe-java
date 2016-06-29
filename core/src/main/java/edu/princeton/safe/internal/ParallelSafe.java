@@ -26,6 +26,7 @@ import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.Safe;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
+import edu.princeton.safe.io.DomainConsumer;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 
@@ -73,157 +74,175 @@ public class ParallelSafe implements Safe {
     @Override
     public void apply() {
         int totalTypes = annotationProvider.isBinary() ? 1 : 2;
-        DefaultEnrichmentLandscape result = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
+        DefaultEnrichmentLandscape landscape = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
         computeDistances(networkProvider, annotationProvider, distanceMetric, isDistanceThresholdAbsolute,
-                         distanceThreshold, result);
+                         distanceThreshold, landscape);
 
-        computeNeighborhoods(result, networkProvider, annotationProvider);
+        computeNeighborhoods(landscape, networkProvider, annotationProvider);
 
         int quantitativeIterations = 1000;
         int randomSeed = 0;
         computeEnrichment(networkProvider, annotationProvider, backgroundMethod, quantitativeIterations, randomSeed,
-                          progressReporter, result);
+                          progressReporter, landscape);
 
-        computeUnimodality(result, restrictionMethod);
-        computeGroups(result, groupingMethod);
+        DefaultCompositeMap compositeMap = new DefaultCompositeMap(annotationProvider);
+        computeUnimodality(landscape, compositeMap, restrictionMethod, progressReporter);
+        computeGroups(landscape, compositeMap, groupingMethod, progressReporter);
 
         int minimumLandscapeSize = 10;
-        applyColors(result, minimumLandscapeSize);
+        computeDomains(landscape, compositeMap, minimumLandscapeSize, progressReporter);
 
-        outputMethod.apply(result);
+        outputMethod.apply(landscape);
     }
 
-    static void computeUnimodality(DefaultEnrichmentLandscape result,
-                                   RestrictionMethod restrictionMethod) {
+    static void computeUnimodality(DefaultEnrichmentLandscape landscape,
+                                   DefaultCompositeMap compositeMap,
+                                   RestrictionMethod restrictionMethod,
+                                   ProgressReporter progressReporter) {
 
         if (restrictionMethod != null) {
-            restrictionMethod.applyRestriction(result);
+            restrictionMethod.applyRestriction(landscape, compositeMap, progressReporter);
             return;
         }
 
-        int totalAttributes = result.getAnnotationProvider()
-                                    .getAttributeCount();
+        int totalAttributes = landscape.getAnnotationProvider()
+                                       .getAttributeCount();
 
-        IntStream.range(0, result.isTop.length)
+        IntStream.range(0, compositeMap.isTop.length)
                  .forEach(typeIndex -> {
                      IntStream.range(0, totalAttributes)
-                              .forEach(i -> result.setTop(i, typeIndex, true));
+                              .forEach(i -> compositeMap.setTop(i, typeIndex, true));
                      return;
                  });
     }
 
-    static void applyColors(DefaultEnrichmentLandscape landscape,
-                            int minimumLandscapeSize) {
+    static void computeDomains(DefaultEnrichmentLandscape landscape,
+                               DefaultCompositeMap compositeMap,
+                               int minimumLandscapeSize,
+                               ProgressReporter progressReporter) {
 
-        computeColors(landscape, EnrichmentLandscape.TYPE_HIGHEST, minimumLandscapeSize);
+        computeDomains(landscape, compositeMap, EnrichmentLandscape.TYPE_HIGHEST, minimumLandscapeSize,
+                       progressReporter);
 
         AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
         if (!annotationProvider.isBinary()) {
-            computeColors(landscape, EnrichmentLandscape.TYPE_LOWEST, minimumLandscapeSize);
+            computeDomains(landscape, compositeMap, EnrichmentLandscape.TYPE_LOWEST, minimumLandscapeSize,
+                           progressReporter);
         }
-
-        assignColors(landscape);
     }
 
-    static void assignColors(DefaultEnrichmentLandscape landscape) {
-        // TODO Auto-generated method stub
-        // assign unique color to each domain
-        // compute color for each node
-    }
+    static void computeDomains(DefaultEnrichmentLandscape landscape,
+                               DefaultCompositeMap compositeMap,
+                               int typeIndex,
+                               int minimumLandscapeSize,
+                               ProgressReporter progressReporter) {
 
-    static void computeColors(DefaultEnrichmentLandscape landscape,
-                              int typeIndex,
-                              int minimumLandscapeSize) {
+        switch (typeIndex) {
+        case EnrichmentLandscape.TYPE_HIGHEST:
+            progressReporter.setStatus("Computing highest most significant domains...");
+            break;
+        case EnrichmentLandscape.TYPE_LOWEST:
+            progressReporter.setStatus("Computing lowest most significant domains...");
+            break;
+        default:
+            throw new RuntimeException();
+        }
 
         AnnotationProvider annotationProvider = landscape.annotationProvider;
         int totalAttributes = annotationProvider.getAttributeCount();
 
-        ScoringFunction score = Neighborhood.getScoringFunction(typeIndex);
         SignificancePredicate isSignificant = Neighborhood.getSignificancePredicate(typeIndex, totalAttributes);
 
-        List<DefaultDomain> domains = landscape.domains.domainsByType[typeIndex];
-        int totalDomains = domains.size();
+        ScoringFunction score = Neighborhood.getScoringFunction(typeIndex);
+
+        List<DefaultDomain> domains = compositeMap.domainsByType[typeIndex];
+        if (domains == null) {
+            return;
+        }
 
         List<DefaultNeighborhood> neighborhoods = landscape.neighborhoods;
         neighborhoods.stream()
-                     .forEach(neighborhood -> {
-                         int[] totalSignificantByDomain = new int[totalDomains];
-                         double[] cumulativeEnrichmentByDomain = new double[totalDomains];
-
-                         IntStream.range(0, totalDomains)
-                                  .forEach(i -> {
-                                      DefaultDomain domain = domains.get(i);
-                                      domain.forEachAttribute(j -> {
-                                          if (isSignificant.test(neighborhood, j)) {
-                                              totalSignificantByDomain[i]++;
-                                          }
-                                          cumulativeEnrichmentByDomain[i] += score.get(neighborhood, j);
-                                      });
-                                  });
-
-                         OptionalInt maximumSignificant = Arrays.stream(totalSignificantByDomain)
-                                                                .max();
-                         if (!maximumSignificant.isPresent()) {
-                             return;
-                         }
-                         int maximum = maximumSignificant.getAsInt();
-                         if (maximum > 0) {
-                             int[] topDomains = IntStream.range(0, totalDomains)
-                                                         .filter(i -> totalSignificantByDomain[i] == maximum)
-                                                         .toArray();
-
-                             OptionalDouble cumulativeEnrichment = Arrays.stream(topDomains)
-                                                                         .mapToDouble(i -> cumulativeEnrichmentByDomain[i])
-                                                                         .max();
-
-                             if (!cumulativeEnrichment.isPresent()) {
-                                 return;
-                             }
-
-                             double cumulativeEnrichment2 = cumulativeEnrichment.getAsDouble();
-                             OptionalInt topDomainIndex = Arrays.stream(topDomains)
-                                                                .filter(i -> cumulativeEnrichmentByDomain[i] == cumulativeEnrichment2)
-                                                                .findFirst();
-
-                             if (!topDomainIndex.isPresent()) {
-                                 return;
-                             }
-
-                             int domainIndex = topDomainIndex.getAsInt();
-                             DefaultDomain domain = domains.get(domainIndex);
-                             OptionalDouble enrichment = StreamSupport.stream(domain.attributeIndexes.spliterator(),
-                                                                              false)
-                                                                      .mapToDouble(c -> score.get(neighborhood,
-                                                                                                  c.value))
-                                                                      .max();
-
-                             int nodeIndex = neighborhood.getNodeIndex();
-                             landscape.domains.cumulativeOpacity[typeIndex][nodeIndex] = enrichment.getAsDouble();
-                             landscape.domains.topDomain[typeIndex][nodeIndex] = domain;
-                         }
-                     });
+                     .forEach(neighborhood -> computeDomains(compositeMap, typeIndex, score, isSignificant, domains,
+                                                             neighborhood));
 
         if (minimumLandscapeSize > 0) {
-            minimizeColors(landscape, typeIndex, minimumLandscapeSize);
+            minimizeDomains(landscape, compositeMap, typeIndex, minimumLandscapeSize, progressReporter);
         }
     }
 
-    static void minimizeColors(DefaultEnrichmentLandscape landscape,
-                               int minimumLandscapeSize) {
-        minimizeColors(landscape, EnrichmentLandscape.TYPE_HIGHEST, minimumLandscapeSize);
-        if (!landscape.annotationProvider.isBinary()) {
-            minimizeColors(landscape, EnrichmentLandscape.TYPE_LOWEST, minimumLandscapeSize);
-        }
-    }
-
-    static void minimizeColors(DefaultEnrichmentLandscape landscape,
+    static void computeDomains(DefaultCompositeMap compositeMap,
                                int typeIndex,
-                               int minimumLandscapeSize) {
+                               ScoringFunction score,
+                               SignificancePredicate isSignificant,
+                               List<DefaultDomain> domains,
+                               DefaultNeighborhood neighborhood) {
+
+        int totalDomains = domains.size();
+        int[] totalSignificantByDomain = new int[totalDomains];
+        double[] cumulativeEnrichmentByDomain = new double[totalDomains];
+
+        IntStream.range(0, totalDomains)
+                 .forEach(i -> {
+                     DefaultDomain domain = domains.get(i);
+                     domain.forEachAttribute(j -> {
+                         if (isSignificant.test(neighborhood, j)) {
+                             totalSignificantByDomain[i]++;
+                         }
+                         cumulativeEnrichmentByDomain[i] += score.get(neighborhood, j);
+                     });
+                 });
+
+        OptionalInt maximumSignificant = Arrays.stream(totalSignificantByDomain)
+                                               .max();
+        if (!maximumSignificant.isPresent()) {
+            return;
+        }
+        int maximum = maximumSignificant.getAsInt();
+        if (maximum > 0) {
+            int[] topDomains = IntStream.range(0, totalDomains)
+                                        .filter(i -> totalSignificantByDomain[i] == maximum)
+                                        .toArray();
+
+            OptionalDouble cumulativeEnrichment = Arrays.stream(topDomains)
+                                                        .mapToDouble(i -> cumulativeEnrichmentByDomain[i])
+                                                        .max();
+
+            if (!cumulativeEnrichment.isPresent()) {
+                return;
+            }
+
+            double cumulativeEnrichment2 = cumulativeEnrichment.getAsDouble();
+            OptionalInt topDomainIndex = Arrays.stream(topDomains)
+                                               .filter(i -> cumulativeEnrichmentByDomain[i] == cumulativeEnrichment2)
+                                               .findFirst();
+
+            if (!topDomainIndex.isPresent()) {
+                return;
+            }
+
+            int domainIndex = topDomainIndex.getAsInt();
+            DefaultDomain domain = domains.get(domainIndex);
+            OptionalDouble enrichment = StreamSupport.stream(domain.attributeIndexes.spliterator(), false)
+                                                     .mapToDouble(c -> score.get(neighborhood, c.value))
+                                                     .max();
+
+            int nodeIndex = neighborhood.getNodeIndex();
+            compositeMap.cumulativeOpacity[typeIndex][nodeIndex] = enrichment.getAsDouble();
+            compositeMap.topDomain[typeIndex][nodeIndex] = domain;
+        }
+
+    }
+
+    static void minimizeDomains(DefaultEnrichmentLandscape landscape,
+                                DefaultCompositeMap compositeMap,
+                                int typeIndex,
+                                int minimumLandscapeSize,
+                                ProgressReporter progressReporter) {
         AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
         int totalAttributes = annotationProvider.getAttributeCount();
         SignificancePredicate isSignificant = Neighborhood.getSignificancePredicate(typeIndex, totalAttributes);
 
-        List<DefaultDomain> domains = landscape.domains.domainsByType[typeIndex];
+        List<DefaultDomain> domains = compositeMap.domainsByType[typeIndex];
         int totalDomains = domains.size();
         IntStream.range(0, totalDomains)
                  .forEach(i -> domains.get(i).index = i);
@@ -247,28 +266,51 @@ public class ParallelSafe implements Safe {
                                             .filter(domain -> totalSignificantByDomain[domain.index] >= minimumLandscapeSize)
                                             .collect(Collectors.toList());
 
-        System.out.printf("Total domains: %d\n", domains.size());
-        System.out.printf("Minimized domains: %d\n", result.size());
+        // Reset each domain index to -1
+        IntStream.range(0, totalDomains)
+                 .forEach(i -> domains.get(i).index = -1);
+
+        progressReporter.setStatus("Total domains: %d", domains.size());
+        progressReporter.setStatus("Total domains (after filtering): %d", result.size());
 
         // Re-index the filtered domain list
         IntStream.range(0, result.size())
                  .forEach(i -> result.get(i).index = i);
 
-        landscape.domains.domainsByType[typeIndex] = result;
+        compositeMap.domainsByType[typeIndex] = result;
+
+        progressReporter.setStatus("Nodes with domain: %d", Arrays.stream(compositeMap.topDomain[typeIndex])
+                                                                  .filter(d -> d != null)
+                                                                  .count());
+
+        // Remove domains that have been filtered out
+        DefaultDomain[] topDomains = compositeMap.topDomain[typeIndex];
+        IntStream.range(0, topDomains.length)
+                 .forEach(i -> {
+                     DefaultDomain domain = topDomains[i];
+                     if (domain != null && domain.index == -1) {
+                         topDomains[i] = null;
+                     }
+                 });
+
+        progressReporter.setStatus("Nodes with domain (after filtering): %d",
+                                   Arrays.stream(compositeMap.topDomain[typeIndex])
+                                         .filter(d -> d != null)
+                                         .count());
     }
 
     static void computeGroups(DefaultEnrichmentLandscape landscape,
-                              GroupingMethod method) {
+                              DefaultCompositeMap compositeMap,
+                              GroupingMethod method,
+                              ProgressReporter progressReporter) {
 
         AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
-        DefaultDomainDetails details = new DefaultDomainDetails(annotationProvider);
-        method.group(landscape, EnrichmentLandscape.TYPE_HIGHEST, details.getConsumer());
+        DomainConsumer domainConsumer = compositeMap.getConsumer();
+        method.group(landscape, compositeMap, EnrichmentLandscape.TYPE_HIGHEST, domainConsumer, progressReporter);
 
         if (!annotationProvider.isBinary()) {
-            method.group(landscape, EnrichmentLandscape.TYPE_LOWEST, details.getConsumer());
+            method.group(landscape, compositeMap, EnrichmentLandscape.TYPE_LOWEST, domainConsumer, progressReporter);
         }
-
-        landscape.domains = details;
     }
 
     static void computeEnrichment(NetworkProvider networkProvider,
@@ -277,9 +319,9 @@ public class ParallelSafe implements Safe {
                                   int quantitativeIterations,
                                   int randomSeed,
                                   ProgressReporter progressReporter,
-                                  DefaultEnrichmentLandscape result) {
+                                  DefaultEnrichmentLandscape landscape) {
         if (annotationProvider.isBinary()) {
-            computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter, result.neighborhoods,
+            computeBinaryEnrichment(networkProvider, annotationProvider, progressReporter, landscape.neighborhoods,
                                     backgroundMethod);
         } else {
             RandomGenerator generator = new Well44497b(randomSeed);
@@ -289,7 +331,7 @@ public class ParallelSafe implements Safe {
                                                                                         quantitativeIterations,
                                                                                         totalNodes);
             computeQuantitativeEnrichment(networkProvider, annotationProvider, scoringMethod, progressReporter,
-                                          result.neighborhoods);
+                                          landscape.neighborhoods);
         }
     }
 
@@ -387,12 +429,12 @@ public class ParallelSafe implements Safe {
         progressReporter.finishNeighborhoodScore();
     }
 
-    static void computeNeighborhoods(DefaultEnrichmentLandscape result,
+    static void computeNeighborhoods(DefaultEnrichmentLandscape landscape,
                                      NetworkProvider networkProvider,
                                      AnnotationProvider annotationProvider) {
 
-        result.neighborhoods.stream()
-                            .forEach(n -> n.applyDistanceThreshold(result.maximumDistanceThreshold));
+        landscape.neighborhoods.stream()
+                               .forEach(n -> n.applyDistanceThreshold(landscape.maximumDistanceThreshold));
     }
 
     static double computeMaximumDistanceThreshold(List<? extends DefaultNeighborhood> neighborhoods,
@@ -409,8 +451,9 @@ public class ParallelSafe implements Safe {
                                  DistanceMetric distanceMetric,
                                  boolean isDistanceThresholdAbsolute,
                                  double distanceThreshold,
-                                 DefaultEnrichmentLandscape result) {
-        if (result.neighborhoods != null) {
+                                 DefaultEnrichmentLandscape landscape) {
+
+        if (landscape.neighborhoods != null) {
             return;
         }
 
@@ -424,11 +467,12 @@ public class ParallelSafe implements Safe {
             factory = (int i) -> new DenseNeighborhood(i, totalNodes, totalAttributes);
         }
 
-        result.neighborhoods = distanceMetric.computeDistances(networkProvider, factory);
+        landscape.neighborhoods = distanceMetric.computeDistances(networkProvider, factory);
         if (isDistanceThresholdAbsolute) {
-            result.maximumDistanceThreshold = distanceThreshold;
+            landscape.maximumDistanceThreshold = distanceThreshold;
         } else {
-            result.maximumDistanceThreshold = computeMaximumDistanceThreshold(result.neighborhoods, distanceThreshold);
+            landscape.maximumDistanceThreshold = computeMaximumDistanceThreshold(landscape.neighborhoods,
+                                                                                 distanceThreshold);
         }
     }
 }

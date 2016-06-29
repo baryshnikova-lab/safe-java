@@ -28,7 +28,7 @@ public class ImportTask extends AbstractTask {
 
     @Override
     public void run(TaskMonitor monitor) throws Exception {
-        monitor.setTitle("SAFE Analysis");
+        monitor.setTitle("SAFE: Compute Enrichment Landscape");
 
         CyNetworkView view = session.getNetworkView();
 
@@ -49,7 +49,7 @@ public class ImportTask extends AbstractTask {
         monitor.showMessage(Level.INFO, String.format("Edges imported: %d", parser.getEdgeCount()));
         monitor.showMessage(Level.INFO, String.format("Edges skipped: %d", parser.getSkippedEdgeCount()));
 
-        consumer.consume(parser.getNodeMappings());
+        consumer.accept(parser.getNodeMappings());
 
         monitor.setStatusMessage("Loading annotations...");
 
@@ -83,7 +83,7 @@ public class ImportTask extends AbstractTask {
                                             .setProgressReporter(new CyProgressReporter(monitor))
                                             .build();
 
-        consumer.consume(result);
+        consumer.accept(result);
     }
 
 }

@@ -33,6 +33,7 @@ import edu.princeton.safe.distance.MapBasedDistanceMetric;
 import edu.princeton.safe.distance.UnweightedDistanceMetric;
 import edu.princeton.safe.internal.BackgroundMethod;
 import edu.princeton.safe.internal.cytoscape.UiUtil.FileSelectionMode;
+import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import net.miginfocom.swing.MigLayout;
 
@@ -43,6 +44,7 @@ public class ImportPanelController {
 
     AttributeBrowserController attributeBrowser;
     ImportTaskConsumer consumer;
+    SafeController safeController;
 
     SafeSession session;
 
@@ -75,19 +77,34 @@ public class ImportPanelController {
 
         consumer = new ImportTaskConsumer() {
             @Override
-            public void consume(EnrichmentLandscape landscape) {
-                setEnrichmentLandscape(landscape);
+            public void accept(EnrichmentLandscape landscape) {
+                safeController.setEnrichmentLandscape(landscape);
+                safeController.setCompositeMap(null);
             }
 
             @Override
-            public void consume(LongIntMap nodeMappings) {
+            public void accept(LongIntMap nodeMappings) {
                 session.setNodeMappings(nodeMappings);
             }
         };
     }
 
+    public void setSafeController(SafeController safeController) {
+        this.safeController = safeController;
+        safeController.addConsumer(new SafeResultConsumer() {
+            @Override
+            public void acceptEnrichmentLandscape(EnrichmentLandscape landscape) {
+                session.setEnrichmentLandscape(landscape);
+                setEnrichmentLandscape(landscape);
+            }
+
+            @Override
+            public void acceptCompositeMap(CompositeMap map) {
+            }
+        });
+    }
+
     void setEnrichmentLandscape(EnrichmentLandscape landscape) {
-        session.setEnrichmentLandscape(landscape);
         attributeBrowser.updateEnrichmentLandscape();
     }
 
