@@ -1,8 +1,6 @@
 package edu.princeton.safe.internal.cytoscape;
 
 import java.awt.Component;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
@@ -38,29 +36,28 @@ import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 
-import edu.princeton.safe.model.CompositeMap;
-import edu.princeton.safe.model.EnrichmentLandscape;
+import edu.princeton.safe.internal.cytoscape.event.EventService;
 import net.miginfocom.swing.MigLayout;
 
 public class SafeController implements SetCurrentNetworkViewListener, NetworkViewAboutToBeDestroyedListener,
         ColumnCreatedListener, ColumnDeletedListener, ColumnNameChangedListener, SessionLoadedListener {
 
-    CyServiceRegistrar registrar;
-    CySwingApplication application;
-    CyApplicationManager applicationManager;
+    final CyServiceRegistrar registrar;
+    final CySwingApplication application;
+    final CyApplicationManager applicationManager;
 
-    ImportPanelController importPanel;
-    AttributeBrowserController attributeBrowser;
-    CompositeMapController compositeMapPanel;
-    List<SafeResultConsumer> resultConsumers;
+    final EventService eventService;
+    final ImportPanelController importPanel;
+    final AttributeBrowserController attributeBrowser;
+    final CompositeMapController compositeMapPanel;
 
     CytoPanelComponent2 cytoPanelComponent;
 
     LongObjectMap<SafeSession> sessionsBySuid;
     SafeSession session;
-    Object sessionMutex = new Object();
+    final Object sessionMutex = new Object();
 
-    Object panelMutex = new Object();
+    final Object panelMutex = new Object();
     boolean panelVisible;
 
     Component panel;
@@ -70,7 +67,8 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                           CyApplicationManager applicationManager,
                           ImportPanelController importPanel,
                           AttributeBrowserController attributeBrowser,
-                          CompositeMapController compositeMapPanel) {
+                          CompositeMapController compositeMapPanel,
+                          EventService eventService) {
 
         this.registrar = registrar;
         this.application = application;
@@ -79,21 +77,9 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         this.importPanel = importPanel;
         this.attributeBrowser = attributeBrowser;
         this.compositeMapPanel = compositeMapPanel;
-        resultConsumers = new ArrayList<>();
+        this.eventService = eventService;
 
         sessionsBySuid = new LongObjectHashMap<>();
-    }
-
-    public void setEnrichmentLandscape(EnrichmentLandscape landscape) {
-        resultConsumers.forEach(c -> c.acceptEnrichmentLandscape(landscape));
-    }
-
-    public void setCompositeMap(CompositeMap map) {
-        resultConsumers.forEach(c -> c.acceptCompositeMap(map));
-    }
-
-    public void addConsumer(SafeResultConsumer consumer) {
-        resultConsumers.add(consumer);
     }
 
     @Override

@@ -23,6 +23,9 @@ import org.cytoscape.work.ServiceProperties;
 import org.cytoscape.work.swing.DialogTaskManager;
 import org.osgi.framework.BundleContext;
 
+import edu.princeton.safe.internal.cytoscape.event.DefaultEventService;
+import edu.princeton.safe.internal.cytoscape.event.EventService;
+
 public class CyActivator extends AbstractCyActivator {
 
     @Override
@@ -48,15 +51,16 @@ public class CyActivator extends AbstractCyActivator {
         AttributeBrowserController attributeBrowser = new AttributeBrowserController(visualMappingManager,
                                                                                      styleFactory);
 
-        ImportPanelController importPanel = new ImportPanelController(application, taskManager, attributeBrowser);
+        EventService eventService = new DefaultEventService();
+
+        ImportPanelController importPanel = new ImportPanelController(application, taskManager, attributeBrowser,
+                                                                      eventService);
 
         CompositeMapController compositeMapPanel = new CompositeMapController(taskManager, visualMappingManager,
-                                                                              styleFactory);
+                                                                              styleFactory, eventService);
 
         SafeController safeController = new SafeController(registrar, application, applicationManager, importPanel,
-                                                           attributeBrowser, compositeMapPanel);
-        importPanel.setSafeController(safeController);
-        compositeMapPanel.setSafeController(safeController);
+                                                           attributeBrowser, compositeMapPanel, eventService);
 
         Map<String, String> safeActionProperties = new MapBuilder().put("inMenuBar", "true")
                                                                    .put("preferredMenu", ServiceProperties.APPS_MENU)

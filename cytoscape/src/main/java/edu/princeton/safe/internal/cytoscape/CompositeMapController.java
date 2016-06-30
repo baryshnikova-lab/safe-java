@@ -36,6 +36,7 @@ import edu.princeton.safe.grouping.DistanceMethod;
 import edu.princeton.safe.internal.ScoringFunction;
 import edu.princeton.safe.internal.SignificancePredicate;
 import edu.princeton.safe.internal.Util;
+import edu.princeton.safe.internal.cytoscape.event.EventService;
 import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.Domain;
 import edu.princeton.safe.model.EnrichmentLandscape;
@@ -45,13 +46,14 @@ import net.miginfocom.swing.MigLayout;
 
 public class CompositeMapController {
 
-    DialogTaskManager taskManager;
-    VisualMappingManager visualMappingManager;
-    StyleFactory styleFactory;
+    final DialogTaskManager taskManager;
+    final VisualMappingManager visualMappingManager;
+    final StyleFactory styleFactory;
+
+    final EventService eventService;
+    final BuildCompositeMapTaskConsumer consumer;
 
     SafeSession session;
-    BuildCompositeMapTaskConsumer consumer;
-    SafeController safeController;
 
     VisualStyle domainBrowserStyle;
 
@@ -68,33 +70,23 @@ public class CompositeMapController {
 
     public CompositeMapController(DialogTaskManager taskManager,
                                   VisualMappingManager visualMappingManager,
-                                  StyleFactory styleFactory) {
+                                  StyleFactory styleFactory,
+                                  EventService eventService) {
         this.taskManager = taskManager;
         this.visualMappingManager = visualMappingManager;
         this.styleFactory = styleFactory;
+        this.eventService = eventService;
+
+        eventService.addEnrichmentLandscapeListener(landscape -> setEnrichmentLandscape(landscape));
+        eventService.addCompositeMapListener(map -> setCompositeMap(map));
 
         consumer = new BuildCompositeMapTaskConsumer() {
             @Override
             public void accept(CompositeMap compositeMap) {
                 session.setCompositeMap(compositeMap);
-                safeController.setCompositeMap(compositeMap);
+                eventService.notifyListeners(compositeMap);
             }
         };
-    }
-
-    public void setSafeController(SafeController safeController) {
-        this.safeController = safeController;
-        safeController.addConsumer(new SafeResultConsumer() {
-            @Override
-            public void acceptEnrichmentLandscape(EnrichmentLandscape landscape) {
-                setEnrichmentLandscape(landscape);
-            }
-
-            @Override
-            public void acceptCompositeMap(CompositeMap map) {
-                setCompositeMap(map);
-            }
-        });
     }
 
     @SuppressWarnings("unchecked")

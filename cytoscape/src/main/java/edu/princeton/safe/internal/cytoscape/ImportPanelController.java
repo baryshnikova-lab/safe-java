@@ -33,18 +33,19 @@ import edu.princeton.safe.distance.MapBasedDistanceMetric;
 import edu.princeton.safe.distance.UnweightedDistanceMetric;
 import edu.princeton.safe.internal.BackgroundMethod;
 import edu.princeton.safe.internal.cytoscape.UiUtil.FileSelectionMode;
+import edu.princeton.safe.internal.cytoscape.event.EventService;
 import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import net.miginfocom.swing.MigLayout;
 
 public class ImportPanelController {
 
-    CySwingApplication application;
-    DialogTaskManager taskManager;
+    final CySwingApplication application;
+    final DialogTaskManager taskManager;
 
-    AttributeBrowserController attributeBrowser;
-    ImportTaskConsumer consumer;
-    SafeController safeController;
+    final EventService eventService;
+    final AttributeBrowserController attributeBrowser;
+    final ImportTaskConsumer consumer;
 
     SafeSession session;
 
@@ -69,17 +70,24 @@ public class ImportPanelController {
 
     public ImportPanelController(CySwingApplication application,
                                  DialogTaskManager taskManager,
-                                 AttributeBrowserController attributeBrowser) {
+                                 AttributeBrowserController attributeBrowser,
+                                 EventService eventService) {
 
         this.application = application;
         this.taskManager = taskManager;
         this.attributeBrowser = attributeBrowser;
+        this.eventService = eventService;
+
+        eventService.addEnrichmentLandscapeListener(landscape -> {
+            session.setEnrichmentLandscape(landscape);
+            setEnrichmentLandscape(landscape);
+        });
 
         consumer = new ImportTaskConsumer() {
             @Override
             public void accept(EnrichmentLandscape landscape) {
-                safeController.setEnrichmentLandscape(landscape);
-                safeController.setCompositeMap(null);
+                eventService.notifyListeners(landscape);
+                eventService.notifyListeners((CompositeMap) null);
             }
 
             @Override
@@ -87,21 +95,6 @@ public class ImportPanelController {
                 session.setNodeMappings(nodeMappings);
             }
         };
-    }
-
-    public void setSafeController(SafeController safeController) {
-        this.safeController = safeController;
-        safeController.addConsumer(new SafeResultConsumer() {
-            @Override
-            public void acceptEnrichmentLandscape(EnrichmentLandscape landscape) {
-                session.setEnrichmentLandscape(landscape);
-                setEnrichmentLandscape(landscape);
-            }
-
-            @Override
-            public void acceptCompositeMap(CompositeMap map) {
-            }
-        });
     }
 
     void setEnrichmentLandscape(EnrichmentLandscape landscape) {
