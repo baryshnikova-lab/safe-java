@@ -27,6 +27,16 @@ public class DefaultDomain implements Domain {
         attributeIndexes.forEach((Consumer<? super IntCursor>) (IntCursor c) -> action.accept(c.value));
     }
 
+    @Override
+    public int getAttribute(int memberIndex) {
+        return attributeIndexes.get(memberIndex);
+    }
+
+    @Override
+    public int getAttributeCount() {
+        return attributeIndexes.size();
+    }
+
     public void addAttribute(int attributeIndex) {
         attributeIndexes.add(attributeIndex);
     }

@@ -31,8 +31,7 @@ public class PerformanceTest {
     void runTimedTest(NetworkParser networkParser,
                       AnnotationProviderFactory annotationProviderFactory,
                       NeighborhoodFactoryFactory neighborhoodFactoryFactory,
-                      EnrichmentHandler enrichmentHandler)
-            throws Exception {
+                      EnrichmentHandler enrichmentHandler) throws Exception {
         int loadRepeats = 1;
         int computeRepeats = 1;
 
@@ -103,6 +102,10 @@ public class PerformanceTest {
         time("Domains",
              () -> ParallelSafe.computeDomains(landscape, compositeMap, minimumLandscapeSize, progressReporter),
              computeRepeats);
+
+        compositeMap.getDomains(EnrichmentLandscape.TYPE_HIGHEST)
+                    .stream()
+                    .forEach(d -> System.out.printf("Domain %d\t%d\n", d.getIndex(), d.getAttributeCount()));
 
         int[] count = { 0 };
         int[] count2 = { 0 };

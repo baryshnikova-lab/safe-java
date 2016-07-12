@@ -44,12 +44,12 @@ public class AttributeBrowserController {
     SafeSession session;
     List<AttributeRow> attributes;
     ListTableModel<AttributeRow> attributeTableModel;
-    JTable table;
     VisualStyle attributeBrowserStyle;
     TableColumn optionalColumn;
 
     Component panel;
     JComboBox<NameValuePair<AnalysisMethod>> analysisMethods;
+    FilteredTable<AttributeRow> filteredTable;
 
     public AttributeBrowserController(VisualMappingManager visualMappingManager,
                                       StyleFactory styleFactory) {
@@ -66,9 +66,6 @@ public class AttributeBrowserController {
         SafeUtil.setSelected(analysisMethods, session.getAnalysisMethod());
     }
 
-    public void applyToSession() {
-    }
-
     Component getPanel() {
         if (panel == null) {
             panel = createPanel();
@@ -81,7 +78,7 @@ public class AttributeBrowserController {
         attributes = new ArrayList<>();
         attributeTableModel = createAttributeTableModel();
 
-        FilteredTable<AttributeRow> filteredTable = new FilteredTable<>(attributeTableModel);
+        filteredTable = new FilteredTable<>(attributeTableModel);
 
         TableRowSorter<TableModel> sorter = filteredTable.getSorter();
         configureSorter(sorter);
@@ -90,24 +87,9 @@ public class AttributeBrowserController {
         table.getSelectionModel()
              .addListSelectionListener(createListSelectionListener(table, sorter));
 
-        TableColumnModel columnModel = table.getColumnModel();
-
         analysisMethods.addActionListener((e) -> {
             updateAnalysisMethod();
-
-            int columnCount = table.getColumnCount();
-            AnalysisMethod analysisMethod = session.getAnalysisMethod();
-            if (analysisMethod == AnalysisMethod.HighestAndLowest && columnCount != 3) {
-                columnModel.addColumn(optionalColumn);
-            }
-
-            if (analysisMethod != AnalysisMethod.HighestAndLowest && columnCount == 3) {
-                optionalColumn = columnModel.getColumn(2);
-                columnModel.removeColumn(optionalColumn);
-            }
-            configureSorter(sorter);
-
-            updateSelectedAttributes(sorter, table.getSelectedRows());
+            updateTableStructure();
         });
 
         JPanel panel = UiUtil.createJPanel();
@@ -117,6 +99,27 @@ public class AttributeBrowserController {
         panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
 
         return panel;
+    }
+
+    void updateTableStructure() {
+        JTable table = filteredTable.getTable();
+        TableColumnModel columnModel = table.getColumnModel();
+
+        int columnCount = table.getColumnCount();
+        AnalysisMethod analysisMethod = session.getAnalysisMethod();
+        if (analysisMethod == AnalysisMethod.HighestAndLowest && columnCount != 3) {
+            columnModel.addColumn(optionalColumn);
+        }
+
+        if (analysisMethod != AnalysisMethod.HighestAndLowest && columnCount == 3) {
+            optionalColumn = columnModel.getColumn(2);
+            columnModel.removeColumn(optionalColumn);
+        }
+
+        TableRowSorter<TableModel> sorter = filteredTable.getSorter();
+        configureSorter(sorter);
+
+        updateSelectedAttributes(sorter, table.getSelectedRows());
     }
 
     ListSelectionListener createListSelectionListener(JTable table,
@@ -335,6 +338,7 @@ public class AttributeBrowserController {
             AnnotationProvider provider = landscape.getAnnotationProvider();
             updateAnalysisMethods(provider);
             updateAnalysisMethod();
+            updateTableStructure();
 
             int totalAttributes = provider.getAttributeCount();
 

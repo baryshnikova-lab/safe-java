@@ -6,7 +6,6 @@ import java.util.Properties;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
 import javax.swing.JViewport;
 
 import org.cytoscape.application.CyApplicationManager;
@@ -36,7 +35,12 @@ import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 
+import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
+import edu.princeton.safe.grouping.DistanceMethod;
 import edu.princeton.safe.internal.cytoscape.event.EventService;
+import edu.princeton.safe.internal.cytoscape.event.SetCompositeMapListener;
+import edu.princeton.safe.internal.cytoscape.event.SetEnrichmentLandscapeListener;
+import edu.princeton.safe.restriction.RadiusBasedRestrictionMethod;
 import net.miginfocom.swing.MigLayout;
 
 public class SafeController implements SetCurrentNetworkViewListener, NetworkViewAboutToBeDestroyedListener,
@@ -50,6 +54,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
     final ImportPanelController importPanel;
     final AttributeBrowserController attributeBrowser;
     final CompositeMapController compositeMapPanel;
+    final DomainBrowserController domainBrowser;
 
     CytoPanelComponent2 cytoPanelComponent;
 
@@ -68,6 +73,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
                           ImportPanelController importPanel,
                           AttributeBrowserController attributeBrowser,
                           CompositeMapController compositeMapPanel,
+                          DomainBrowserController domainBrowser,
                           EventService eventService) {
 
         this.registrar = registrar;
@@ -77,6 +83,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         this.importPanel = importPanel;
         this.attributeBrowser = attributeBrowser;
         this.compositeMapPanel = compositeMapPanel;
+        this.domainBrowser = domainBrowser;
         this.eventService = eventService;
 
         sessionsBySuid = new LongObjectHashMap<>();
@@ -124,7 +131,8 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         session.setForceUndirectedEdges(true);
         session.setMinimumLandscapeSize(10);
         session.setSimilarityThreshold(0.75);
-
+        session.setRestrictionMethod(new RadiusBasedRestrictionMethod(0, 0));
+        session.setGroupingMethod(new ClusterBasedGroupingMethod(0, DistanceMethod.JACCARD));
         return session;
     }
 
@@ -201,21 +209,28 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
     Component createPanel() {
         JPanel panel = UiUtil.createJPanel();
-        panel.setLayout(new MigLayout("fillx"));
+        panel.setLayout(new MigLayout("fillx, hidemode 3"));
 
-        SafeUtil.addSection(panel, "Step 1: Build Enrichment Landscapes");
-
-        panel.add(importPanel.getPanel(), "grow, wrap");
-
+        Component step1Section = importPanel.getPanel();
+        ExpanderController step1Controller = SafeUtil.addExpandingSection(panel, "Step 1: Build Enrichment Landscapes",
+                                                                          step1Section, "grow, wrap");
         SafeUtil.addSeparator(panel);
-        SafeUtil.addSection(panel, "Step 2: Preview Enrichment Landscapes");
 
-        panel.add(attributeBrowser.getPanel(), "grow, hmin 100, hmax 200, wrap");
+        Component step2Section = attributeBrowser.getPanel();
+        ExpanderController step2Controller = SafeUtil.addExpandingSection(panel, "Step 2: View Enrichment Landscapes",
+                                                                          step2Section,
+                                                                          "grow, hmin 100, hmax 200, wrap");
+        SafeUtil.addSeparator(panel);
 
-        panel.add(new JSeparator(), "span, growx, hmin 10, wrap");
-        SafeUtil.addSection(panel, "Step 3: Build Composite Map");
+        Component step3Section = compositeMapPanel.getPanel();
+        ExpanderController step3Controller = SafeUtil.addExpandingSection(panel, "Step 3: Build Composite Map",
+                                                                          step3Section, "grow, wrap");
+        SafeUtil.addSeparator(panel);
 
-        panel.add(compositeMapPanel.getPanel(), "grow, wrap");
+        Component step4Section = domainBrowser.getPanel();
+        ExpanderController step4Controller = SafeUtil.addExpandingSection(panel, "Step 4: View Composite Map",
+                                                                          step4Section,
+                                                                          "grow, hmin 100, hmax 200, wrap");
 
         JScrollPane container = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -226,6 +241,44 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
             JViewport viewport = container.getViewport();
             viewport.setOpaque(false);
         }
+
+        SetEnrichmentLandscapeListener landscapeListener = landscape -> {
+            if (landscape == null) {
+                step2Controller.setExpanded(false);
+                step2Controller.setEnabled(false);
+
+                step3Controller.setExpanded(false);
+                step3Controller.setEnabled(false);
+            } else {
+                step1Controller.setExpanded(false);
+
+                step2Controller.setExpanded(true);
+                step2Controller.setEnabled(true);
+
+                step3Controller.setExpanded(true);
+                step3Controller.setEnabled(true);
+            }
+        };
+
+        SetCompositeMapListener compositeMapListener = compositeMap -> {
+            if (compositeMap == null) {
+                step4Controller.setEnabled(false);
+                step4Controller.setExpanded(false);
+            } else {
+                step1Controller.setExpanded(false);
+                step2Controller.setExpanded(false);
+                step3Controller.setExpanded(false);
+
+                step4Controller.setEnabled(true);
+                step4Controller.setExpanded(true);
+            }
+        };
+
+        landscapeListener.set(null);
+        compositeMapListener.set(null);
+
+        eventService.addEnrichmentLandscapeListener(landscapeListener);
+        eventService.addCompositeMapListener(compositeMapListener);
 
         return container;
     }

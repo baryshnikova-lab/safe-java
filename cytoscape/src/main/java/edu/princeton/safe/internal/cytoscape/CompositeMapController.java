@@ -4,10 +4,6 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -16,46 +12,30 @@ import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
-import org.cytoscape.model.CyNetwork;
-import org.cytoscape.model.CyRow;
-import org.cytoscape.model.CyTable;
-import org.cytoscape.view.model.CyNetworkView;
-import org.cytoscape.view.vizmap.VisualMappingManager;
-import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.swing.DialogTaskManager;
-
-import com.carrotsearch.hppc.IntObjectMap;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
 import edu.princeton.safe.grouping.DistanceMethod;
-import edu.princeton.safe.internal.ScoringFunction;
-import edu.princeton.safe.internal.SignificancePredicate;
-import edu.princeton.safe.internal.Util;
+import edu.princeton.safe.grouping.NullGroupingMethod;
 import edu.princeton.safe.internal.cytoscape.event.EventService;
 import edu.princeton.safe.model.CompositeMap;
-import edu.princeton.safe.model.Domain;
 import edu.princeton.safe.model.EnrichmentLandscape;
-import edu.princeton.safe.model.Neighborhood;
 import edu.princeton.safe.restriction.RadiusBasedRestrictionMethod;
 import net.miginfocom.swing.MigLayout;
 
 public class CompositeMapController {
 
     final DialogTaskManager taskManager;
-    final VisualMappingManager visualMappingManager;
-    final StyleFactory styleFactory;
 
     final EventService eventService;
+    final DomainBrowserController domainBrowser;
     final BuildCompositeMapTaskConsumer consumer;
 
     SafeSession session;
-
-    VisualStyle domainBrowserStyle;
 
     Component panel;
 
@@ -69,12 +49,10 @@ public class CompositeMapController {
     JComboBox<NameValuePair<Integer>> analysisTypes;
 
     public CompositeMapController(DialogTaskManager taskManager,
-                                  VisualMappingManager visualMappingManager,
-                                  StyleFactory styleFactory,
+                                  DomainBrowserController domainBrowser,
                                   EventService eventService) {
         this.taskManager = taskManager;
-        this.visualMappingManager = visualMappingManager;
-        this.styleFactory = styleFactory;
+        this.domainBrowser = domainBrowser;
         this.eventService = eventService;
 
         eventService.addEnrichmentLandscapeListener(landscape -> setEnrichmentLandscape(landscape));
@@ -89,13 +67,8 @@ public class CompositeMapController {
         };
     }
 
-    @SuppressWarnings("unchecked")
     void setCompositeMap(CompositeMap compositeMap) {
-        if (compositeMap == null) {
-            return;
-        }
-        NameValuePair<Integer> analysisType = (NameValuePair<Integer>) analysisTypes.getSelectedItem();
-        applyColors(compositeMap, analysisType.getValue());
+        domainBrowser.updateCompositeMap();
     }
 
     public void setSession(SafeSession session) {
@@ -116,6 +89,8 @@ public class CompositeMapController {
         setEnrichmentLandscape(landscape);
 
         setCompositeMap(session.getCompositeMap());
+
+        domainBrowser.setSession(session);
     }
 
     void setEnrichmentLandscape(EnrichmentLandscape landscape) {
@@ -206,7 +181,9 @@ public class CompositeMapController {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     ComboBoxModel<NameValuePair<Factory<GroupingMethod>>> createSimilarityMetricModel() {
-        NameValuePair[] items = { new NameValuePair<>("Jaccard",
+        NameValuePair[] items = { new NameValuePair<>("None (no grouping)",
+                                                      new Factory<>(null, () -> NullGroupingMethod.instance)),
+                                  new NameValuePair<>("Jaccard",
                                                       new Factory<>("jaccard",
                                                                     () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
                                                                                                          DistanceMethod.JACCARD))),
@@ -219,7 +196,9 @@ public class CompositeMapController {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     ComboBoxModel<NameValuePair<Factory<RestrictionMethod>>> createFilteringMethodModel() {
-        NameValuePair[] items = new NameValuePair[] { new NameValuePair<>("Radius-based",
+        NameValuePair[] items = new NameValuePair[] { new NameValuePair<>("None (no filtering)",
+                                                                          new Factory<>(null, () -> null)),
+                                                      new NameValuePair<>("Radius-based",
                                                                           new Factory<>("radius",
                                                                                         () -> new RadiusBasedRestrictionMethod(getMinimumLandscapeSize(),
                                                                                                                                getDistanceThreshold()))) };
@@ -241,123 +220,4 @@ public class CompositeMapController {
         return Double.parseDouble(similarityThreshold.getText());
     }
 
-    void applyColors(CompositeMap compositeMap,
-                     int typeIndex) {
-        IntObjectMap<Long> nodeMappings = session.getNodeMappings();
-
-        CyNetworkView view = session.getNetworkView();
-        CyNetwork network = view.getModel();
-        CyTable nodeTable = network.getDefaultNodeTable();
-
-        SafeUtil.checkSafeColumns(nodeTable);
-
-        List<? extends Domain> domains = compositeMap.getDomains(typeIndex);
-        int totalDomains = domains.size();
-        List<double[]> colors = IntStream.range(0, totalDomains)
-                                         .mapToObj(i -> {
-                                             double hue = (double) i / totalDomains;
-                                             return Util.hslToRgb(hue, 1.0, 0.5);
-                                         })
-                                         .collect(Collectors.toList());
-
-        Collections.shuffle(colors);
-
-        EnrichmentLandscape landscape = session.getEnrichmentLandscape();
-        AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
-        int totalAttributes = annotationProvider.getAttributeCount();
-        SignificancePredicate isSignificant = Neighborhood.getSignificancePredicate(typeIndex, totalAttributes);
-        ScoringFunction score = Neighborhood.getScoringFunction(typeIndex);
-
-        ColorFunction coloring = d -> (int) Math.round(Math.min(1, d * 1.5) * 255);
-
-        List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
-        neighborhoods.stream()
-                     .forEach(n -> {
-                         Long suid = nodeMappings.get(n.getNodeIndex());
-                         CyRow row = nodeTable.getRow(suid);
-
-                         double[] color = computeColor(compositeMap, domains, colors, isSignificant, score, n,
-                                                       typeIndex);
-                         if (color == null) {
-                             row.set(StyleFactory.COLOR_COLUMN, null);
-                             row.set(StyleFactory.BRIGHTNESSS_COLUMN, 0D);
-                         } else {
-                             int red = coloring.get(color[0]);
-                             int green = coloring.get(color[1]);
-                             int blue = coloring.get(color[2]);
-
-                             String hexColor = String.format("#%02x%02x%02x", red, green, blue);
-                             row.set(StyleFactory.COLOR_COLUMN, hexColor);
-
-                             double brightness = (color[0] + color[1] + color[2]) / 3;
-                             row.set(StyleFactory.BRIGHTNESSS_COLUMN, brightness);
-                         }
-                     });
-
-        setDomainBrowserStyle(view);
-    }
-
-    void setDomainBrowserStyle(CyNetworkView view) {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> setDomainBrowserStyle(view));
-            return;
-        }
-
-        if (domainBrowserStyle == null) {
-            domainBrowserStyle = visualMappingManager.getAllVisualStyles()
-                                                     .stream()
-                                                     .filter(s -> s.getTitle()
-                                                                   .equals(StyleFactory.DOMAIN_BROWSER_STYLE))
-                                                     .findFirst()
-                                                     .orElse(null);
-        }
-
-        if (domainBrowserStyle == null) {
-            domainBrowserStyle = styleFactory.createDomainBrowserStyle();
-            visualMappingManager.addVisualStyle(domainBrowserStyle);
-        }
-
-        VisualStyle viewStyle = visualMappingManager.getVisualStyle(view);
-        if (viewStyle != domainBrowserStyle) {
-            visualMappingManager.setVisualStyle(domainBrowserStyle, view);
-
-        }
-    }
-
-    double[] computeColor(CompositeMap compositeMap,
-                          List<? extends Domain> domains,
-                          List<double[]> colors,
-                          SignificancePredicate isSignificant,
-                          ScoringFunction score,
-                          Neighborhood neighborhood,
-                          int typeIndex) {
-        double[] color = { 0, 0, 0 };
-        int[] totalContributions = { 0 };
-
-        domains.stream()
-               .forEach(domain -> {
-                   int index = domain.getIndex();
-                   domain.forEachAttribute(j -> {
-                       if (!isSignificant.test(neighborhood, j) || !compositeMap.isTop(j, typeIndex)) {
-                           return;
-                       }
-
-                       double opacity = score.get(neighborhood, j);
-                       double[] attributeColor = Util.multiply(opacity * opacity, colors.get(index));
-                       Util.addInPlace(attributeColor, color);
-                       totalContributions[0]++;
-                   });
-               });
-
-        if (totalContributions[0] == 0) {
-            return null;
-        }
-
-        Util.divideInPlace(totalContributions[0], color);
-        return color;
-    }
-
-    static interface ColorFunction {
-        int get(double value);
-    }
 }

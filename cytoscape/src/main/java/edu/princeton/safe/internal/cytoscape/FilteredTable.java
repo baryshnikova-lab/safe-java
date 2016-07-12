@@ -5,7 +5,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -79,7 +78,7 @@ public class FilteredTable<T> {
         JPanel panel = UiUtil.createJPanel();
         panel.setLayout(new MigLayout("fill, insets 0", "[min!, grow 0][grow]", "[][grow]"));
 
-        panel.add(new JLabel("Query"));
+        panel.add(SafeUtil.createIconLabel(SafeUtil.SEARCH_ICON));
         panel.add(queryField, "growx, wrap");
         panel.add(scrollPane, "span 2, grow");
 

@@ -11,6 +11,11 @@ import org.opencompare.hac.ClusteringBuilder;
 import org.opencompare.hac.HierarchicalAgglomerativeClusterer;
 import org.opencompare.hac.agglomeration.AgglomerationMethod;
 import org.opencompare.hac.agglomeration.SingleLinkage;
+import org.opencompare.hac.dendrogram.Dendrogram;
+import org.opencompare.hac.dendrogram.DendrogramBuilder;
+import org.opencompare.hac.dendrogram.DendrogramNode;
+import org.opencompare.hac.dendrogram.MergeNode;
+import org.opencompare.hac.dendrogram.ObservationNode;
 import org.opencompare.hac.experiment.DissimilarityMeasure;
 import org.opencompare.hac.experiment.Experiment;
 
@@ -30,8 +35,6 @@ import edu.princeton.safe.model.Neighborhood;
 
 public class ClusterBasedGroupingMethod implements GroupingMethod {
 
-    public static final String ID = "cluster";
-
     double threshold;
     DistanceMethod distanceMethod;
 
@@ -43,7 +46,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
 
     @Override
     public String getId() {
-        return ID;
+        return distanceMethod.getId();
     }
 
     @Override
@@ -70,16 +73,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         progressReporter.setStatus("Computing dissimilarity matrix...");
         double[] distances = pdist(scores, distanceMethod);
 
-        progressReporter.setStatus("Computing cluster linkages...");
-        List<Linkage> linkages = computeLinkages(distances, totalFiltered);
-        double height = getHeight(linkages);
-
-        progressReporter.setStatus("Cluster tree height: %f", height);
-        progressReporter.setStatus("Total linkages: %d", linkages.size());
-
-        double linkageThreshold = height * threshold;
-        int[] parents = computeParents(linkages, totalFiltered, linkageThreshold);
-        List<IntArrayList> clusters = computeClusters(parents);
+        List<IntArrayList> clusters = computeClusters2(totalFiltered, distances, progressReporter);
 
         progressReporter.setStatus("Assigning clusters...");
         // Populate domains with attribute indexes.
@@ -91,10 +85,24 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
             for (IntCursor cursor : cluster) {
                 int attributeIndex = filteredIndexes.get(cursor.value);
                 consumer.attribute(attributeIndex);
-                ;
             }
             consumer.endDomain();
         }
+    }
+
+    List<IntArrayList> computeClusters1(int totalFiltered,
+                                        double[] distances,
+                                        ProgressReporter progressReporter) {
+        progressReporter.setStatus("Computing cluster linkages...");
+        List<Linkage> linkages = computeLinkages(distances, totalFiltered);
+        double height = getHeight(linkages);
+
+        progressReporter.setStatus("Cluster tree height: %f", height);
+        progressReporter.setStatus("Total linkages: %d", linkages.size());
+
+        double linkageThreshold = height * threshold;
+        int[] parents = computeParents(linkages, totalFiltered, linkageThreshold);
+        return computeClusters(parents);
     }
 
     static List<IntArrayList> computeClusters(int[] parents) {
@@ -201,9 +209,8 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         return scores;
     }
 
-    static List<Linkage> computeLinkages(double[] condensedDistances,
-                                         int totalObservations) {
-
+    static HierarchicalAgglomerativeClusterer buildClusterer(double[] condensedDistances,
+                                                             int totalObservations) {
         Experiment experiment = new Experiment() {
             @Override
             public int getNumberOfObservations() {
@@ -228,10 +235,83 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         };
 
         AgglomerationMethod agglomerationMethod = new SingleLinkage();
-        HierarchicalAgglomerativeClusterer clusterer = new HierarchicalAgglomerativeClusterer(experiment,
-                                                                                              dissimilarityMeasure,
-                                                                                              agglomerationMethod);
+        return new HierarchicalAgglomerativeClusterer(experiment, dissimilarityMeasure, agglomerationMethod);
+    }
 
+    List<IntArrayList> computeClusters2(int totalObservations,
+                                        double[] condensedDistances,
+                                        ProgressReporter progressReporter) {
+
+        progressReporter.setStatus("Computing cluster tree...");
+
+        HierarchicalAgglomerativeClusterer clusterer = buildClusterer(condensedDistances, totalObservations);
+        DendrogramBuilder builder = new DendrogramBuilder(totalObservations);
+        double[] maximumDissimilarity = { 0 };
+        clusterer.cluster(new ClusteringBuilder() {
+            @Override
+            public void merge(int i,
+                              int j,
+                              double dissimilarity) {
+                builder.merge(i, j, dissimilarity);
+                if (dissimilarity > maximumDissimilarity[0]) {
+                    maximumDissimilarity[0] = dissimilarity;
+                }
+            }
+        });
+        Dendrogram dendrogram = builder.getDendrogram();
+
+        DendrogramNode root = dendrogram.getRoot();
+        List<DendrogramNode> roots = new ArrayList<>();
+        double height = maximumDissimilarity[0];
+        cut(roots, root, threshold * height);
+
+        progressReporter.setStatus("Cluster tree height: %f", height);
+
+        return roots.stream()
+                    .map(node -> getObservations(node))
+                    .collect(Collectors.toList());
+    }
+
+    static IntArrayList getObservations(DendrogramNode node) {
+        IntArrayList result = new IntArrayList();
+        getObservations(result, node);
+        return result;
+    }
+
+    static void getObservations(IntArrayList result,
+                                DendrogramNode node) {
+        if (node instanceof ObservationNode) {
+            int observation = ((ObservationNode) node).getObservation();
+            result.add(observation);
+            return;
+        }
+        getObservations(result, node.getLeft());
+        getObservations(result, node.getRight());
+    }
+
+    static void cut(List<DendrogramNode> roots,
+                    DendrogramNode root,
+                    double threshold) {
+        if (root instanceof ObservationNode) {
+            roots.add(root);
+            return;
+        }
+
+        MergeNode node = (MergeNode) root;
+        double score = node.getDissimilarity();
+        if (score <= threshold) {
+            roots.add(root);
+            return;
+        }
+
+        cut(roots, root.getLeft(), threshold);
+        cut(roots, root.getRight(), threshold);
+    }
+
+    static List<Linkage> computeLinkages(double[] condensedDistances,
+                                         int totalObservations) {
+
+        HierarchicalAgglomerativeClusterer clusterer = buildClusterer(condensedDistances, totalObservations);
         List<Linkage> linkages = new ArrayList<Linkage>();
         ClusteringBuilder builder = new ClusteringBuilder() {
             @Override
@@ -242,6 +322,7 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
             }
         };
         clusterer.cluster(builder);
+
         return linkages;
     }
 

@@ -254,12 +254,12 @@ public class ParallelSafe implements Safe {
                      .forEach(neighborhood -> {
                          domains.stream()
                                 .forEach(domain -> {
-                                    domain.forEachAttribute(attributeIndex -> {
-                                        if (isSignificant.test(neighborhood, attributeIndex)) {
-                                            totalSignificantByDomain[domain.index]++;
-                                        }
-                                    });
-                                });
+                             domain.forEachAttribute(attributeIndex -> {
+                                 if (isSignificant.test(neighborhood, attributeIndex)) {
+                                     totalSignificantByDomain[domain.index]++;
+                                 }
+                             });
+                         });
                      });
 
         List<DefaultDomain> result = domains.stream()

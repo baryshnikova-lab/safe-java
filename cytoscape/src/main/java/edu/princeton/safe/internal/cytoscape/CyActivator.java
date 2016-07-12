@@ -56,11 +56,13 @@ public class CyActivator extends AbstractCyActivator {
         ImportPanelController importPanel = new ImportPanelController(application, taskManager, attributeBrowser,
                                                                       eventService);
 
-        CompositeMapController compositeMapPanel = new CompositeMapController(taskManager, visualMappingManager,
-                                                                              styleFactory, eventService);
+        DomainBrowserController domainBrowser = new DomainBrowserController(visualMappingManager, styleFactory);
+
+        CompositeMapController compositeMapPanel = new CompositeMapController(taskManager, domainBrowser, eventService);
 
         SafeController safeController = new SafeController(registrar, application, applicationManager, importPanel,
-                                                           attributeBrowser, compositeMapPanel, eventService);
+                                                           attributeBrowser, compositeMapPanel, domainBrowser,
+                                                           eventService);
 
         Map<String, String> safeActionProperties = new MapBuilder().put("inMenuBar", "true")
                                                                    .put("preferredMenu", ServiceProperties.APPS_MENU)

@@ -79,15 +79,17 @@ public class ImportPanelController {
         this.eventService = eventService;
 
         eventService.addEnrichmentLandscapeListener(landscape -> {
-            session.setEnrichmentLandscape(landscape);
             setEnrichmentLandscape(landscape);
         });
 
         consumer = new ImportTaskConsumer() {
             @Override
             public void accept(EnrichmentLandscape landscape) {
-                eventService.notifyListeners(landscape);
+                session.setCompositeMap(null);
                 eventService.notifyListeners((CompositeMap) null);
+
+                session.setEnrichmentLandscape(landscape);
+                eventService.notifyListeners(landscape);
             }
 
             @Override
@@ -258,8 +260,6 @@ public class ImportPanelController {
 
                 NameValuePair<BackgroundMethod> backgroundPair = (NameValuePair<BackgroundMethod>) backgroundMethods.getSelectedItem();
                 session.setBackgroundMethod(backgroundPair.getValue());
-
-                attributeBrowser.applyToSession();
 
                 ImportTaskFactory factory = new ImportTaskFactory(session, consumer);
                 taskManager.execute(factory.createTaskIterator());
