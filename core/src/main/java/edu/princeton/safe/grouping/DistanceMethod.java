@@ -8,29 +8,6 @@ public interface DistanceMethod extends Identifiable {
     double apply(double[] s,
                  double[] t);
 
-    public static final DistanceMethod JACCARD = new DistanceMethod() {
-        @Override
-        public String getId() {
-            return "jaccard";
-        }
-
-        @Override
-        public double apply(double[] s,
-                            double[] t) {
-            int all = 0;
-            int any = 0;
-            for (int i = 0; i < s.length; i++) {
-                if (s[i] != 0 && t[i] != 0) {
-                    all++;
-                    any++;
-                } else if (s[i] != 0 || t[i] != 0) {
-                    any++;
-                }
-            }
-            return 1 - (double) all / any;
-        }
-    };
-
     public static final DistanceMethod CORRELATION = new DistanceMethod() {
         @Override
         public String getId() {

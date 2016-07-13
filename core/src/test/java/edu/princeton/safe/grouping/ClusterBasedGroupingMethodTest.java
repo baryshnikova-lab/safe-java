@@ -24,7 +24,7 @@ public class ClusterBasedGroupingMethodTest {
     public void testPDistJaccard() {
         double[][] distances = { { 1, 0, 1, 0, 1, 0 }, { 1, 1, 1, 1, 1, 1 }, { 0, 0, 0, 0, 0, 0 },
                                  { 1, 0, 0, 0, 0, 0 } };
-        double[] result = pdist(distances, DistanceMethod.JACCARD);
+        double[] result = pdist(distances, new JaccardDistanceMethod(d -> d != 0));
         double[] expected = { 0.5, 1, 2.0 / 3, 1, 5.0 / 6, 1 };
         Assert.assertArrayEquals(expected, result, DEFAULT_DELTA);
     }
@@ -94,7 +94,7 @@ public class ClusterBasedGroupingMethodTest {
             }
         }
 
-        double[] d = pdist(distances, DistanceMethod.JACCARD);
+        double[] d = pdist(distances, new JaccardDistanceMethod(x -> x != 0));
         List<Linkage> linkages = computeLinkages(d, n);
         int[] parents = computeParents(linkages, n, 0.5);
         List<IntArrayList> clusters = computeClusters(parents);
@@ -111,7 +111,7 @@ public class ClusterBasedGroupingMethodTest {
             }
         }
 
-        double[] d = pdist(distances, DistanceMethod.JACCARD);
+        double[] d = pdist(distances, new JaccardDistanceMethod(x -> x != 0));
         List<Linkage> linkages = computeLinkages(d, n);
         int[] parents = computeParents(linkages, n, 0.5);
         List<IntArrayList> clusters = computeClusters(parents);

@@ -19,7 +19,7 @@ import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.distance.MapBasedDistanceMetric;
 import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
-import edu.princeton.safe.grouping.DistanceMethod;
+import edu.princeton.safe.grouping.JaccardDistanceMethod;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
 import edu.princeton.safe.io.AnnotationParser;
 import edu.princeton.safe.io.NetworkParser;
@@ -95,7 +95,9 @@ public class PerformanceTest {
              () -> ParallelSafe.computeUnimodality(landscape, compositeMap, restrictionMethod, progressReporter),
              computeRepeats);
 
-        GroupingMethod groupingMethod = new ClusterBasedGroupingMethod(0.75, DistanceMethod.JACCARD);
+        double significanceThreshold = Neighborhood.getEnrichmentThreshold(totalAttributes);
+        JaccardDistanceMethod distanceMethod = new JaccardDistanceMethod(d -> d > significanceThreshold);
+        GroupingMethod groupingMethod = new ClusterBasedGroupingMethod(0.75, distanceMethod);
         time("Grouping", () -> ParallelSafe.computeGroups(landscape, compositeMap, groupingMethod, progressReporter),
              computeRepeats);
 

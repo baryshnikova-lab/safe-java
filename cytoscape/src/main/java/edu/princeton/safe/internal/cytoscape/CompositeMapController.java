@@ -20,10 +20,12 @@ import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
 import edu.princeton.safe.grouping.DistanceMethod;
+import edu.princeton.safe.grouping.JaccardDistanceMethod;
 import edu.princeton.safe.grouping.NullGroupingMethod;
 import edu.princeton.safe.internal.cytoscape.event.EventService;
 import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
+import edu.princeton.safe.model.Neighborhood;
 import edu.princeton.safe.restriction.RadiusBasedRestrictionMethod;
 import net.miginfocom.swing.MigLayout;
 
@@ -183,10 +185,14 @@ public class CompositeMapController {
     ComboBoxModel<NameValuePair<Factory<GroupingMethod>>> createSimilarityMetricModel() {
         NameValuePair[] items = { new NameValuePair<>("None (no grouping)",
                                                       new Factory<>(null, () -> NullGroupingMethod.instance)),
-                                  new NameValuePair<>("Jaccard",
-                                                      new Factory<>("jaccard",
-                                                                    () -> new ClusterBasedGroupingMethod(getClusterThreshold(),
-                                                                                                         DistanceMethod.JACCARD))),
+                                  new NameValuePair<>("Jaccard", new Factory<>("jaccard", () -> {
+                                      int totalAttributes = session.getEnrichmentLandscape()
+                                                                   .getAnnotationProvider()
+                                                                   .getAttributeCount();
+                                      double threshold = Neighborhood.getEnrichmentThreshold(totalAttributes);
+                                      JaccardDistanceMethod distanceMethod = new JaccardDistanceMethod(d -> d > threshold);
+                                      return new ClusterBasedGroupingMethod(getClusterThreshold(), distanceMethod);
+                                  })),
                                   new NameValuePair<>("Pearson",
                                                       new Factory<>("pearson",
                                                                     () -> new ClusterBasedGroupingMethod(getClusterThreshold(),

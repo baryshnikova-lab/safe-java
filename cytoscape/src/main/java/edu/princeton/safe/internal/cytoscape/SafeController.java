@@ -36,7 +36,7 @@ import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 
 import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
-import edu.princeton.safe.grouping.DistanceMethod;
+import edu.princeton.safe.grouping.JaccardDistanceMethod;
 import edu.princeton.safe.internal.cytoscape.event.EventService;
 import edu.princeton.safe.internal.cytoscape.event.SetCompositeMapListener;
 import edu.princeton.safe.internal.cytoscape.event.SetEnrichmentLandscapeListener;
@@ -132,7 +132,7 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
         session.setMinimumLandscapeSize(10);
         session.setSimilarityThreshold(0.75);
         session.setRestrictionMethod(new RadiusBasedRestrictionMethod(0, 0));
-        session.setGroupingMethod(new ClusterBasedGroupingMethod(0, DistanceMethod.JACCARD));
+        session.setGroupingMethod(new ClusterBasedGroupingMethod(0, new JaccardDistanceMethod(d -> d != 0)));
         return session;
     }
 
