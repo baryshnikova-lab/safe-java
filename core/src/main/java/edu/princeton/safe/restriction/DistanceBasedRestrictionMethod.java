@@ -66,7 +66,7 @@ public abstract class DistanceBasedRestrictionMethod implements RestrictionMetho
                                    .mapToInt(n -> n.getNodeIndex())
                                    .toArray();
 
-        if (nodes.length < 5 || nodes.length < minimumLandscapeSize) {
+        if (nodes.length < 5 || nodes.length <= minimumLandscapeSize) {
             return false;
         }
 
