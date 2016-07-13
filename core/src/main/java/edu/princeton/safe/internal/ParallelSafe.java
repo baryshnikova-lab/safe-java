@@ -21,16 +21,14 @@ import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.NeighborhoodFactory;
 import edu.princeton.safe.NeighborhoodScoringMethod;
 import edu.princeton.safe.NetworkProvider;
-import edu.princeton.safe.OutputMethod;
 import edu.princeton.safe.ProgressReporter;
 import edu.princeton.safe.RestrictionMethod;
-import edu.princeton.safe.Safe;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
 import edu.princeton.safe.io.DomainConsumer;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 
-public class ParallelSafe implements Safe {
+public class ParallelSafe {
 
     NetworkProvider networkProvider;
     AnnotationProvider annotationProvider;
@@ -38,7 +36,6 @@ public class ParallelSafe implements Safe {
     RestrictionMethod restrictionMethod;
     GroupingMethod groupingMethod;
     BackgroundMethod backgroundMethod;
-    OutputMethod outputMethod;
     ProgressReporter progressReporter;
 
     boolean isDistanceThresholdAbsolute;
@@ -51,7 +48,6 @@ public class ParallelSafe implements Safe {
                         BackgroundMethod backgroundMethod,
                         RestrictionMethod restrictionMethod,
                         GroupingMethod groupingMethod,
-                        OutputMethod outputMethod,
                         boolean isDistanceThresholdAbsolute,
                         double distancePercentile,
                         int empiricalIterations,
@@ -63,36 +59,11 @@ public class ParallelSafe implements Safe {
         this.backgroundMethod = backgroundMethod;
         this.restrictionMethod = restrictionMethod;
         this.groupingMethod = groupingMethod;
-        this.outputMethod = outputMethod;
         this.progressReporter = progressReporter;
 
         this.isDistanceThresholdAbsolute = isDistanceThresholdAbsolute;
         this.distanceThreshold = distancePercentile;
         this.empiricalIterations = empiricalIterations;
-    }
-
-    @Override
-    public void apply() {
-        int totalTypes = annotationProvider.isBinary() ? 1 : 2;
-        DefaultEnrichmentLandscape landscape = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
-        computeDistances(networkProvider, annotationProvider, distanceMetric, isDistanceThresholdAbsolute,
-                         distanceThreshold, landscape);
-
-        computeNeighborhoods(landscape, networkProvider, annotationProvider);
-
-        int quantitativeIterations = 1000;
-        int randomSeed = 0;
-        computeEnrichment(networkProvider, annotationProvider, backgroundMethod, quantitativeIterations, randomSeed,
-                          progressReporter, landscape);
-
-        DefaultCompositeMap compositeMap = new DefaultCompositeMap(annotationProvider);
-        computeUnimodality(landscape, compositeMap, restrictionMethod, progressReporter);
-        computeGroups(landscape, compositeMap, groupingMethod, progressReporter);
-
-        int minimumLandscapeSize = 10;
-        computeDomains(landscape, compositeMap, minimumLandscapeSize, progressReporter);
-
-        outputMethod.apply(landscape);
     }
 
     static void computeUnimodality(DefaultEnrichmentLandscape landscape,
