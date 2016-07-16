@@ -31,6 +31,14 @@ public class JaccardDistanceMethod implements DistanceMethod {
                 any++;
             }
         }
-        return 1 - (double) all / any;
+
+        double coefficient;
+        if (any == 0) {
+            coefficient = 1;
+        } else {
+            coefficient = (double) all / any;
+        }
+
+        return 1 - coefficient;
     }
 }
