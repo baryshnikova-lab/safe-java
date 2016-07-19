@@ -373,7 +373,8 @@ public class AttributeBrowserController {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     void updateAnalysisMethods(AnnotationProvider provider) {
         NameValuePair[] model;
-        if (provider.isBinary()) {
+        boolean isBinary = provider.isBinary();
+        if (isBinary) {
             model = new NameValuePair[] { new NameValuePair<>("Highest", AnalysisMethod.Highest) };
         } else {
             model = new NameValuePair[] { new NameValuePair<>("Highest and lowest", AnalysisMethod.HighestAndLowest),
@@ -383,6 +384,8 @@ public class AttributeBrowserController {
 
         analysisMethods.setModel(new DefaultComboBoxModel<>(model));
         SafeUtil.setSelected(analysisMethods, session.getAnalysisMethod());
+        
+        analysisMethods.setEnabled(isBinary);
     }
 
 }
