@@ -145,7 +145,7 @@ public class CompositeMapController {
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisTypes, "wrap");
 
-        panel.add(button, "span 2, tag apply, wrap");
+        panel.add(button, "skip 1, wrap");
 
         return panel;
     }

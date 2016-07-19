@@ -217,7 +217,7 @@ public class ImportPanelController {
         panel.add(forceUndirectedEdges, "skip 1, wrap");
 
         step1Button = createStep1Button();
-        panel.add(step1Button, "span 2, tag apply, wrap");
+        panel.add(step1Button, "skip 1, wrap");
 
         return panel;
     }
