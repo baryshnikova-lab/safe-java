@@ -12,6 +12,7 @@ public class DefaultDomain implements Domain {
 
     IntArrayList attributeIndexes;
     int index;
+    String name;
 
     public DefaultDomain() {
         attributeIndexes = new IntArrayList();
@@ -20,6 +21,11 @@ public class DefaultDomain implements Domain {
     @Override
     public int getIndex() {
         return index;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override

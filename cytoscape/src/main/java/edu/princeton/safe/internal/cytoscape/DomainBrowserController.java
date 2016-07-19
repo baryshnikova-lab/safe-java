@@ -153,7 +153,7 @@ public class DomainBrowserController {
                     String color = String.format("#%02x%02x%02x", Math.round(row.color[0] * 255),
                                                  Math.round(row.color[1] * 255), Math.round(row.color[2] * 255));
                     return String.format("<html><span style=\"color: %s; font-family: FontAwesome\">\uf111</span> %s",
-                                         color, row.name);
+                                         color, row.domain.getName());
                 case 1:
                     return row.domain.getAttributeCount();
                 default:
@@ -254,8 +254,6 @@ public class DomainBrowserController {
                      .mapToObj(domainIndex -> {
                          Domain domain = domains.get(domainIndex);
                          DomainRow row = new DomainRow();
-                         int attributeIndex = domain.getAttribute(0);
-                         row.name = annotationProvider.getAttributeLabel(attributeIndex);
                          row.domain = domain;
                          row.color = colors.get(domainIndex);
                          return row;

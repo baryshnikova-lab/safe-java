@@ -10,4 +10,6 @@ public interface Domain {
     int getAttributeCount();
 
     int getAttribute(int memberIndex);
+
+    String getName();
 }
