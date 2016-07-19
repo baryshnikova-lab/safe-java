@@ -53,9 +53,6 @@ public class ImportPanelController {
 
     JButton step1Button;
 
-    JComboBox<String> nodeNames;
-    DefaultComboBoxModel<String> nodeNamesModel;
-
     JComboBox<String> nodeIds;
     DefaultComboBoxModel<String> nodeIdsModel;
 
@@ -130,7 +127,6 @@ public class ImportPanelController {
     }
 
     void updateColumnList() {
-        nodeNamesModel.removeAllElements();
         nodeIdsModel.removeAllElements();
 
         if (session == null) {
@@ -147,11 +143,9 @@ public class ImportPanelController {
              .map(c -> c.getName())
              .sorted(String.CASE_INSENSITIVE_ORDER)
              .forEach(name -> {
-                 nodeNamesModel.addElement(name);
                  nodeIdsModel.addElement(name);
              });
 
-        nodeNames.setSelectedItem(session.getNameColumn());
         nodeIds.setSelectedItem(session.getIdColumn());
     }
 
@@ -167,14 +161,9 @@ public class ImportPanelController {
         JPanel panel = UiUtil.createJPanel();
         panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
 
-        nodeNamesModel = new DefaultComboBoxModel<>();
         nodeIdsModel = new DefaultComboBoxModel<>();
 
-        nodeNames = new JComboBox<>(nodeNamesModel);
         nodeIds = new JComboBox<>(nodeIdsModel);
-
-        panel.add(new JLabel("Node names"));
-        panel.add(nodeNames, "wrap");
 
         panel.add(new JLabel("Annotation ids"));
         panel.add(nodeIds, "wrap");
@@ -248,7 +237,6 @@ public class ImportPanelController {
             @SuppressWarnings("unchecked")
             @Override
             public void actionPerformed(ActionEvent e) {
-                session.setNameColumn((String) nodeNames.getSelectedItem());
                 session.setIdColumn((String) nodeIds.getSelectedItem());
                 session.setAnnotationFile(new File(annotationPath.getText()));
 
