@@ -266,7 +266,6 @@ public class ImportPanelController {
 
     void fail(IOException e,
               String string) {
-        // TODO Auto-generated method stub
         e.printStackTrace();
     }
 
