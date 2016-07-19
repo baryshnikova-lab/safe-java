@@ -213,7 +213,13 @@ public class ParallelSafe {
                                 ProgressReporter progressReporter) {
         AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
         int totalAttributes = annotationProvider.getAttributeCount();
-        SignificancePredicate isSignificant = Neighborhood.getSignificancePredicate(typeIndex, totalAttributes);
+
+        double enrichmentThreshold = Neighborhood.getEnrichmentThreshold(totalAttributes);
+        SignificancePredicate isSignificant = (neighborhood,
+                                               attributeIndex) -> {
+            int nodeIndex = neighborhood.getNodeIndex();
+            return compositeMap.cumulativeOpacity[typeIndex][nodeIndex] > enrichmentThreshold;
+        };
 
         List<DefaultDomain> domains = compositeMap.domainsByType[typeIndex];
         int totalDomains = domains.size();
@@ -225,14 +231,11 @@ public class ParallelSafe {
         List<DefaultNeighborhood> neighborhoods = landscape.neighborhoods;
         neighborhoods.stream()
                      .forEach(neighborhood -> {
-                         domains.stream()
-                                .forEach(domain -> {
-                                    domain.forEachAttribute(attributeIndex -> {
-                                        if (isSignificant.test(neighborhood, attributeIndex)) {
-                                            totalSignificantByDomain[domain.index]++;
-                                        }
-                                    });
-                                });
+                         if (isSignificant.test(neighborhood, 0)) {
+                             int nodeIndex = neighborhood.nodeIndex;
+                             DefaultDomain domain = compositeMap.topDomain[typeIndex][nodeIndex];
+                             totalSignificantByDomain[domain.index]++;
+                         }
                      });
 
         List<DefaultDomain> result = domains.stream()
