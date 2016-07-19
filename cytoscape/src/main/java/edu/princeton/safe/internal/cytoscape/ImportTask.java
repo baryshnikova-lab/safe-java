@@ -9,6 +9,7 @@ import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskMonitor.Level;
 
 import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.EnrichmentLandscapeBuilder;
 import edu.princeton.safe.internal.DefaultEnrichmentLandscapeBuilder;
 import edu.princeton.safe.internal.DenseAnnotationProvider;
 import edu.princeton.safe.internal.SparseNetworkProvider;
@@ -72,7 +73,7 @@ public class ImportTask extends AbstractTask {
             throw new RuntimeException();
         }
 
-        DefaultEnrichmentLandscapeBuilder builder = new DefaultEnrichmentLandscapeBuilder();
+        EnrichmentLandscapeBuilder builder = new DefaultEnrichmentLandscapeBuilder();
         EnrichmentLandscape result = builder.setNetworkProvider(networkProvider)
                                             .setAnnotationProvider(annotationProvider)
                                             .setDistanceMetric(session.getDistanceMetric())
