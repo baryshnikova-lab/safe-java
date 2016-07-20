@@ -66,9 +66,9 @@ public class ImportTask extends AbstractTask {
             monitor.showMessage(Level.INFO,
                                 String.format("Attributes imported: %d", annotationProvider.getAttributeCount()));
             monitor.showMessage(Level.INFO, String.format("Nodes annotated: %d", totalAnnotatedNodes));
-            monitor.showMessage(Level.INFO, String.format("Nodes not annotated: %d", totalMissingNodes));
             monitor.showMessage(Level.INFO,
                                 String.format("Ids of nodes not annotated: %s", String.join(", ", missingNodes)));
+            monitor.showMessage(Level.INFO, String.format("Nodes not annotated: %d", totalMissingNodes));
         } else {
             throw new RuntimeException();
         }
