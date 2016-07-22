@@ -6,8 +6,8 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
-public abstract class RegexRowFilter extends RowFilter<TableModel, Integer> {
-    protected Predicate<String> predicate;
+public abstract class SubstringRowFilter extends RowFilter<TableModel, Integer> {
+    Predicate<String> predicate;
     String query;
 
     public void setQuery(String value) {
@@ -19,4 +19,12 @@ public abstract class RegexRowFilter extends RowFilter<TableModel, Integer> {
         predicate = Pattern.compile(Pattern.quote(value), Pattern.CASE_INSENSITIVE)
                            .asPredicate();
     }
+
+    @Override
+    public boolean include(RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
+        return test(predicate, entry.getIdentifier());
+    }
+
+    protected abstract boolean test(Predicate<String> predicate,
+                                    int rowIndex);
 }

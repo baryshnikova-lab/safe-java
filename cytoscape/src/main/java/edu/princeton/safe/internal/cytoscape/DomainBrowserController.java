@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -84,7 +85,15 @@ public class DomainBrowserController {
         domainRows = new ArrayList<>();
         domainTableModel = createDomainTableModel();
 
-        filteredTable = new FilteredTable<>(domainTableModel);
+        filteredTable = new FilteredTable<>(domainTableModel, new SubstringRowFilter() {
+            @Override
+            protected boolean test(Predicate<String> predicate,
+                                   int rowIndex) {
+                DomainRow row = domainTableModel.getRow(rowIndex);
+                String value = row.domain.getName();
+                return value != null && predicate.test(value);
+            }
+        });
 
         TableRowSorter<TableModel> sorter = filteredTable.getSorter();
         configureSorter(sorter);
@@ -150,10 +159,7 @@ public class DomainBrowserController {
                 DomainRow row = rows.get(rowIndex);
                 switch (columnIndex) {
                 case 0:
-                    String color = String.format("#%02x%02x%02x", Math.round(row.color[0] * 255),
-                                                 Math.round(row.color[1] * 255), Math.round(row.color[2] * 255));
-                    return String.format("<html><span style=\"color: %s; font-family: FontAwesome\">\uf111</span> %s",
-                                         color, row.domain.getName());
+                    return row;
                 case 1:
                     return row.domain.getAttributeCount();
                 default:
@@ -177,7 +183,7 @@ public class DomainBrowserController {
             public Class<?> getColumnClass(int column) {
                 switch (column) {
                 case 0:
-                    return String.class;
+                    return DomainRow.class;
                 case 1:
                     return Integer.class;
                 default:
@@ -210,7 +216,9 @@ public class DomainBrowserController {
     }
 
     void configureSorter(TableRowSorter<TableModel> sorter) {
-        sorter.setComparator(0, String.CASE_INSENSITIVE_ORDER);
+        sorter.setComparator(0, (DomainRow d1,
+                                 DomainRow d2) -> String.CASE_INSENSITIVE_ORDER.compare(d1.domain.getName(),
+                                                                                        d2.domain.getName()));
     }
 
     @SuppressWarnings("unchecked")

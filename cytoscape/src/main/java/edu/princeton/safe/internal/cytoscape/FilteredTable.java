@@ -9,7 +9,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -26,20 +25,13 @@ public class FilteredTable<T> {
     private JTable table;
     private TableRowSorter<TableModel> sorter;
 
-    public FilteredTable(ListTableModel<T> model) {
+    public FilteredTable(ListTableModel<T> model,
+                         SubstringRowFilter filter) {
         queryField = new JTextField();
 
         table = new JTable(model);
         table.setFillsViewportHeight(true);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-
-        RegexRowFilter filter = new RegexRowFilter() {
-            @Override
-            public boolean include(RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
-                String value = (String) model.getValueAt(entry.getIdentifier(), 0);
-                return value != null && predicate.test(value);
-            }
-        };
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         sorter = new TableRowSorter<TableModel>(model) {
             @Override

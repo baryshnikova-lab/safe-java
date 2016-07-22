@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import javax.swing.DefaultComboBoxModel;
@@ -78,7 +79,15 @@ public class AttributeBrowserController {
         attributes = new ArrayList<>();
         attributeTableModel = createAttributeTableModel();
 
-        filteredTable = new FilteredTable<>(attributeTableModel);
+        filteredTable = new FilteredTable<>(attributeTableModel, new SubstringRowFilter() {
+            @Override
+            protected boolean test(Predicate<String> predicate,
+                                   int rowIndex) {
+                AttributeRow row = attributeTableModel.getRow(rowIndex);
+                String value = row.name;
+                return value != null && predicate.test(value);
+            }
+        });
 
         TableRowSorter<TableModel> sorter = filteredTable.getSorter();
         configureSorter(sorter);
@@ -384,7 +393,7 @@ public class AttributeBrowserController {
 
         analysisMethods.setModel(new DefaultComboBoxModel<>(model));
         SafeUtil.setSelected(analysisMethods, session.getAnalysisMethod());
-        
+
         analysisMethods.setEnabled(isBinary);
     }
 
