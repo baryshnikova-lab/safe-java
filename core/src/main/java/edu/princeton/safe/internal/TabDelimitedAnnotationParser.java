@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.ObjectScatterSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
 import edu.princeton.safe.NetworkProvider;
@@ -18,11 +17,10 @@ import edu.princeton.safe.io.AnnotationParser;
 
 public class TabDelimitedAnnotationParser implements AnnotationParser {
 
-    ObjectScatterSet<String> skippedNodes;
     int skippedLines;
     int totalLines;
     String path;
-    private Set<String> unmappedNodeNames;
+    Set<String> unmappedNodeNames;
 
     public TabDelimitedAnnotationParser(String path) {
         this.path = path;
@@ -33,11 +31,9 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
                       AnnotationConsumer consumer)
             throws IOException {
 
-        if (skippedNodes != null) {
+        if (unmappedNodeNames != null) {
             throw new IOException("Cannot call parse twice for same instance");
         }
-        skippedNodes = new ObjectScatterSet<>();
-
         try (BufferedReader reader = Util.getReader(path)) {
             // Parse header
             String line = reader.readLine();
@@ -67,7 +63,7 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
                 String label = parts[0];
                 IntArrayList indexes = nodeIdsToIndexes.get(label);
                 if (indexes == null) {
-                    skippedNodes.add(label);
+                    consumer.skipped(label);
                     skippedLines++;
                 } else {
                     notSeen.remove(label);

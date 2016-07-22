@@ -11,4 +11,6 @@ public interface AnnotationConsumer {
 
     void finish(int totalAnnotationNodes);
 
+    void skipped(String nodeId);
+
 }

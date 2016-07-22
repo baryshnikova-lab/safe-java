@@ -47,6 +47,10 @@ public class DenseAnnotationProvider extends DefaultAnnotationProvider {
             public void finish(int annotationNodes) {
                 totalAnnotationNodes = annotationNodes;
             }
+
+            @Override
+            public void skipped(String nodeId) {
+            }
         });
     }
 

@@ -46,6 +46,10 @@ public class SparseAnnotationProvider extends DefaultAnnotationProvider {
             public void finish(int annotationNodes) {
                 totalAnnotationNodes = annotationNodes;
             }
+
+            @Override
+            public void skipped(String nodeId) {
+            }
         });
     }
 
