@@ -137,7 +137,7 @@ public class ImportPanelController {
         panel.add(annotationPath, "growx, wmax 200, split 2");
         panel.add(chooseAnnotationFileButton, "wrap");
 
-        panel.add(new JLabel("Annotation ids"));
+        panel.add(new JLabel("Annotation IDs"));
         panel.add(annotationChooser.getNodeIdComboBox(), "wrap");
 
         panel.add(annotationChooser.getStatusLabel(), "grow 0, skip 1, wrap");

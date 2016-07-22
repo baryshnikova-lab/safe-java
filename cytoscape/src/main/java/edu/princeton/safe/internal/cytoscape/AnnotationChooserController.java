@@ -140,7 +140,7 @@ public class AnnotationChooserController {
         double networkCoverage = (double) nodeHits / idMappingResult.totalNetworkNodes * 100;
         double annotationCoverage = (double) nodeHits / idMappingResult.totalAnnotationNodes * 100;
 
-        statusLabel.setText(String.format("<html><div>Network coverage: %.0f%%</div><div>Annotation coverage: %.0f%%</div></html>",
+        statusLabel.setText(String.format("<html><div>Network ID coverage: %.0f%%</div><div>Annotation ID coverage: %.0f%%</div></html>",
                                           networkCoverage, annotationCoverage));
     }
 
