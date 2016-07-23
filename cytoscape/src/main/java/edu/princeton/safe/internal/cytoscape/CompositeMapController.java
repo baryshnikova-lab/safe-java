@@ -13,6 +13,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.swing.DialogTaskManager;
 
 import edu.princeton.safe.AnnotationProvider;
@@ -166,7 +167,7 @@ public class CompositeMapController {
 
                 session.setMinimumLandscapeSize(getMinimumLandscapeSize());
 
-                BuildCompositeMapTaskFactory factory = new BuildCompositeMapTaskFactory(session, consumer);
+                TaskFactory factory = new SimpleTaskFactory(() -> new BuildCompositeMapTask(session, consumer));
                 taskManager.execute(factory.createTaskIterator());
             }
         });

@@ -16,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.swing.DialogTaskManager;
 
 import com.carrotsearch.hppc.LongIntMap;
@@ -199,7 +200,7 @@ public class ImportPanelController {
                 NameValuePair<BackgroundMethod> backgroundPair = (NameValuePair<BackgroundMethod>) backgroundMethods.getSelectedItem();
                 session.setBackgroundMethod(backgroundPair.getValue());
 
-                ImportTaskFactory factory = new ImportTaskFactory(session, consumer);
+                TaskFactory factory = new SimpleTaskFactory(() -> new ImportTask(session, consumer));
                 taskManager.execute(factory.createTaskIterator());
             }
         });

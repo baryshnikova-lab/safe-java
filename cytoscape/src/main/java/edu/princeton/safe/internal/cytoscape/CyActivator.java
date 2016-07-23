@@ -53,7 +53,7 @@ public class CyActivator extends AbstractCyActivator {
 
         EventService eventService = new DefaultEventService();
 
-        AnnotationChooserController annotationChooser = new AnnotationChooserController(application);
+        AnnotationChooserController annotationChooser = new AnnotationChooserController(application, taskManager);
 
         ImportPanelController importPanel = new ImportPanelController(taskManager, attributeBrowser, annotationChooser,
                                                                       eventService);

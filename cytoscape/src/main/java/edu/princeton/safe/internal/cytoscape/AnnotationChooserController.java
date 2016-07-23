@@ -23,19 +23,20 @@ import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.work.swing.DialogTaskManager;
 
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.carrotsearch.hppc.ObjectIntMap;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 
-import edu.princeton.safe.internal.IdAnalyzer;
 import edu.princeton.safe.internal.IdMappingResult;
 import edu.princeton.safe.internal.cytoscape.UiUtil.FileSelectionMode;
 
 public class AnnotationChooserController {
 
     final CySwingApplication application;
+    final DialogTaskManager taskManager;
 
     JTextField annotationPath;
     JButton chooseButton;
@@ -50,8 +51,10 @@ public class AnnotationChooserController {
     ObjectIntMap<String> columnCoverage;
     IdMappingResult idMappingResult;
 
-    public AnnotationChooserController(CySwingApplication application) {
+    public AnnotationChooserController(CySwingApplication application,
+                                       DialogTaskManager taskManager) {
         this.application = application;
+        this.taskManager = taskManager;
     }
 
     JButton createChooseButton() {
@@ -88,32 +91,44 @@ public class AnnotationChooserController {
                 return;
             }
 
-            checkIdCoverage(path);
-            lastAnnotationPath = canonicalPath;
+            checkIdCoverage(file);
         } catch (IOException e) {
             fail(e, "Unexpected error");
         }
     }
 
-    void checkIdCoverage(String path) {
+    void checkIdCoverage(File file) throws IOException {
         CyNetworkView view = session.getNetworkView();
         CyNetwork network = view.getModel();
         CyTable nodeTable = network.getDefaultNodeTable();
 
         List<String> names = getColumnNameStream(nodeTable).collect(Collectors.toList());
-        try {
-            idMappingResult = IdAnalyzer.analyzeAnnotations(path, new CyNodeTableVisitor(nodeTable, names));
-            IntIntMap coverage = idMappingResult.coverage;
-            int topIndex = getTopHit(coverage);
-            nodeIds.setSelectedIndex(topIndex);
+        CyNodeTableVisitor visitor = new CyNodeTableVisitor(nodeTable, names);
 
-            columnCoverage = new ObjectIntHashMap<>();
-            coverage.forEach((Consumer<? super IntIntCursor>) c -> columnCoverage.addTo(names.get(c.key), c.value));
+        String path = file.getPath();
+        AnalyzeAnnotationConsumer consumer = new AnalyzeAnnotationConsumer() {
+            @Override
+            public void accept(IdMappingResult result) {
+                idMappingResult = result;
+                IntIntMap coverage = result.coverage;
+                int topIndex = getTopHit(coverage);
 
-            updateCoverage();
-        } catch (IOException e) {
-            fail(e, "Unexpected error");
-        }
+                columnCoverage = new ObjectIntHashMap<>();
+                coverage.forEach((Consumer<? super IntIntCursor>) c -> columnCoverage.addTo(names.get(c.key), c.value));
+
+                nodeIds.setSelectedIndex(topIndex);
+
+                try {
+                    String canonicalPath = file.getCanonicalPath();
+                    lastAnnotationPath = canonicalPath;
+                } catch (IOException e) {
+                    fail(e, "Unexpected error");
+                }
+            }
+        };
+
+        SimpleTaskFactory taskFactory = new SimpleTaskFactory(() -> new AnalyzeAnnotationTask(path, visitor, consumer));
+        taskManager.execute(taskFactory.createTaskIterator());
     }
 
     int getTopHit(IntIntMap coverage) {
