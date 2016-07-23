@@ -213,23 +213,23 @@ public class SafeController implements SetCurrentNetworkViewListener, NetworkVie
 
         Component step1Section = importPanel.getPanel();
         ExpanderController step1Controller = SafeUtil.addExpandingSection(panel, "Step 1: Build Enrichment Landscapes",
-                                                                          step1Section, "grow, wrap");
+                                                                          step1Section, null, "grow, wrap");
         SafeUtil.addSeparator(panel);
 
         Component step2Section = attributeBrowser.getPanel();
         ExpanderController step2Controller = SafeUtil.addExpandingSection(panel, "Step 2: View Enrichment Landscapes",
-                                                                          step2Section,
+                                                                          step2Section, attributeBrowser,
                                                                           "grow, hmin 100, hmax 200, wrap");
         SafeUtil.addSeparator(panel);
 
         Component step3Section = compositeMapPanel.getPanel();
         ExpanderController step3Controller = SafeUtil.addExpandingSection(panel, "Step 3: Build Composite Map",
-                                                                          step3Section, "grow, wrap");
+                                                                          step3Section, null, "grow, wrap");
         SafeUtil.addSeparator(panel);
 
         Component step4Section = domainBrowser.getPanel();
         ExpanderController step4Controller = SafeUtil.addExpandingSection(panel, "Step 4: View Composite Map",
-                                                                          step4Section,
+                                                                          step4Section, domainBrowser,
                                                                           "grow, hmin 100, hmax 200, wrap");
 
         JScrollPane container = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,

@@ -30,8 +30,9 @@ public class FilteredTable<T> {
         queryField = new JTextField();
 
         table = new JTable(model);
+
         table.setFillsViewportHeight(true);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         sorter = new TableRowSorter<TableModel>(model) {
             @Override

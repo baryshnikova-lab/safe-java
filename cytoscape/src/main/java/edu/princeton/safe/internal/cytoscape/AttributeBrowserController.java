@@ -37,7 +37,7 @@ import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 import net.miginfocom.swing.MigLayout;
 
-public class AttributeBrowserController {
+public class AttributeBrowserController implements ExpansionChangeListener {
 
     VisualMappingManager visualMappingManager;
     StyleFactory styleFactory;
@@ -397,4 +397,10 @@ public class AttributeBrowserController {
         analysisMethods.setEnabled(isBinary);
     }
 
+    @Override
+    public void expansionChanged(boolean isExpanded) {
+        SwingUtilities.invokeLater(() -> {
+            UiUtil.packColumns(filteredTable.getTable());
+        });
+    }
 }

@@ -10,7 +10,12 @@ import java.util.Set;
 
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 public class UiUtil {
     public static JPanel createJPanel() {
@@ -174,6 +179,57 @@ public class UiUtil {
 
     public enum FileSelectionMode {
         OPEN_FILE, SAVE_FILE, OPEN_DIRECTORY,
+    }
+
+    public static void packColumns(JTable table) {
+        int padding = 5;
+        int[] widths = new int[table.getColumnCount()];
+        for (int j = 0; j < table.getRowCount(); j++) {
+            for (int i = 0; i < widths.length; i++) {
+                TableCellRenderer renderer = table.getCellRenderer(j, i);
+                Object value = table.getValueAt(j, i);
+                Component component = renderer.getTableCellRendererComponent(table, value, true, true, j, i);
+                widths[i] = (int) Math.max(widths[i], component.getPreferredSize()
+                                                               .getWidth()
+                        + table.getIntercellSpacing()
+                               .getWidth()
+                        + padding);
+            }
+        }
+
+        TableColumnModel columnModel = table.getColumnModel();
+        JTableHeader header = table.getTableHeader();
+        System.out.println(table.getWidth());
+        System.out.println(table.getParent()
+                                .getWidth());
+        int remaining = table.getParent()
+                             .getWidth();
+        for (int i = 0; i < widths.length; i++) {
+            TableColumn column = columnModel.getColumn(i);
+            TableCellRenderer renderer = column.getHeaderRenderer();
+            if (renderer == null) {
+                renderer = header.getDefaultRenderer();
+            }
+            Component component = renderer.getTableCellRendererComponent(table, column.getHeaderValue(), true, true, 0,
+                                                                         i);
+            widths[i] = (int) Math.max(widths[i], component.getPreferredSize()
+                                                           .getWidth());
+
+            // First column gets all the extra space, if any
+            if (i != 0) {
+                remaining -= widths[i];
+            }
+        }
+
+        widths[0] = (int) Math.max(1, remaining);
+
+        for (int i = 0; i < widths.length; i++) {
+            System.out.printf("%d\t%d\n", i, widths[i]);
+            TableColumn column = columnModel.getColumn(i);
+            header.setResizingColumn(column);
+            column.setWidth(widths[i]);
+        }
+
     }
 
 }

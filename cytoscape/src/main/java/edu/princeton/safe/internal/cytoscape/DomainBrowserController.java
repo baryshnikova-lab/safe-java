@@ -43,7 +43,7 @@ import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 import net.miginfocom.swing.MigLayout;
 
-public class DomainBrowserController {
+public class DomainBrowserController implements ExpansionChangeListener {
 
     VisualMappingManager visualMappingManager;
     StyleFactory styleFactory;
@@ -387,6 +387,13 @@ public class DomainBrowserController {
 
         Util.divideInPlace(totalContributions[0], color);
         return color;
+    }
+
+    @Override
+    public void expansionChanged(boolean isExpanded) {
+        SwingUtilities.invokeLater(() -> {
+            UiUtil.packColumns(filteredTable.getTable());
+        });
     }
 
     static interface ColorFunction {

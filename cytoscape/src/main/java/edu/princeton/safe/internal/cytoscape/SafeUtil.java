@@ -76,6 +76,7 @@ public class SafeUtil {
     public static ExpanderController addExpandingSection(JPanel parent,
                                                          String title,
                                                          Component section,
+                                                         ExpansionChangeListener expansionListener,
                                                          String layoutOptions) {
 
         ExpanderController controller = new ExpanderController();
@@ -102,6 +103,9 @@ public class SafeUtil {
 
         controller.addExpandListener(isExpanded -> {
             section.setVisible(isExpanded);
+            if (expansionListener != null) {
+                expansionListener.expansionChanged(isExpanded);
+            }
         });
 
         controller.addEnableListener(isEnabled -> {
