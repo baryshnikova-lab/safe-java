@@ -82,6 +82,7 @@ public class PerformanceTest {
         DefaultEnrichmentLandscape landscape = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
         landscape.maximumDistanceThreshold = threshold;
         landscape.neighborhoods = neighborhoods;
+        landscape.networkProvider = networkProvider;
 
         time("Neighborhoods", () -> ParallelSafe.computeNeighborhoods(landscape, networkProvider, annotationProvider),
              computeRepeats);

@@ -77,6 +77,8 @@ public class DefaultEnrichmentLandscapeBuilder implements EnrichmentLandscapeBui
     public EnrichmentLandscape build() {
         int totalTypes = annotationProvider.isBinary() ? 1 : 2;
         DefaultEnrichmentLandscape landscape = new DefaultEnrichmentLandscape(annotationProvider, totalTypes);
+        landscape.networkProvider = networkProvider;
+
         ParallelSafe.computeDistances(networkProvider, annotationProvider, distanceMetric, isDistanceThresholdAbsolute,
                                       distanceThreshold, landscape);
 
