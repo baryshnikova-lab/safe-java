@@ -200,7 +200,7 @@ public class ParallelSafe {
                                                      .max();
 
             int nodeIndex = neighborhood.getNodeIndex();
-            compositeMap.cumulativeOpacity[typeIndex][nodeIndex] = enrichment.getAsDouble();
+            compositeMap.maximumEnrichment[typeIndex][nodeIndex] = enrichment.getAsDouble();
             compositeMap.topDomain[typeIndex][nodeIndex] = domain;
         }
 
@@ -218,7 +218,7 @@ public class ParallelSafe {
         SignificancePredicate isSignificant = (neighborhood,
                                                attributeIndex) -> {
             int nodeIndex = neighborhood.getNodeIndex();
-            return compositeMap.cumulativeOpacity[typeIndex][nodeIndex] > enrichmentThreshold;
+            return compositeMap.maximumEnrichment[typeIndex][nodeIndex] > enrichmentThreshold;
         };
 
         List<DefaultDomain> domains = compositeMap.domainsByType[typeIndex];

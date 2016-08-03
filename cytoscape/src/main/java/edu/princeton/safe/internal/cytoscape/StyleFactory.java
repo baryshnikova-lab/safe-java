@@ -13,9 +13,9 @@ import org.cytoscape.view.vizmap.mappings.BoundaryRangeValues;
 import org.cytoscape.view.vizmap.mappings.ContinuousMapping;
 
 public class StyleFactory {
-    public static final String HIGHLIGHT_COLUMN = "SAFE Highlight";
+    public static final String HIGHLIGHT_COLUMN = "SAFE Enrichment Score";
     public static final String COLOR_COLUMN = "SAFE Color";
-    public static final String BRIGHTNESSS_COLUMN = "SAFE Brightness";
+    public static final String BRIGHTNESSS_COLUMN = "SAFE Max Enrichment Score";
 
     public static final String ATTRIBUTE_BROWSER_STYLE = "SAFE Attribute Browser";
     public static final String DOMAIN_BROWSER_STYLE = "SAFE Domain Browser";
@@ -32,10 +32,10 @@ public class StyleFactory {
         this.passthroughMappingFactory = passthroughMappingFactory;
     }
 
-    VisualStyle createAttributeBrowserStyle() {
+    public VisualStyle createAttributeBrowserStyle() {
 
         Color negative = new Color(0, 204, 255);
-        Color zero = new Color(30, 30, 30);
+        Color zero = new Color(51, 51, 51);
         Color positive = new Color(255, 204, 0);
 
         VisualStyle style = visualStyleFactory.createVisualStyle(ATTRIBUTE_BROWSER_STYLE);
@@ -65,9 +65,9 @@ public class StyleFactory {
         return style;
     }
 
-    VisualStyle createDomainBrowserStyle() {
+    public VisualStyle createDomainBrowserStyle() {
 
-        Color noDomain = new Color(30, 30, 30);
+        Color noDomain = new Color(51, 51, 51);
 
         VisualStyle style = visualStyleFactory.createVisualStyle(DOMAIN_BROWSER_STYLE);
 

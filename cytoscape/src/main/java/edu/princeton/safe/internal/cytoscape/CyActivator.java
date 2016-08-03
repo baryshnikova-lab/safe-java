@@ -8,11 +8,14 @@ import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.events.SetCurrentNetworkViewListener;
 import org.cytoscape.application.swing.CyAction;
 import org.cytoscape.application.swing.CySwingApplication;
+import org.cytoscape.model.CyTableFactory;
+import org.cytoscape.model.CyTableManager;
 import org.cytoscape.model.events.ColumnCreatedListener;
 import org.cytoscape.model.events.ColumnDeletedListener;
 import org.cytoscape.model.events.ColumnNameChangedListener;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.session.events.SessionAboutToBeSavedListener;
 import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
@@ -23,8 +26,15 @@ import org.cytoscape.work.ServiceProperties;
 import org.cytoscape.work.swing.DialogTaskManager;
 import org.osgi.framework.BundleContext;
 
+import edu.princeton.safe.internal.cytoscape.controller.AnnotationChooserController;
+import edu.princeton.safe.internal.cytoscape.controller.AttributeBrowserController;
+import edu.princeton.safe.internal.cytoscape.controller.CompositeMapController;
+import edu.princeton.safe.internal.cytoscape.controller.DomainBrowserController;
+import edu.princeton.safe.internal.cytoscape.controller.ImportPanelController;
+import edu.princeton.safe.internal.cytoscape.controller.SafeController;
 import edu.princeton.safe.internal.cytoscape.event.DefaultEventService;
 import edu.princeton.safe.internal.cytoscape.event.EventService;
+import edu.princeton.safe.internal.cytoscape.io.SafeSessionSerializer;
 
 public class CyActivator extends AbstractCyActivator {
 
@@ -36,6 +46,9 @@ public class CyActivator extends AbstractCyActivator {
         CyServiceRegistrar registrar = getService(context, CyServiceRegistrar.class);
         CySwingApplication application = getService(context, CySwingApplication.class);
         DialogTaskManager taskManager = getService(context, DialogTaskManager.class);
+        CyTableManager tableManager = getService(context, CyTableManager.class);
+        CyTableFactory tableFactory = getService(context, CyTableFactory.class);
+
         VisualMappingManager visualMappingManager = getService(context, VisualMappingManager.class);
         VisualStyleFactory visualStyleFactory = getService(context, VisualStyleFactory.class);
 
@@ -58,13 +71,16 @@ public class CyActivator extends AbstractCyActivator {
         ImportPanelController importPanel = new ImportPanelController(taskManager, attributeBrowser, annotationChooser,
                                                                       eventService);
 
-        DomainBrowserController domainBrowser = new DomainBrowserController(visualMappingManager, styleFactory);
+        DomainBrowserController domainBrowser = new DomainBrowserController(visualMappingManager, styleFactory,
+                                                                            taskManager);
 
         CompositeMapController compositeMapPanel = new CompositeMapController(taskManager, domainBrowser, eventService);
 
+        SafeSessionSerializer serializer = new SafeSessionSerializer(tableManager, tableFactory);
+
         SafeController safeController = new SafeController(registrar, application, applicationManager, importPanel,
                                                            attributeBrowser, compositeMapPanel, domainBrowser,
-                                                           eventService);
+                                                           eventService, serializer);
 
         Map<String, String> safeActionProperties = new MapBuilder().put("inMenuBar", "true")
                                                                    .put("preferredMenu", ServiceProperties.APPS_MENU)
@@ -76,7 +92,8 @@ public class CyActivator extends AbstractCyActivator {
         registerService(context, safeAction, CyAction.class);
         registerService(context, safeController, SetCurrentNetworkViewListener.class,
                         NetworkViewAboutToBeDestroyedListener.class, ColumnCreatedListener.class,
-                        ColumnDeletedListener.class, ColumnNameChangedListener.class, SessionLoadedListener.class);
+                        ColumnDeletedListener.class, ColumnNameChangedListener.class, SessionLoadedListener.class,
+                        SessionAboutToBeSavedListener.class);
     }
 
     void registerService(BundleContext context,

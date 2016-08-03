@@ -51,6 +51,11 @@ public abstract class DefaultNeighborhood implements Neighborhood {
     }
 
     @Override
+    public int getMember(int memberIndex) {
+        return memberIndexes.get(memberIndex);
+    }
+
+    @Override
     public void forEachMemberIndex(IntConsumer action) {
         Consumer<? super IntCursor> consumer = (IntCursor c) -> action.accept(c.value);
         memberIndexes.forEach(consumer);

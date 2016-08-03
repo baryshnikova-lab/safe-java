@@ -4,6 +4,8 @@ import java.util.function.DoublePredicate;
 
 public class JaccardDistanceMethod implements DistanceMethod {
 
+    public static final String ID = "jaccard";
+    
     private DoublePredicate predicate;
 
     public JaccardDistanceMethod(DoublePredicate predicate) {
@@ -12,7 +14,7 @@ public class JaccardDistanceMethod implements DistanceMethod {
 
     @Override
     public String getId() {
-        return "jaccard";
+        return ID;
     }
 
     @Override

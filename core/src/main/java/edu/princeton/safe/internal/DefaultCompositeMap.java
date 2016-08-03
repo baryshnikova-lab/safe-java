@@ -5,15 +5,15 @@ import java.util.List;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.io.DomainConsumer;
-import edu.princeton.safe.model.Domain;
 import edu.princeton.safe.model.CompositeMap;
+import edu.princeton.safe.model.Domain;
 
 public class DefaultCompositeMap implements CompositeMap {
 
     List<DefaultDomain>[] domainsByType;
     DomainConsumer consumer;
     DefaultDomain[][] topDomain;
-    double[][] cumulativeOpacity;
+    double[][] maximumEnrichment;
     boolean[][] isTop;
 
     @SuppressWarnings("unchecked")
@@ -23,7 +23,7 @@ public class DefaultCompositeMap implements CompositeMap {
 
         int totalNodes = provider.getNetworkNodeCount();
         topDomain = new DefaultDomain[totalTypes][totalNodes];
-        cumulativeOpacity = new double[totalTypes][totalNodes];
+        maximumEnrichment = new double[totalTypes][totalNodes];
 
         int totalAttributes = provider.getAttributeCount();
         isTop = new boolean[totalTypes][totalAttributes];
@@ -57,6 +57,18 @@ public class DefaultCompositeMap implements CompositeMap {
             domainsByType[typeIndex] = domains;
         }
         domains.add(domain);
+    }
+
+    @Override
+    public Domain getTopDomain(int nodeIndex,
+                               int typeIndex) {
+        return topDomain[typeIndex][nodeIndex];
+    }
+
+    @Override
+    public double getMaximumEnrichment(int nodeIndex,
+                                       int typeIndex) {
+        return maximumEnrichment[typeIndex][nodeIndex];
     }
 
     DomainConsumer getConsumer() {

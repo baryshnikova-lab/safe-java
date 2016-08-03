@@ -13,4 +13,10 @@ public interface CompositeMap {
                 int typeIndex,
                 boolean isTop);
 
+    Domain getTopDomain(int nodeIndex,
+                        int typeIndex);
+
+    double getMaximumEnrichment(int nodeIndex,
+                                int typeIndex);
+
 }

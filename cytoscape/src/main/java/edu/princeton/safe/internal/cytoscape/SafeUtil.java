@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -22,9 +23,14 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
 import org.cytoscape.model.CyColumn;
+import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
 
 import edu.princeton.safe.Identifiable;
+import edu.princeton.safe.internal.cytoscape.controller.ExpanderController;
+import edu.princeton.safe.internal.cytoscape.controller.ExpansionChangeListener;
+import edu.princeton.safe.internal.cytoscape.model.Factory;
+import edu.princeton.safe.internal.cytoscape.model.NameValuePair;
 
 public class SafeUtil {
 
@@ -208,6 +214,21 @@ public class SafeUtil {
             }
             parent = parent.getParent();
         }
+    }
+
+    public static void clearSelection(CyTable table) {
+        table.getMatchingRows(CyNetwork.SELECTED, true)
+             .stream()
+             .forEach(row -> row.set(CyNetwork.SELECTED, false));
+    }
+
+    public static Stream<String> getStringColumnNames(CyTable table) {
+        return table.getColumns()
+                    .stream()
+                    .filter(c -> c.getType()
+                                  .equals(String.class))
+                    .map(c -> c.getName())
+                    .sorted(String.CASE_INSENSITIVE_ORDER);
     }
 
 }

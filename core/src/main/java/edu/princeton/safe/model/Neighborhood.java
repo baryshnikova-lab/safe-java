@@ -68,4 +68,6 @@ public interface Neighborhood {
 
     double getMemberDistance(int memberIndex);
 
+    int getMember(int memberIndex);
+
 }

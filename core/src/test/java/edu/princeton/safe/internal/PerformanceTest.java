@@ -3,6 +3,7 @@ package edu.princeton.safe.internal;
 import static edu.princeton.safe.internal.Timeable.time;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.OptionalDouble;
 
@@ -20,6 +21,9 @@ import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.distance.MapBasedDistanceMetric;
 import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
 import edu.princeton.safe.grouping.JaccardDistanceMethod;
+import edu.princeton.safe.internal.io.AttributeReport;
+import edu.princeton.safe.internal.io.TabDelimitedAnnotationParser;
+import edu.princeton.safe.internal.io.TabDelimitedNetworkParser;
 import edu.princeton.safe.internal.scoring.RandomizedMemberScoringMethod;
 import edu.princeton.safe.io.AnnotationParser;
 import edu.princeton.safe.io.NetworkParser;
@@ -129,6 +133,8 @@ public class PerformanceTest {
         System.out.printf("Total significant: %d\n", count[0]);
         System.out.printf("Total scores: %d\n", totalAttributes * totalNodes - count2[0]);
         System.out.printf("Enrichment threshold: %f\n", Neighborhood.getEnrichmentThreshold(totalAttributes));
+
+        AttributeReport.write(new PrintWriter(System.out), landscape, compositeMap, EnrichmentLandscape.TYPE_HIGHEST);
     }
 
     @Test

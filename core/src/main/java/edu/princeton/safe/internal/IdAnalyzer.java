@@ -9,6 +9,8 @@ import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.IntIntMap;
 
 import edu.princeton.safe.NetworkProvider;
+import edu.princeton.safe.internal.io.TabDelimitedAnnotationParser;
+import edu.princeton.safe.internal.io.TabDelimitedNodeTableVisitor;
 import edu.princeton.safe.io.AnnotationConsumer;
 import edu.princeton.safe.io.NodeTableConsumer;
 import edu.princeton.safe.io.NodeTableVisitor;

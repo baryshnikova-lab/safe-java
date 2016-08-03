@@ -7,6 +7,8 @@ import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.AbstractCyAction;
 import org.cytoscape.view.model.CyNetworkViewManager;
 
+import edu.princeton.safe.internal.cytoscape.controller.SafeController;
+
 public class SafeAction extends AbstractCyAction {
 
     private static final long serialVersionUID = 1L;
