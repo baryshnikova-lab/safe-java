@@ -199,9 +199,6 @@ public class UiUtil {
 
         TableColumnModel columnModel = table.getColumnModel();
         JTableHeader header = table.getTableHeader();
-        System.out.println(table.getWidth());
-        System.out.println(table.getParent()
-                                .getWidth());
         int remaining = table.getParent()
                              .getWidth();
         for (int i = 0; i < widths.length; i++) {
@@ -224,7 +221,6 @@ public class UiUtil {
         widths[0] = (int) Math.max(1, remaining);
 
         for (int i = 0; i < widths.length; i++) {
-            System.out.printf("%d\t%d\n", i, widths[i]);
             TableColumn column = columnModel.getColumn(i);
             header.setResizingColumn(column);
             column.setWidth(widths[i]);
