@@ -1,0 +1,5 @@
+ORF	a	b	c	d
+A	0	1	2	3
+B	0	1	X	3
+C	None	1	2	3
+D	0	#ERROR	2	3

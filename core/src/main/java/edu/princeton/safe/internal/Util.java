@@ -5,6 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParsePosition;
+import java.util.Locale;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
@@ -16,6 +21,14 @@ public class Util {
 
     static Percentile defaultPercentile = new Percentile().withEstimationType(EstimationType.R_5)
                                                           .withKthSelector(new KthSelector(new CentralPivotingStrategy()));
+    static final NumberFormat numberFormat;
+    static final ParsePosition parsePosition;
+
+    static {
+        Locale locale = Locale.getDefault();
+        numberFormat = DecimalFormat.getNumberInstance(locale);
+        parsePosition = new ParsePosition(0);
+    }
 
     public static double[] nanArray(int size) {
         double[] array = new double[size];
@@ -109,5 +122,24 @@ public class Util {
         for (int i = 0; i < target.length; i++) {
             target[i] /= denominator;
         }
+    }
+
+    public static double parseDouble(String value) {
+        parsePosition.setErrorIndex(-1);
+        parsePosition.setIndex(0);
+        Number result = numberFormat.parse(value, parsePosition);
+        if (parsePosition.getErrorIndex() != -1) {
+            return Double.NaN;
+        }
+
+        if (parsePosition.getIndex() != value.length()) {
+            try {
+                BigDecimal value2 = new BigDecimal(value);
+                return value2.doubleValue();
+            } catch (NumberFormatException e) {
+                return Double.NaN;
+            }
+        }
+        return result.doubleValue();
     }
 }

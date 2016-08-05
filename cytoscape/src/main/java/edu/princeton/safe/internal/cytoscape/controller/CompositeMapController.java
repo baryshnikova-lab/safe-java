@@ -25,6 +25,7 @@ import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
 import edu.princeton.safe.grouping.DistanceMethod;
 import edu.princeton.safe.grouping.JaccardDistanceMethod;
 import edu.princeton.safe.grouping.NullGroupingMethod;
+import edu.princeton.safe.internal.Util;
 import edu.princeton.safe.internal.cytoscape.SafeUtil;
 import edu.princeton.safe.internal.cytoscape.UiUtil;
 import edu.princeton.safe.internal.cytoscape.event.EventService;
@@ -247,7 +248,7 @@ public class CompositeMapController {
     }
 
     double getClusterThreshold() {
-        return Double.parseDouble(similarityThreshold.getText());
+        return Util.parseDouble(similarityThreshold.getText());
     }
 
 }

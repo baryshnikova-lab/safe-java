@@ -60,25 +60,28 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
 
             line = reader.readLine();
             while (line != null) {
-                String[] parts = line.split("\t");
-                String label = parts[0];
-                IntArrayList indexes = nodeIdsToIndexes.get(label);
-                if (indexes == null) {
-                    consumer.skipped(label);
-                    skippedLines++;
-                } else {
-                    notSeen.remove(label);
+                try {
+                    String[] parts = line.split("\t");
+                    String label = parts[0];
+                    IntArrayList indexes = nodeIdsToIndexes.get(label);
+                    if (indexes == null) {
+                        consumer.skipped(label);
+                        skippedLines++;
+                    } else {
+                        notSeen.remove(label);
 
-                    indexes.forEach((Consumer<? super IntCursor>) (cursor) -> {
-                        int nodeIndex = cursor.value;
-                        for (int j = 1; j < parts.length; j++) {
-                            double value = Double.parseDouble(parts[j]);
-                            consumer.value(nodeIndex, j - 1, value);
-                        }
-                    });
+                        indexes.forEach((Consumer<? super IntCursor>) (cursor) -> {
+                            int nodeIndex = cursor.value;
+                            for (int j = 1; j < parts.length; j++) {
+                                double value = Util.parseDouble(parts[j]);
+                                consumer.value(nodeIndex, j - 1, value);
+                            }
+                        });
+                    }
+                } finally {
+                    totalLines++;
+                    line = reader.readLine();
                 }
-                totalLines++;
-                line = reader.readLine();
             }
 
             unmappedNodeNames = notSeen.values()

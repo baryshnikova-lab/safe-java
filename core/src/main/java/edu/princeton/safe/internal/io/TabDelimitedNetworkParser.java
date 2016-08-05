@@ -38,8 +38,8 @@ public class TabDelimitedNetworkParser implements NetworkParser {
                       String[] parts = line.split("\t");
                       String label = parts[0];
                       String id = parts[1];
-                      double x = Double.parseDouble(parts[2]);
-                      double y = Double.parseDouble(parts[3]);
+                      double x = Util.parseDouble(parts[2]);
+                      double y = Util.parseDouble(parts[3]);
                       consumer.node(index[0], label, id, x, y);
 
                       nodeIdsToIndexes.put(label, index[0]);
