@@ -4,10 +4,12 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
+import java.util.Random;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -59,6 +61,8 @@ public class CompositeMapController {
 
     JComboBox<NameValuePair<Integer>> analysisTypes;
 
+    JCheckBox randomizeColorsCheckBox;
+
     public CompositeMapController(DialogTaskManager taskManager,
                                   DomainBrowserController domainBrowser,
                                   EventService eventService) {
@@ -97,6 +101,8 @@ public class CompositeMapController {
         SafeUtil.setSelected(restrictionMethods, session.getRestrictionMethod());
         SafeUtil.setSelected(groupingMethods, session.getGroupingMethod());
         SafeUtil.setSelected(analysisTypes, session.getAnalysisType());
+
+        randomizeColorsCheckBox.setSelected(session.getRandomizeColors());
 
         EnrichmentLandscape landscape = session.getEnrichmentLandscape();
         setEnrichmentLandscape(landscape);
@@ -137,6 +143,8 @@ public class CompositeMapController {
 
         JButton button = createBuildButton();
 
+        randomizeColorsCheckBox = new JCheckBox("Randomize colors");
+
         JPanel panel = UiUtil.createJPanel();
         panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
 
@@ -154,6 +162,8 @@ public class CompositeMapController {
 
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisTypes, "wrap");
+
+        panel.add(randomizeColorsCheckBox, "skip 1, wrap");
 
         panel.add(button, "skip 1, wrap");
 
@@ -175,6 +185,10 @@ public class CompositeMapController {
                                                               .create());
 
                 session.setMinimumLandscapeSize(getMinimumLandscapeSize());
+
+                if (randomizeColorsCheckBox.isSelected()) {
+                    session.setColorSeed(new Random().nextInt());
+                }
 
                 TaskFactory factory = new SimpleTaskFactory(() -> new BuildCompositeMapTask(session, consumer));
                 taskManager.execute(factory.createTaskIterator());

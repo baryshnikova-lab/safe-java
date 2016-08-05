@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -340,7 +341,8 @@ public class DomainBrowserController implements ExpansionChangeListener {
                                              })
                                              .collect(Collectors.toList());
 
-            Collections.shuffle(colors);
+            Random random = new Random(session.getColorSeed());
+            Collections.shuffle(colors, random);
 
             IntStream.range(0, domains.size())
                      .mapToObj(domainIndex -> {

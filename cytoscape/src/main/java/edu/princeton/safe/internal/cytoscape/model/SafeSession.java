@@ -38,6 +38,8 @@ public class SafeSession {
     RestrictionMethod restrictionMethod;
     int analysisType;
     CompositeMap compositeMap;
+    int colorSeed;
+    boolean randomizeColors;
 
     public SafeSession() {
         // TODO: Expose as setting
@@ -203,6 +205,22 @@ public class SafeSession {
 
     public void setQuantitativeIterations(int iterations) {
         quantitativeIterations = iterations;
+    }
+
+    public int getColorSeed() {
+        return colorSeed;
+    }
+
+    public void setColorSeed(int colorSeed) {
+        this.colorSeed = colorSeed;
+    }
+
+    public boolean getRandomizeColors() {
+        return randomizeColors;
+    }
+
+    public void setRandomizeColors(boolean randomizeColors) {
+        this.randomizeColors = randomizeColors;
     }
 
 }

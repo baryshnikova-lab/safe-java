@@ -181,6 +181,8 @@ public class SafeSessionSerializer {
             }
 
             generator.writeNumberField("similarityThreshold", session.getSimilarityThreshold());
+            generator.writeNumberField("colorSeed", session.getColorSeed());
+            generator.writeBooleanField("randomizeColors", session.getRandomizeColors());
 
             generator.writeEndObject();
         }
@@ -260,6 +262,10 @@ public class SafeSessionSerializer {
                     session.setGroupingMethod(getGroupingMethod(parser.nextTextValue()));
                 } else if ("restrictionMethod".equals(name)) {
                     session.setRestrictionMethod(getRestrictionMethod(parser.nextTextValue()));
+                } else if ("colorSeed".equals(name)) {
+                    session.setColorSeed(parser.nextIntValue(0));
+                } else if ("randomizeColors".equals(name)) {
+                    session.setRandomizeColors(parser.nextBooleanValue());
                 }
             }
 
