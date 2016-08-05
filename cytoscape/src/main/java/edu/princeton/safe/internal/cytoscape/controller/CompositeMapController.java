@@ -150,7 +150,7 @@ public class CompositeMapController {
         panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
 
         SafeUtil.addSubsection(panel, "Filter Attributes");
-        panel.add(new JLabel("Neighborhood filtering method"));
+        panel.add(new JLabel("Multi-regional"));
         panel.add(restrictionMethods, "wrap");
         panel.add(new JLabel("Min. landscape size"));
         panel.add(minimumLandscapeSize, "growx, wmax 200, wrap");
@@ -227,9 +227,9 @@ public class CompositeMapController {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     ComboBoxModel<NameValuePair<Factory<RestrictionMethod>>> createFilteringMethodModel() {
-        NameValuePair[] items = new NameValuePair[] { new NameValuePair<>("None (no filtering)",
+        NameValuePair[] items = new NameValuePair[] { new NameValuePair<>("Do not remove",
                                                                           new Factory<>(null, () -> null)),
-                                                      new NameValuePair<>("Radius-based",
+                                                      new NameValuePair<>("Removed (Radius-based)",
                                                                           new Factory<>("radius",
                                                                                         () -> new RadiusBasedRestrictionMethod(getMinimumLandscapeSize(),
                                                                                                                                getDistanceThreshold()))) };
