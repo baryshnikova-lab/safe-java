@@ -42,6 +42,7 @@ import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.LongObjectMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 
+import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
 import edu.princeton.safe.grouping.JaccardDistanceMethod;
 import edu.princeton.safe.internal.cytoscape.SafeCytoPanelComponent;
@@ -300,8 +301,14 @@ public class SafeController
                 step2Controller.setExpanded(true);
                 step2Controller.setEnabled(true);
 
-                step3Controller.setExpanded(true);
-                step3Controller.setEnabled(true);
+                AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
+                if (annotationProvider.getAttributeCount() < 2) {
+                    step3Controller.setExpanded(false);
+                    step3Controller.setEnabled(false);
+                } else {
+                    step3Controller.setExpanded(true);
+                    step3Controller.setEnabled(true);
+                }
             }
         };
 
