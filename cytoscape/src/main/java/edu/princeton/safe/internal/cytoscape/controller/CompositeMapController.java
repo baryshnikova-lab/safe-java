@@ -229,7 +229,7 @@ public class CompositeMapController {
     ComboBoxModel<NameValuePair<Factory<RestrictionMethod>>> createFilteringMethodModel() {
         NameValuePair[] items = new NameValuePair[] { new NameValuePair<>("Do not remove",
                                                                           new Factory<>(null, () -> null)),
-                                                      new NameValuePair<>("Removed (Radius-based)",
+                                                      new NameValuePair<>("Remove (Radius-based)",
                                                                           new Factory<>("radius",
                                                                                         () -> new RadiusBasedRestrictionMethod(getMinimumLandscapeSize(),
                                                                                                                                getDistanceThreshold()))) };
