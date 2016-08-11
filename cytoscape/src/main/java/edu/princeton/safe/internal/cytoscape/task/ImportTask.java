@@ -10,6 +10,7 @@ import org.cytoscape.work.TaskMonitor.Level;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.EnrichmentLandscapeBuilder;
+import edu.princeton.safe.FactoryMethod;
 import edu.princeton.safe.internal.DefaultEnrichmentLandscapeBuilder;
 import edu.princeton.safe.internal.DenseAnnotationProvider;
 import edu.princeton.safe.internal.SparseNetworkProvider;
@@ -23,11 +24,14 @@ public class ImportTask extends AbstractTask {
 
     SafeSession session;
     ImportTaskConsumer consumer;
+    FactoryMethod<TabDelimitedAnnotationParser> parserFactory;
 
     public ImportTask(SafeSession session,
-                      ImportTaskConsumer consumer) {
+                      ImportTaskConsumer consumer,
+                      FactoryMethod<TabDelimitedAnnotationParser> parserFactory) {
         this.session = session;
         this.consumer = consumer;
+        this.parserFactory = parserFactory;
     }
 
     @Override
@@ -61,7 +65,7 @@ public class ImportTask extends AbstractTask {
         AnnotationProvider annotationProvider;
         File annotationFile = session.getAnnotationFile();
         if (annotationFile != null) {
-            TabDelimitedAnnotationParser annotationParser = new TabDelimitedAnnotationParser(annotationFile.getAbsolutePath());
+            TabDelimitedAnnotationParser annotationParser = parserFactory.create();
             annotationProvider = new DenseAnnotationProvider(networkProvider, annotationParser);
             Set<String> missingNodes = annotationParser.getMissingNodes();
             int totalMissingNodes = missingNodes.size();

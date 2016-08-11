@@ -1,9 +1,9 @@
 package edu.princeton.safe.internal.io;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -12,19 +12,27 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
 import edu.princeton.safe.NetworkProvider;
+import edu.princeton.safe.internal.IdAnalyzer;
 import edu.princeton.safe.internal.Util;
 import edu.princeton.safe.io.AnnotationConsumer;
 import edu.princeton.safe.io.AnnotationParser;
 
-public class TabDelimitedAnnotationParser implements AnnotationParser {
+public class TabDelimitedAnnotationParser extends TabDelimitedParser implements AnnotationParser {
 
-    int skippedLines;
-    int totalLines;
-    String path;
     Set<String> unmappedNodeNames;
+    HashMap<String, IntArrayList> nodeIdsToIndexes;
+    HashMap<String, IntArrayList> notSeen;
 
-    public TabDelimitedAnnotationParser(String path) {
-        this.path = path;
+    int labelLineIndex;
+    String commentCharacter;
+    int expectedColumns;
+
+    public TabDelimitedAnnotationParser(String path,
+                                        int labelLineIndex,
+                                        String commentCharacter) {
+        super(path);
+        this.labelLineIndex = labelLineIndex;
+        this.commentCharacter = commentCharacter;
     }
 
     @Override
@@ -35,54 +43,43 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
         if (unmappedNodeNames != null) {
             throw new IOException("Cannot call parse twice for same instance");
         }
-        try (BufferedReader reader = Util.getReader(path)) {
-            // Parse header
-            String line = reader.readLine();
-            String[] headerParts = line.split("\t");
 
-            String[] attributeLabels = Arrays.copyOfRange(headerParts, 1, headerParts.length);
-            int totalNodes = networkProvider.getNodeCount();
-            consumer.start(attributeLabels, totalNodes);
+        // Create look up for node label -> node index
+        nodeIdsToIndexes = new HashMap<>();
+        int totalNodes = networkProvider.getNodeCount();
+        for (int i = 0; i < totalNodes; i++) {
+            String key = networkProvider.getNodeId(i);
+            IntArrayList list = nodeIdsToIndexes.get(key);
+            if (list == null) {
+                list = new IntArrayList();
+                nodeIdsToIndexes.put(key, list);
+            }
+            list.add(i);
+        }
 
-            // Create look up for node label -> node index
-            HashMap<String, IntArrayList> nodeIdsToIndexes = new HashMap<>();
-            for (int i = 0; i < totalNodes; i++) {
-                String key = networkProvider.getNodeId(i);
-                IntArrayList list = nodeIdsToIndexes.get(key);
-                if (list == null) {
-                    list = new IntArrayList();
-                    nodeIdsToIndexes.put(key, list);
-                }
-                list.add(i);
+        notSeen = new HashMap<>(nodeIdsToIndexes);
+        LineHandler handler = parts -> {
+            String comment = IdAnalyzer.getComment(parts[0]);
+            if (comment != null && comment.startsWith(commentCharacter)) {
+                return false;
             }
 
-            HashMap<String, IntArrayList> notSeen = new HashMap<>(nodeIdsToIndexes);
-
-            line = reader.readLine();
-            while (line != null) {
-                try {
-                    String[] parts = line.split("\t");
-                    String label = parts[0];
-                    IntArrayList indexes = nodeIdsToIndexes.get(label);
-                    if (indexes == null) {
-                        consumer.skipped(label);
-                        skippedLines++;
-                    } else {
-                        notSeen.remove(label);
-
-                        indexes.forEach((Consumer<? super IntCursor>) (cursor) -> {
-                            int nodeIndex = cursor.value;
-                            for (int j = 1; j < parts.length; j++) {
-                                double value = Util.parseDouble(parts[j]);
-                                consumer.value(nodeIndex, j - 1, value);
-                            }
-                        });
-                    }
-                } finally {
-                    totalLines++;
-                    line = reader.readLine();
-                }
+            if (totalLines == labelLineIndex) {
+                String[] attributeLabels = Arrays.copyOfRange(parts, 1, parts.length);
+                expectedColumns = attributeLabels.length;
+                consumer.start(attributeLabels, totalNodes);
+                return false;
             }
+
+            if (parts.length != expectedColumns + 1) {
+                return false;
+            }
+
+            return handleParts(consumer, parts, nodeIdsToIndexes, notSeen);
+        };
+
+        try {
+            parse(handler);
 
             unmappedNodeNames = notSeen.values()
                                        .stream()
@@ -92,6 +89,29 @@ public class TabDelimitedAnnotationParser implements AnnotationParser {
         } finally {
             consumer.finish(totalLines);
         }
+    }
+
+    boolean handleParts(AnnotationConsumer consumer,
+                        String[] parts,
+                        Map<String, IntArrayList> nodeIdsToIndexes,
+                        Map<String, IntArrayList> notSeen) {
+        String label = parts[0];
+        IntArrayList indexes = nodeIdsToIndexes.get(label);
+        if (indexes == null) {
+            consumer.skipped(label);
+            return false;
+        } else {
+            notSeen.remove(label);
+
+            indexes.forEach((Consumer<? super IntCursor>) (cursor) -> {
+                int nodeIndex = cursor.value;
+                for (int j = 1; j < parts.length; j++) {
+                    double value = Util.parseDouble(parts[j]);
+                    consumer.value(nodeIndex, j - 1, value);
+                }
+            });
+        }
+        return true;
     }
 
     public Set<String> getMissingNodes() {

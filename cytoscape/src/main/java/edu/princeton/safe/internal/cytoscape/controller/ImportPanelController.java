@@ -27,6 +27,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
 import com.carrotsearch.hppc.LongIntMap;
 
 import edu.princeton.safe.DistanceMetric;
+import edu.princeton.safe.FactoryMethod;
 import edu.princeton.safe.distance.EdgeWeightedDistanceMetric;
 import edu.princeton.safe.distance.MapBasedDistanceMetric;
 import edu.princeton.safe.distance.UnweightedDistanceMetric;
@@ -40,6 +41,7 @@ import edu.princeton.safe.internal.cytoscape.model.SafeSession;
 import edu.princeton.safe.internal.cytoscape.task.ImportTask;
 import edu.princeton.safe.internal.cytoscape.task.ImportTaskConsumer;
 import edu.princeton.safe.internal.cytoscape.task.SimpleTaskFactory;
+import edu.princeton.safe.internal.io.TabDelimitedAnnotationParser;
 import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import net.miginfocom.swing.MigLayout;
@@ -277,7 +279,8 @@ public class ImportPanelController {
                 NameValuePair<BackgroundMethod> backgroundPair = (NameValuePair<BackgroundMethod>) backgroundMethods.getSelectedItem();
                 session.setBackgroundMethod(backgroundPair.getValue());
 
-                TaskFactory factory = new SimpleTaskFactory(() -> new ImportTask(session, consumer));
+                FactoryMethod<TabDelimitedAnnotationParser> parserFactory = annotationChooser.getParserFactory();
+                TaskFactory factory = new SimpleTaskFactory(() -> new ImportTask(session, consumer, parserFactory));
                 taskManager.execute(factory.createTaskIterator());
             }
         });

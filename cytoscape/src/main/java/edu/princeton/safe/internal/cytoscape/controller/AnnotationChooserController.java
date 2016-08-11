@@ -29,7 +29,9 @@ import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.carrotsearch.hppc.ObjectIntMap;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 
+import edu.princeton.safe.FactoryMethod;
 import edu.princeton.safe.internal.IdMappingResult;
+import edu.princeton.safe.internal.Util;
 import edu.princeton.safe.internal.cytoscape.SafeUtil;
 import edu.princeton.safe.internal.cytoscape.UiUtil;
 import edu.princeton.safe.internal.cytoscape.UiUtil.FileSelectionMode;
@@ -38,6 +40,7 @@ import edu.princeton.safe.internal.cytoscape.model.SafeSession;
 import edu.princeton.safe.internal.cytoscape.task.AnalyzeAnnotationConsumer;
 import edu.princeton.safe.internal.cytoscape.task.AnalyzeAnnotationTask;
 import edu.princeton.safe.internal.cytoscape.task.SimpleTaskFactory;
+import edu.princeton.safe.internal.io.TabDelimitedAnnotationParser;
 
 public class AnnotationChooserController {
 
@@ -119,7 +122,7 @@ public class AnnotationChooserController {
             public void accept(IdMappingResult result) {
                 idMappingResult = result;
                 IntIntMap coverage = result.coverage;
-                int topIndex = getTopHit(coverage);
+                int topIndex = Util.getTopKey(coverage, -1);
 
                 columnCoverage = new ObjectIntHashMap<>();
                 coverage.forEach((Consumer<? super IntIntCursor>) c -> columnCoverage.addTo(names.get(c.key), c.value));
@@ -137,18 +140,6 @@ public class AnnotationChooserController {
 
         SimpleTaskFactory taskFactory = new SimpleTaskFactory(() -> new AnalyzeAnnotationTask(path, visitor, consumer));
         taskManager.execute(taskFactory.createTaskIterator());
-    }
-
-    int getTopHit(IntIntMap coverage) {
-        int[] topIndex = { -1 };
-        int[] topCount = { 0 };
-        coverage.forEach((Consumer<? super IntIntCursor>) c -> {
-            if (c.value > topCount[0]) {
-                topCount[0] = c.value;
-                topIndex[0] = c.key;
-            }
-        });
-        return topIndex[0];
     }
 
     void updateCoverage() {
@@ -238,6 +229,16 @@ public class AnnotationChooserController {
                 });
 
         nodeIds.setSelectedItem(session.getIdColumn());
+    }
+
+    public FactoryMethod<TabDelimitedAnnotationParser> getParserFactory() {
+        return () -> {
+            int labelLineIndex = idMappingResult.getLabelLineIndex();
+            String commentCharacter = idMappingResult.getCommentCharacter();
+            return new TabDelimitedAnnotationParser(session.getAnnotationFile()
+                                                           .getPath(),
+                                                    labelLineIndex, commentCharacter);
+        };
     }
 
     void fail(Throwable t,

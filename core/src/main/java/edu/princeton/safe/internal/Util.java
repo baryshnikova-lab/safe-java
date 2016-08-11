@@ -10,12 +10,16 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile.EstimationType;
 import org.apache.commons.math3.util.CentralPivotingStrategy;
 import org.apache.commons.math3.util.KthSelector;
+
+import com.carrotsearch.hppc.IntIntMap;
+import com.carrotsearch.hppc.cursors.IntIntCursor;
 
 public class Util {
 
@@ -142,4 +146,18 @@ public class Util {
         }
         return result.doubleValue();
     }
+
+    public static int getTopKey(IntIntMap map,
+                                int defaultValue) {
+        int[] topKey = { defaultValue };
+        int[] topCount = { 0 };
+        map.forEach((Consumer<? super IntIntCursor>) c -> {
+            if (c.value > topCount[0]) {
+                topCount[0] = c.value;
+                topKey[0] = c.key;
+            }
+        });
+        return topKey[0];
+    }
+
 }

@@ -144,7 +144,8 @@ public class PerformanceTest {
                                                                     "src/test/resources/Costanzo_Science_2010.edges.txt",
                                                                     false);
 
-        AnnotationParser annotationParser = new TabDelimitedAnnotationParser("src/test/resources/hoepfner_movva_2014_hop_known.txt.gz");
+        AnnotationParser annotationParser = new TabDelimitedAnnotationParser("src/test/resources/hoepfner_movva_2014_hop_known.txt.gz",
+                                                                             0, "#");
         AnnotationProviderFactory annotationProviderFactory = (networkProvider) -> {
             try {
                 return new DenseAnnotationProvider(networkProvider, annotationParser);
@@ -183,7 +184,8 @@ public class PerformanceTest {
                                                                     "src/test/resources/Costanzo_Science_2010.edges.txt",
                                                                     false);
 
-        AnnotationParser annotationParser = new TabDelimitedAnnotationParser("src/test/resources/go_bp_140819.txt.gz");
+        AnnotationParser annotationParser = new TabDelimitedAnnotationParser("src/test/resources/go_bp_140819.txt.gz",
+                                                                             0, "#");
         AnnotationProviderFactory annotationProviderFactory = (networkProvider) -> {
             try {
                 return new SparseAnnotationProvider(networkProvider, annotationParser);
