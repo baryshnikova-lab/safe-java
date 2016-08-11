@@ -1,0 +1,6 @@
+	group1	group2	group3	group4	group5	group6
+YJL118W	1	1	0	0	0	1
+YCR033W	1	0	0	1	0	0
+YER110C	0	1	1	0	0	1
+YMR200W	0	0	0	1	0	0
+YOR214C	0	0	0	1	0	0
