@@ -18,7 +18,6 @@ import javax.swing.JPanel;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.swing.DialogTaskManager;
 
-import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.GroupingMethod;
 import edu.princeton.safe.RestrictionMethod;
 import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
@@ -60,8 +59,6 @@ public class CompositeMapController {
     JComboBox<NameValuePair<Factory<GroupingMethod>>> groupingMethods;
     JFormattedTextField similarityThreshold;
 
-    JComboBox<NameValuePair<Integer>> analysisTypes;
-
     JCheckBox randomizeColorsCheckBox;
 
     public CompositeMapController(DialogTaskManager taskManager,
@@ -101,7 +98,6 @@ public class CompositeMapController {
 
         SafeUtil.setSelected(restrictionMethods, session.getRestrictionMethod());
         SafeUtil.setSelected(groupingMethods, session.getGroupingMethod());
-        SafeUtil.setSelected(analysisTypes, session.getAnalysisType());
 
         randomizeColorsCheckBox.setSelected(session.getRandomizeColors());
 
@@ -119,11 +115,6 @@ public class CompositeMapController {
         }
 
         panel.setEnabled(true);
-
-        AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
-        boolean isBinary = annotationProvider.isBinary();
-
-        analysisTypes.setEnabled(!isBinary);
     }
 
     Component getPanel() {
@@ -139,8 +130,6 @@ public class CompositeMapController {
 
         groupingMethods = new JComboBox<>(createSimilarityMetricModel());
         similarityThreshold = new JFormattedTextField(NumberFormat.getNumberInstance());
-
-        analysisTypes = new JComboBox<>(createAnalysisTypeModel());
 
         JButton button = createBuildButton();
 
@@ -160,9 +149,6 @@ public class CompositeMapController {
         panel.add(groupingMethods, "wrap");
         panel.add(new JLabel("Similarity threshold"));
         panel.add(similarityThreshold, "growx, wmax 200, wrap");
-
-        panel.add(new JLabel("Values to consider"));
-        panel.add(analysisTypes, "wrap");
 
         panel.add(randomizeColorsCheckBox, "skip 1, wrap");
 

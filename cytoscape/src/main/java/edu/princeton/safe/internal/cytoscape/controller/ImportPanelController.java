@@ -90,6 +90,7 @@ public class ImportPanelController {
         consumer = new ImportTaskConsumer() {
             @Override
             public void accept(EnrichmentLandscape landscape) {
+                session.setAnalysisMethod(null);
                 session.setCompositeMap(null);
                 eventService.notifyListeners((CompositeMap) null);
 
