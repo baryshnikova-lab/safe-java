@@ -1,40 +1,40 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>edu.princeton.safe</groupId>
-		<artifactId>safe-parent</artifactId>
-		<version>1.0.0-beta1</version>
-		<relativePath>..</relativePath>
-	</parent>
+    <parent>
+        <groupId>edu.princeton.safe</groupId>
+        <artifactId>safe-parent</artifactId>
+        <version>1.0.0-beta1</version>
+        <relativePath>..</relativePath>
+    </parent>
 
-	<properties>
-		<maven-bundle-plugin.version>2.3.4</maven-bundle-plugin.version>
-	</properties>
+    <properties>
+        <maven-bundle-plugin.version>2.3.4</maven-bundle-plugin.version>
+    </properties>
 
-	<artifactId>safe-core</artifactId>
-	<packaging>jar</packaging>
-	<name>SAFE Core</name>
+    <artifactId>safe-core</artifactId>
+    <packaging>jar</packaging>
+    <name>SAFE Core</name>
 
-	<dependencies>
+    <dependencies>
         <dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-math3</artifactId>
-			<version>3.6.1</version>
-		</dependency>
-
-        <dependency>
-			<groupId>com.carrotsearch</groupId>
-			<artifactId>hppc</artifactId>
-			<version>0.7.1</version>
-		</dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
+        </dependency>
 
         <dependency>
-			<groupId>colt</groupId>
-			<artifactId>colt</artifactId>
-			<version>1.2.0</version>
-		</dependency>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>hppc</artifactId>
+            <version>0.7.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>colt</groupId>
+            <artifactId>colt</artifactId>
+            <version>1.2.0</version>
+        </dependency>
 
         <dependency>
             <groupId>org.jgrapht</groupId>
@@ -54,12 +54,12 @@
             <version>1.1.5</version>
         </dependency>
 
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.11</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 </project>
