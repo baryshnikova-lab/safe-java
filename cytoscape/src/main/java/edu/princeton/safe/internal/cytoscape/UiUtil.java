@@ -183,7 +183,8 @@ public class UiUtil {
 
     public static void packColumns(JTable table) {
         int padding = 5;
-        int[] widths = new int[table.getColumnCount()];
+        TableColumnModel columnModel = table.getColumnModel();
+        int[] widths = new int[columnModel.getColumnCount()];
         for (int j = 0; j < table.getRowCount(); j++) {
             for (int i = 0; i < widths.length; i++) {
                 TableCellRenderer renderer = table.getCellRenderer(j, i);
@@ -197,7 +198,6 @@ public class UiUtil {
             }
         }
 
-        TableColumnModel columnModel = table.getColumnModel();
         JTableHeader header = table.getTableHeader();
         int remaining = table.getParent()
                              .getWidth();

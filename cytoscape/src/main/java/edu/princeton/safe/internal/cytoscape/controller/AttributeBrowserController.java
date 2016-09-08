@@ -184,7 +184,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         JTable table = filteredTable.getTable();
         TableColumnModel columnModel = table.getColumnModel();
 
-        int columnCount = table.getColumnCount();
+        int columnCount = columnModel.getColumnCount();
         AnalysisMethod analysisMethod = session.getAnalysisMethod();
         if (analysisMethod == AnalysisMethod.HighestAndLowest && columnCount != 3) {
             columnModel.addColumn(optionalColumn);
