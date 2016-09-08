@@ -106,6 +106,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         analysisMethods.addActionListener((e) -> {
             updateAnalysisMethod();
             updateTableStructure();
+            updateTableLayout();
         });
 
         selectSignificantButton = new JButton("Select Significant Nodes");
@@ -471,13 +472,23 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         }
 
         analysisMethods.setModel(new DefaultComboBoxModel<>(model));
-        SafeUtil.setSelected(analysisMethods, session.getAnalysisMethod());
+        if (session.getAnalysisMethod() != null) {
+            SafeUtil.setSelected(analysisMethods, session.getAnalysisMethod());
+        } else {
+            SafeUtil.setSelected(analysisMethods, isBinary ? AnalysisMethod.Highest : AnalysisMethod.HighestAndLowest);
+        }
 
-        analysisMethods.setEnabled(isBinary);
+        analysisMethods.setEnabled(!isBinary);
     }
 
     @Override
     public void expansionChanged(boolean isExpanded) {
+        if (isExpanded) {
+            updateTableLayout();
+        }
+    }
+    
+    void updateTableLayout() {
         SwingUtilities.invokeLater(() -> {
             UiUtil.packColumns(filteredTable.getTable());
         });
