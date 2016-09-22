@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -14,7 +15,8 @@ import edu.princeton.safe.AnnotationProvider;
 
 public class DomainLabeller {
 
-    static Set<String> stopWords;
+    static final Set<String> stopWords;
+    static final Pattern goAccessionPattern;
 
     static {
         stopWords = new HashSet<>();
@@ -22,13 +24,18 @@ public class DomainLabeller {
                                           "process" }) {
             stopWords.add(word);
         }
+        goAccessionPattern = Pattern.compile("GO:\\d+", Pattern.CASE_INSENSITIVE);
     }
 
     static boolean isStopWord(String word) {
         if (word == null) {
             return true;
         }
-        return stopWords.contains(word.toLowerCase());
+        if (stopWords.contains(word.toLowerCase())) {
+            return true;
+        }
+        return goAccessionPattern.matcher(word)
+                                 .matches();
     }
 
     static void assignLabels(AnnotationProvider annotationProvider,
