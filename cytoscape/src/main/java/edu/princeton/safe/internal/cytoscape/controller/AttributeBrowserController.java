@@ -487,7 +487,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
             updateTableLayout();
         }
     }
-    
+
     void updateTableLayout() {
         SwingUtilities.invokeLater(() -> {
             UiUtil.packColumns(filteredTable.getTable());
