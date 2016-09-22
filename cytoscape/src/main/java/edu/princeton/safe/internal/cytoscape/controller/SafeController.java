@@ -274,7 +274,7 @@ public class SafeController
         Component step4Section = domainBrowser.getPanel();
         ExpanderController step4Controller = SafeUtil.addExpandingSection(panel, "Step 4: View Composite Map",
                                                                           step4Section, domainBrowser,
-                                                                          "grow, hmin 100, hmax 200, wrap");
+                                                                          "grow, hmin 100, hmax 300, wrap");
 
         JScrollPane container = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
