@@ -41,7 +41,7 @@ public class SparseNetworkProvider implements NetworkProvider {
             @Override
             public void node(int nodeIndex,
                              String label,
-                             String id,
+                             List<String> id,
                              double x,
                              double y) {
                 Node node = new Node();
@@ -111,12 +111,12 @@ public class SparseNetworkProvider implements NetworkProvider {
     }
 
     @Override
-    public String getNodeId(int nodeIndex) {
+    public List<String> getNodeIds(int nodeIndex) {
         return nodes.get(nodeIndex).id;
     }
 
     private class Node {
-        String id;
+        List<String> id;
         String label;
         double x;
         double y;

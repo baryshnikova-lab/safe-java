@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -225,10 +226,20 @@ public class SafeUtil {
     public static Stream<String> getStringColumnNames(CyTable table) {
         return table.getColumns()
                     .stream()
-                    .filter(c -> c.getType()
-                                  .equals(String.class))
+                    .filter(c -> isStringColumn(c))
                     .map(c -> c.getName())
                     .sorted(String.CASE_INSENSITIVE_ORDER);
     }
 
+    static boolean isStringColumn(CyColumn column) {
+        Class<?> type = column.getType();
+        if (type.equals(String.class)) {
+            return true;
+        }
+        if (type.equals(List.class) && column.getListElementType()
+                                             .equals(String.class)) {
+            return true;
+        }
+        return false;
+    }
 }

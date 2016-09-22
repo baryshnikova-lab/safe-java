@@ -2,12 +2,16 @@ package edu.princeton.safe.internal.cytoscape.io;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
+import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
+import org.cytoscape.model.CyTable;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.presentation.property.BasicVisualLexicon;
@@ -52,6 +56,11 @@ public class CyNetworkParser implements NetworkParser {
                           .anyMatch(e -> e.getModel()
                                           .isDirected());
 
+        CyTable nodeTable = network.getDefaultNodeTable();
+        CyColumn idColumnModel = nodeTable.getColumn(idColumn);
+        boolean idIsList = idColumnModel.getType()
+                                        .equals(List.class);
+
         nodesBySuid = new LongIntScatterMap();
         int[] index = { 0 };
         Collection<View<CyNode>> nodes = view.getNodeViews();
@@ -70,8 +79,16 @@ public class CyNetworkParser implements NetworkParser {
 
                      CyRow row = network.getRow(node);
                      String name = row.get(nameColumn, String.class);
-                     String id = row.get(idColumn, String.class);
-                     consumer.node(index[0], name, id, x, y);
+
+                     List<String> ids;
+                     if (idIsList) {
+                         ids = row.getList(idColumn, String.class);
+                     } else {
+                         String id = row.get(idColumn, String.class);
+                         ids = Collections.singletonList(id);
+                     }
+
+                     consumer.node(index[0], name, ids, x, y);
                      nodesBySuid.put(node.getSUID(), index[0]);
                      index[0]++;
                  }

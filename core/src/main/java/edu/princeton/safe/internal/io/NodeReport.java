@@ -45,7 +45,10 @@ public class NodeReport {
                      writer.print(labelFunction.get(nodeIndex));
                      writer.print("\t");
 
-                     writer.print(networkProvider.getNodeId(nodeIndex));
+                     writer.print(networkProvider.getNodeIds(nodeIndex)
+                                                 .stream()
+                                                 .findFirst()
+                                                 .orElse(null));
                      writer.print("\t");
 
                      // To match MATLAB output, 1 means no domain. 2+ means node

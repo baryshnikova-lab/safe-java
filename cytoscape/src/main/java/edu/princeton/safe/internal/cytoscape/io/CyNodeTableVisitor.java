@@ -3,6 +3,7 @@ package edu.princeton.safe.internal.cytoscape.io;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.model.CyTable;
 
@@ -35,8 +36,15 @@ public class CyNodeTableVisitor implements NodeTableVisitor {
         IntStream.range(0, columnNames.size())
                  .forEach(index -> {
                      String name = columnNames.get(index);
-                     String value = row.get(name, String.class);
-                     consumer.cell(index, value);
+                     CyColumn column = nodeTable.getColumn(name);
+                     if (column.getType()
+                               .equals(List.class)) {
+                         List<String> list = row.getList(name, String.class);
+                         list.forEach(value -> consumer.cell(index, value));
+                     } else {
+                         String value = row.get(name, String.class);
+                         consumer.cell(index, value);
+                     }
                  });
         consumer.endNode();
         lastNodeIndex++;

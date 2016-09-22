@@ -49,13 +49,16 @@ public abstract class CyAnnotationParser implements AnnotationParser {
         // Create look up for node label -> node index
         HashMap<String, IntArrayList> nodeIdsToIndexes = new HashMap<>();
         for (int i = 0; i < totalNetworkNodes; i++) {
-            String key = networkProvider.getNodeId(i);
-            IntArrayList list = nodeIdsToIndexes.get(key);
-            if (list == null) {
-                list = new IntArrayList();
-                nodeIdsToIndexes.put(key, list);
-            }
-            list.add(i);
+            int idIndex = i;
+            networkProvider.getNodeIds(i)
+                           .forEach(key -> {
+                               IntArrayList list = nodeIdsToIndexes.get(key);
+                               if (list == null) {
+                                   list = new IntArrayList();
+                                   nodeIdsToIndexes.put(key, list);
+                               }
+                               list.add(idIndex);
+                           });
         }
 
         int totalAnnotationNodes = 0;

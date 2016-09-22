@@ -48,13 +48,16 @@ public class TabDelimitedAnnotationParser extends TabDelimitedParser implements 
         nodeIdsToIndexes = new HashMap<>();
         int totalNodes = networkProvider.getNodeCount();
         for (int i = 0; i < totalNodes; i++) {
-            String key = networkProvider.getNodeId(i);
-            IntArrayList list = nodeIdsToIndexes.get(key);
-            if (list == null) {
-                list = new IntArrayList();
-                nodeIdsToIndexes.put(key, list);
-            }
-            list.add(i);
+            int idIndex = i;
+            networkProvider.getNodeIds(i)
+                           .forEach(key -> {
+                               IntArrayList list = nodeIdsToIndexes.get(key);
+                               if (list == null) {
+                                   list = new IntArrayList();
+                                   nodeIdsToIndexes.put(key, list);
+                               }
+                               list.add(idIndex);
+                           });
         }
 
         notSeen = new HashMap<>(nodeIdsToIndexes);
