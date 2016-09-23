@@ -43,7 +43,7 @@ public class SafeSession {
 
     public SafeSession() {
         // TODO: Expose as setting
-        setQuantitativeIterations(100);
+        setQuantitativeIterations(1000);
     }
 
     public CyNetworkView getNetworkView() {
