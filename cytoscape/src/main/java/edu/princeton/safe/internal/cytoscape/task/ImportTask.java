@@ -56,8 +56,12 @@ public class ImportTask extends AbstractTask {
         monitor.showMessage(Level.INFO, String.format("Nodes imported: %d", networkProvider.getNodeCount()));
         monitor.showMessage(Level.INFO, String.format("Nodes skipped: %d", parser.getSkippedNodeCount()));
         monitor.showMessage(Level.INFO, String.format("Edges imported: %d", parser.getEdgeCount()));
-        monitor.showMessage(Level.INFO, String.format("Edges skipped: %d", parser.getSkippedEdgeCount()));
+        monitor.showMessage(Level.INFO, String.format("Edges not mapped: %d", parser.getSkippedEdgeCount()));
 
+        if (weightColumn != null) {
+            monitor.showMessage(Level.INFO, String.format("Edges with missing weight: %d", parser.getMissingWeightCount()));
+        }
+        
         consumer.accept(parser.getNodeMappings());
 
         monitor.setStatusMessage("Loading annotations...");

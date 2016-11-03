@@ -35,6 +35,7 @@ public class CyNetworkParser implements NetworkParser {
     int totalSkippedNodes;
     int totalEdges;
     int totalSkippedEdges;
+    int totalMissingWeights;
     LongIntMap nodesBySuid;
 
     public CyNetworkParser(CyNetworkView view,
@@ -100,7 +101,17 @@ public class CyNetworkParser implements NetworkParser {
         if (weightColumn == null) {
             weight = r -> 1;
         } else {
-            weight = r -> r.get(weightColumn, Double.class);
+            weight = r -> {
+                Double value = r.get(weightColumn, Double.class);
+                if (value == null) {
+                    totalMissingWeights++;
+                    return Double.NaN;
+                }
+                if (!Double.isFinite(value)) {
+                    totalMissingWeights++;
+                }
+                return value.doubleValue();
+            };
         }
 
         consumer.startEdges();
@@ -153,6 +164,10 @@ public class CyNetworkParser implements NetworkParser {
         return totalEdges;
     }
 
+    public int getMissingWeightCount() {
+        return totalMissingWeights;
+    }
+    
     public LongIntMap getNodeMappings() {
         return nodesBySuid;
     }
