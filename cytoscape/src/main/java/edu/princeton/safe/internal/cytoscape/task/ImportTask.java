@@ -9,8 +9,10 @@ import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskMonitor.Level;
 
 import edu.princeton.safe.AnnotationProvider;
+import edu.princeton.safe.DistanceMetric;
 import edu.princeton.safe.EnrichmentLandscapeBuilder;
 import edu.princeton.safe.FactoryMethod;
+import edu.princeton.safe.distance.EdgeWeightedDistanceMetric;
 import edu.princeton.safe.internal.DefaultEnrichmentLandscapeBuilder;
 import edu.princeton.safe.internal.DenseAnnotationProvider;
 import edu.princeton.safe.internal.SparseNetworkProvider;
@@ -42,12 +44,17 @@ public class ImportTask extends AbstractTask {
 
         String nameColumn = session.getNameColumn();
         String idColumn = session.getIdColumn();
-        String weightColumn = session.getWeightColumn();
+        String weightColumn = null;
 
         if (idColumn == null) {
             idColumn = nameColumn;
         }
 
+        DistanceMetric distanceMetric = session.getDistanceMetric();
+        if (EdgeWeightedDistanceMetric.ID.equals(distanceMetric.getId())) {
+            weightColumn = session.getWeightColumn();
+        }
+        
         monitor.setStatusMessage("Loading network...");
 
         CyNetworkParser parser = new CyNetworkParser(view, nameColumn, idColumn, weightColumn);
