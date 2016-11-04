@@ -101,16 +101,20 @@ public class CyNetworkParser implements NetworkParser {
         if (weightColumn == null) {
             weight = r -> 1;
         } else {
+            CyTable edgeTable = network.getDefaultEdgeTable();
+            CyColumn edgeWeightColumn = edgeTable.getColumn(weightColumn);
+            Class<?> weightType = edgeWeightColumn.getType();
             weight = r -> {
-                Double value = r.get(weightColumn, Double.class);
+                Number value = (Number) r.get(weightColumn, weightType);
                 if (value == null) {
                     totalMissingWeights++;
                     return Double.NaN;
                 }
-                if (!Double.isFinite(value)) {
+                double doubleValue = value.doubleValue();
+                if (!Double.isFinite(doubleValue)) {
                     totalMissingWeights++;
                 }
-                return value.doubleValue();
+                return doubleValue;
             };
         }
 
