@@ -3,10 +3,12 @@ package edu.princeton.safe.internal.cytoscape.task;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.CompositeMapBuilder;
 import edu.princeton.safe.internal.cytoscape.io.CyProgressReporter;
 import edu.princeton.safe.internal.cytoscape.model.SafeSession;
 import edu.princeton.safe.model.CompositeMap;
+import edu.princeton.safe.model.EnrichmentLandscape;
 
 public class BuildCompositeMapTask extends AbstractTask {
 
@@ -34,6 +36,19 @@ public class BuildCompositeMapTask extends AbstractTask {
                                            .build();
 
         consumer.accept(compositeMap);
+
+        boolean hasHighestDomains = compositeMap.getDomains(EnrichmentLandscape.TYPE_HIGHEST) != null;
+        boolean hasLowestDomains = compositeMap.getDomains(EnrichmentLandscape.TYPE_LOWEST) != null;
+
+        EnrichmentLandscape landscape = session.getEnrichmentLandscape();
+        AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
+
+        boolean hasDomains = annotationProvider.isBinary() && hasHighestDomains;
+        hasDomains = hasDomains || !annotationProvider.isBinary() && hasHighestDomains && hasLowestDomains;
+
+        if (!hasDomains) {
+            throw new Exception("No domains were found");
+        }
     }
 
 }

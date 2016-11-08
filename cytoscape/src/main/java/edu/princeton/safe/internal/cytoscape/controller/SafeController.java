@@ -316,6 +316,10 @@ public class SafeController
             if (compositeMap == null) {
                 step4Controller.setEnabled(false);
                 step4Controller.setExpanded(false);
+            } else if (compositeMap.getDomains(EnrichmentLandscape.TYPE_HIGHEST) == null
+                    && compositeMap.getDomains(EnrichmentLandscape.TYPE_LOWEST) == null) {
+                step4Controller.setEnabled(false);
+                step4Controller.setExpanded(false);
             } else {
                 step1Controller.setExpanded(false);
                 step2Controller.setExpanded(false);

@@ -323,16 +323,24 @@ public class DomainBrowserController implements ExpansionChangeListener {
             AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
 
             boolean isBinary = annotationProvider.isBinary();
-            analysisTypes.setEnabled(!isBinary);
+            boolean hasHighestDomains = compositeMap.getDomains(EnrichmentLandscape.TYPE_HIGHEST) != null;
+            analysisTypes.setEnabled(!isBinary && hasHighestDomains);
 
             NameValuePair<Integer> pair = (NameValuePair<Integer>) analysisTypes.getSelectedItem();
             Integer analysisType = pair.getValue();
-            if (isBinary && analysisType != 0) {
+            if (isBinary && analysisType != EnrichmentLandscape.TYPE_HIGHEST) {
                 analysisTypes.setSelectedIndex(0);
+                return;
+            } else if (!isBinary && !hasHighestDomains && analysisType != EnrichmentLandscape.TYPE_LOWEST) {
+                analysisTypes.setSelectedIndex(1);
                 return;
             }
 
             List<? extends Domain> domains = compositeMap.getDomains(analysisType);
+            if (domains == null) {
+                return;
+            }
+
             int totalDomains = domains.size();
             List<double[]> colors = IntStream.range(0, totalDomains)
                                              .mapToObj(i -> {

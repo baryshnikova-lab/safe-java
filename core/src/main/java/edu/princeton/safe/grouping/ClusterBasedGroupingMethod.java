@@ -57,13 +57,24 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
             }
         }
         int totalFiltered = filteredIndexes.size();
+        if (totalFiltered < 2) {
+            progressReporter.setStatus("Warning: Less than two attributes remain after filtering", totalFiltered);
+
+            if (totalFiltered == 1) {
+                consumer.startDomain(typeIndex);
+                int attributeIndex = filteredIndexes.get(0);
+                consumer.attribute(attributeIndex);
+                consumer.endDomain();
+            }
+            return;
+        }
+
         progressReporter.setStatus("Top attributes: %d", totalFiltered);
 
         progressReporter.setStatus("Computing attribute distances...");
         double[][] scores = computeScores(landscape, totalAttributes, filteredIndexes, typeIndex);
         progressReporter.setStatus("Computing dissimilarity matrix...");
         double[] distances = pdist(scores, distanceMethod);
-
 
         List<IntArrayList> clusters = computeClusters(totalFiltered, distances, progressReporter, annotationProvider,
                                                       filteredIndexes);
@@ -127,7 +138,6 @@ public class ClusterBasedGroupingMethod implements GroupingMethod {
         DendrogramNode root = builder.getRoot();
         double height = maximumDissimilarity.getAsDouble();
         List<DendrogramNode> roots = Dendrogram.cut(root, threshold * height);
-
 
         progressReporter.setStatus("Cluster tree height: %f", height);
 

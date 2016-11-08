@@ -33,6 +33,9 @@ public class DefaultCompositeMap implements CompositeMap {
 
     @Override
     public List<? extends Domain> getDomains(int typeIndex) {
+        if (typeIndex < 0 || typeIndex >= domainsByType.length) {
+            return null;
+        }
         return domainsByType[typeIndex];
     }
 
