@@ -54,7 +54,7 @@ public class ImportTask extends AbstractTask {
         if (EdgeWeightedDistanceMetric.ID.equals(distanceMetric.getId())) {
             weightColumn = session.getWeightColumn();
         }
-        
+
         monitor.setStatusMessage("Loading network...");
 
         CyNetworkParser parser = new CyNetworkParser(view, nameColumn, idColumn, weightColumn);
@@ -66,9 +66,10 @@ public class ImportTask extends AbstractTask {
         monitor.showMessage(Level.INFO, String.format("Edges not mapped: %d", parser.getSkippedEdgeCount()));
 
         if (weightColumn != null) {
-            monitor.showMessage(Level.INFO, String.format("Edges with missing weight: %d", parser.getMissingWeightCount()));
+            monitor.showMessage(Level.INFO,
+                                String.format("Edges with missing weight: %d", parser.getMissingWeightCount()));
         }
-        
+
         consumer.accept(parser.getNodeMappings());
 
         monitor.setStatusMessage("Loading annotations...");

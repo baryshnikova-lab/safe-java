@@ -171,7 +171,7 @@ public class CyNetworkParser implements NetworkParser {
     public int getMissingWeightCount() {
         return totalMissingWeights;
     }
-    
+
     public LongIntMap getNodeMappings() {
         return nodesBySuid;
     }
