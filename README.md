@@ -2,7 +2,9 @@
 
 ## Introduction
 
-This is the Java port of the [original implementation of the SAFE algorithm in MATLAB](https://bitbucket.org/abarysh/safe). This project also includes a [Cytoscape](http://cytoscape.org/) app featuring an interactive version of the algorithm.
+This is the Java implementation of the SAFE algorithm. This project also includes a SAFE app for [Cytoscape](http://cytoscape.org/) featuring an interactive version of the algorithm (see the [instructions](https://github.com/baryshnikova-lab/safe-java/wiki) on download and installation).
+
+The original SAFE code in MATLAB is available at https://bitbucket.org/abarysh/safe.
 
 ### Compilation
 
