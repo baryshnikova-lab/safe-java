@@ -1,21 +1,29 @@
 package edu.princeton.safe.internal.cytoscape;
 
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Set;
 
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.text.html.HTMLEditorKit;
 
 public class UiUtil {
     public static JPanel createJPanel() {
@@ -226,6 +234,59 @@ public class UiUtil {
             column.setWidth(widths[i]);
         }
 
+    }
+
+    public static JEditorPane createEditorPane(String text) {
+        JEditorPane pane = new JEditorPane();
+        pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
+        pane.setEditorKit(new HTMLEditorKit());
+        pane.setOpaque(false);
+        pane.setEditable(false);
+        pane.setText(text);
+        return pane;
+    }
+
+    public static JEditorPane createLinkEnabledEditorPane(final Component parent,
+                                                          String text) {
+        JEditorPane pane = createEditorPane(text);
+        HyperlinkListener linkListener = new HyperlinkListener() {
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    URL url = e.getURL();
+                    if (!openBrowser(e.getURL())) {
+                        JOptionPane.showMessageDialog(parent,
+                                                      "An error occurred while opening the URL: " + url.toString(),
+                                                      "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        };
+        pane.addHyperlinkListener(linkListener);
+        return pane;
+    }
+
+    public static boolean openBrowser(URL url) {
+        if (!Desktop.isDesktopSupported())
+            return false;
+        try {
+            Desktop.getDesktop()
+                   .browse(url.toURI());
+            return true;
+        } catch (IOException e) {
+        } catch (URISyntaxException e) {
+            return false;
+        }
+
+        for (String browser : new String[] { "xdg-open", "htmlview", "firefox", "mozilla", "konqueror", "chrome",
+                                             "chromium" }) {
+            final ProcessBuilder builder = new ProcessBuilder(browser, url.toString());
+            try {
+                builder.start();
+                return true;
+            } catch (IOException e) {
+            }
+        }
+        return false;
     }
 
 }

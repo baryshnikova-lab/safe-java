@@ -12,6 +12,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -181,6 +182,10 @@ public class ImportPanelController {
     JComponent createPanel() {
         JPanel panel = UiUtil.createJPanel();
         panel.setLayout(new MigLayout("fillx, insets 0, hidemode 3", "[grow 0, right]rel[left]"));
+
+        JEditorPane examplesLabel = UiUtil.createLinkEnabledEditorPane(panel,
+                                                                       "<html><a href=\"https://github.com/baryshnikova-lab/safe-java/wiki\">Examples</a>");
+        panel.add(examplesLabel, "grow 0, skip 1, wrap");
 
         JButton chooseAnnotationFileButton = annotationChooser.getChooseButton();
         JTextField annotationPath = annotationChooser.getTextField();
