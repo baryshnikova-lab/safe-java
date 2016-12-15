@@ -467,14 +467,22 @@ public class AttributeBrowserController implements ExpansionChangeListener {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     void updateAnalysisMethods(AnnotationProvider provider) {
+        String highestBullet = UiUtil.getBulletHtml(StyleFactory.POSITIVE);
+        String lowestBullet = UiUtil.getBulletHtml(StyleFactory.NEGATIVE);
+
         NameValuePair[] model;
         boolean isBinary = provider.isBinary();
         if (isBinary) {
-            model = new NameValuePair[] { new NameValuePair<>("Highest", AnalysisMethod.Highest) };
+            model = new NameValuePair[] { new NameValuePair<>(String.format("<html>%s Highest", highestBullet),
+                                                              AnalysisMethod.Highest) };
         } else {
-            model = new NameValuePair[] { new NameValuePair<>("Highest and lowest", AnalysisMethod.HighestAndLowest),
-                                          new NameValuePair<>("Highest", AnalysisMethod.Highest),
-                                          new NameValuePair<>("Lowest", AnalysisMethod.Lowest) };
+            model = new NameValuePair[] { new NameValuePair<>(String.format("<html>%s Highest and %s Lowest",
+                                                                            highestBullet, lowestBullet),
+                                                              AnalysisMethod.HighestAndLowest),
+                                          new NameValuePair<>(String.format("<html>%s Highest", highestBullet),
+                                                              AnalysisMethod.Highest),
+                                          new NameValuePair<>(String.format("<html>%s Lowest", lowestBullet),
+                                                              AnalysisMethod.Lowest) };
         }
 
         analysisMethods.setModel(new DefaultComboBoxModel<>(model));

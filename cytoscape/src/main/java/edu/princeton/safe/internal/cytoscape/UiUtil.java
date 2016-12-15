@@ -1,5 +1,6 @@
 package edu.princeton.safe.internal.cytoscape;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.FileDialog;
@@ -289,4 +290,9 @@ public class UiUtil {
         return false;
     }
 
+    public static String getBulletHtml(Color color) {
+        String hexColor = String.format("#%02x%02x%02x", Math.round(color.getRed()), Math.round(color.getGreen()),
+                                        Math.round(color.getBlue()));
+        return String.format("<span style=\"color: %s; font-family: FontAwesome\">\uf111</span>", hexColor);
+    }
 }
