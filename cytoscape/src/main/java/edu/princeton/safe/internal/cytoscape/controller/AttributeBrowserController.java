@@ -13,6 +13,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -59,6 +60,8 @@ public class AttributeBrowserController implements ExpansionChangeListener {
     FilteredTable<AttributeRow> filteredTable;
     JButton selectSignificantButton;
 
+    volatile boolean allowUpdates;
+
     public AttributeBrowserController(VisualMappingManager visualMappingManager,
                                       StyleFactory styleFactory) {
 
@@ -104,9 +107,16 @@ public class AttributeBrowserController implements ExpansionChangeListener {
              .addListSelectionListener(createListSelectionListener(table, sorter));
 
         analysisMethods.addActionListener((e) -> {
-            updateAnalysisMethod();
-            updateTableStructure();
-            updateTableLayout();
+            boolean lastState = allowUpdates;
+            allowUpdates = false;
+            try {
+                updateAnalysisMethod();
+                updateTableStructure();
+                updateTableLayout();
+            } finally {
+                allowUpdates = lastState;
+                updateSelectedAttributes();
+            }
         });
 
         selectSignificantButton = new JButton("Select Significant Nodes");
@@ -228,7 +238,28 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         AnalysisMethod method = pair.getValue();
         session.setAnalysisMethod(method);
 
+        int[] selection = getSelectedRows();
         attributeTableModel.fireTableStructureChanged();
+        setSelectedRows(selection);
+    }
+
+    int[] getSelectedRows() {
+        JTable table = filteredTable.getTable();
+        return table.getSelectedRows();
+    }
+
+    void setSelectedRows(int[] selection) {
+        JTable table = filteredTable.getTable();
+        ListSelectionModel selectionModel = table.getSelectionModel();
+        try {
+            selectionModel.setValueIsAdjusting(true);
+            selectionModel.clearSelection();
+            for (int index : selection) {
+                selectionModel.addSelectionInterval(index, index);
+            }
+        } finally {
+            selectionModel.setValueIsAdjusting(false);
+        }
     }
 
     @SuppressWarnings("serial")
@@ -342,8 +373,19 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         }
     }
 
+    void updateSelectedAttributes() {
+        TableRowSorter<TableModel> sorter = filteredTable.getSorter();
+        JTable table = filteredTable.getTable();
+        int[] rows = table.getSelectedRows();
+        updateSelectedAttributes(sorter, rows);
+    }
+
     void updateSelectedAttributes(TableRowSorter<TableModel> sorter,
                                   int[] rows) {
+
+        if (!allowUpdates || sorter.getViewRowCount() == 0) {
+            return;
+        }
 
         ScoringFunction scoringFunction = getScoringFunction();
         if (scoringFunction == null) {
@@ -415,6 +457,8 @@ public class AttributeBrowserController implements ExpansionChangeListener {
     void updateEnrichmentLandscape() {
         attributes.clear();
         try {
+            allowUpdates = false;
+
             if (session == null) {
                 return;
             }
@@ -457,10 +501,11 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         } finally {
             attributeTableModel.fireTableDataChanged();
 
-            JTable table = filteredTable.getTable();
-            if (attributeTableModel.getRowCount() > 0 && table.getSelectedRow() == -1) {
-                table.getSelectionModel()
-                     .setSelectionInterval(0, 0);
+            if (attributeTableModel.getRowCount() > 0) {
+                setSelectedRows(new int[] { 0 });
+
+                allowUpdates = true;
+                updateSelectedAttributes();
             }
         }
     }
