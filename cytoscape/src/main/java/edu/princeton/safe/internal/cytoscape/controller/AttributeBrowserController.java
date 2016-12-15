@@ -456,6 +456,12 @@ public class AttributeBrowserController implements ExpansionChangeListener {
 
         } finally {
             attributeTableModel.fireTableDataChanged();
+
+            JTable table = filteredTable.getTable();
+            if (attributeTableModel.getRowCount() > 0 && table.getSelectedRow() == -1) {
+                table.getSelectionModel()
+                     .setSelectionInterval(0, 0);
+            }
         }
     }
 
