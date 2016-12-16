@@ -68,10 +68,20 @@ public class TabDelimitedAnnotationParser extends TabDelimitedParser implements 
             }
 
             if (totalLines == labelLineIndex) {
-                String[] attributeLabels = Arrays.copyOfRange(parts, 1, parts.length);
-                expectedColumns = attributeLabels.length;
-                consumer.start(attributeLabels, totalNodes);
-                return false;
+                expectedColumns = parts.length - 1;
+                if (isProbablyHeader(parts)) {
+                    String[] attributeLabels = Arrays.copyOfRange(parts, 1, parts.length);
+                    consumer.start(attributeLabels, totalNodes);
+                    return false;
+                } else {
+                    // Header is likely missing so we generate attribute names
+                    // and treat line like values
+                    String[] attributeLabels = new String[expectedColumns];
+                    for (int i = 0; i < expectedColumns; i++) {
+                        attributeLabels[i] = String.format("Attribute %d", i + 1);
+                    }
+                    consumer.start(attributeLabels, totalNodes);
+                }
             }
 
             if (parts.length != expectedColumns + 1) {
@@ -92,6 +102,21 @@ public class TabDelimitedAnnotationParser extends TabDelimitedParser implements 
         } finally {
             consumer.finish(totalLines);
         }
+    }
+
+    boolean isDouble(String value) {
+        try {
+            Double.parseDouble(value);
+            return true;
+        } catch (Exception e) {
+        }
+        return false;
+    }
+
+    boolean isProbablyHeader(String[] parts) {
+        return Arrays.stream(parts, 1, parts.length)
+                     .anyMatch(s -> !isDouble(s) && s.chars()
+                                                     .anyMatch(c -> Character.isLetter(c)));
     }
 
     boolean handleParts(AnnotationConsumer consumer,
