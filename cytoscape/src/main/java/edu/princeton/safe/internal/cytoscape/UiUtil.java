@@ -190,7 +190,7 @@ public class UiUtil {
         OPEN_FILE, SAVE_FILE, OPEN_DIRECTORY,
     }
 
-    public static void packColumns(JTable table) {
+    public static void packColumns(JTable table, int width) {
         int padding = 5;
         TableColumnModel columnModel = table.getColumnModel();
         int[] widths = new int[columnModel.getColumnCount()];
@@ -208,8 +208,7 @@ public class UiUtil {
         }
 
         JTableHeader header = table.getTableHeader();
-        int remaining = table.getParent()
-                             .getWidth();
+        int remaining = width;
         for (int i = 0; i < widths.length; i++) {
             TableColumn column = columnModel.getColumn(i);
             TableCellRenderer renderer = column.getHeaderRenderer();
