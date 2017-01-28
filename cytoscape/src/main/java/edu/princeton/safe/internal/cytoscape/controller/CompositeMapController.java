@@ -192,8 +192,7 @@ public class CompositeMapController {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     ComboBoxModel<NameValuePair<Factory<GroupingMethod>>> createSimilarityMetricModel() {
-        NameValuePair[] items = { new NameValuePair<>("None",
-                                                      new Factory<>(null, () -> NullGroupingMethod.instance)),
+        NameValuePair[] items = { new NameValuePair<>("None", new Factory<>(null, () -> NullGroupingMethod.instance)),
                                   new NameValuePair<>("Jaccard", new Factory<>("jaccard", () -> {
                                       int totalAttributes = session.getEnrichmentLandscape()
                                                                    .getAnnotationProvider()
