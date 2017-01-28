@@ -67,20 +67,20 @@ public class AnnotationChooserController {
     }
 
     JButton createChooseButton() {
-        JButton button = new JButton("Choose");
+        JButton button = new JButton("Choose...");
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
                 Set<String> extensions = new HashSet<>();
                 try {
-                    File file = UiUtil.getFile(application.getJFrame(), "Select Annotation File", new File("."),
-                                               "Annotation File", extensions, FileSelectionMode.OPEN_FILE);
+                    File file = UiUtil.getFile(application.getJFrame(), "Select Attribute File", new File("."),
+                                               "Attribute File", extensions, FileSelectionMode.OPEN_FILE);
                     if (file != null) {
                         annotationPath.setText(file.getPath());
                         handleAnnotationFileSelected();
                     }
                 } catch (IOException e) {
-                    fail(e, "Unexpected error while reading annotation file");
+                    fail(e, "Unexpected error while reading attribute file");
                 }
             }
         });
@@ -154,7 +154,7 @@ public class AnnotationChooserController {
         double networkCoverage = (double) nodeHits / idMappingResult.totalNetworkNodes * 100;
         double annotationCoverage = (double) nodeHits / idMappingResult.totalAnnotationNodes * 100;
 
-        statusLabel.setText(String.format("<html><div>Network coverage: %.0f%%</div><div>Annotation coverage: %.0f%%</div></html>",
+        statusLabel.setText(String.format("<html><div>Network coverage: %.0f%%</div><div>Attribute coverage: %.0f%%</div></html>",
                                           networkCoverage, annotationCoverage));
         statusLabel.setVisible(true);
     }

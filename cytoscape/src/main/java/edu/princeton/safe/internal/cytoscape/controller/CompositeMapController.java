@@ -138,21 +138,19 @@ public class CompositeMapController {
         JPanel panel = UiUtil.createJPanel();
         panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
 
-        SafeUtil.addSubsection(panel, "Filter Attributes");
-        panel.add(new JLabel("Multi-regional"));
+        panel.add(new JLabel("Multi-regional landscapes"));
         panel.add(restrictionMethods, "wrap");
         panel.add(new JLabel("Min. landscape size"));
-        panel.add(minimumLandscapeSize, "growx, wmax 200, wrap");
+        panel.add(minimumLandscapeSize, "growx, wmax 50, wrap");
 
-        SafeUtil.addSubsection(panel, "Group Attributes");
-        panel.add(new JLabel("Similarity metric"));
-        panel.add(groupingMethods, "wrap");
-        panel.add(new JLabel("Similarity threshold"));
-        panel.add(similarityThreshold, "growx, wmax 200, wrap");
+        panel.add(new JLabel("Landscape similarity"), "newline unrel");
+        panel.add(groupingMethods, "split 3");
+        panel.add(new JLabel("Threshold"));
+        panel.add(similarityThreshold, "growx, wmax 50, wrap");
 
-        panel.add(randomizeColorsCheckBox, "skip 1, wrap");
+        panel.add(randomizeColorsCheckBox, "newline unrel, skip 1, wrap");
 
-        panel.add(button, "skip 1, wrap");
+        panel.add(button, "newline unrel, skip 1, wrap");
 
         return panel;
     }
@@ -194,7 +192,7 @@ public class CompositeMapController {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     ComboBoxModel<NameValuePair<Factory<GroupingMethod>>> createSimilarityMetricModel() {
-        NameValuePair[] items = { new NameValuePair<>("None (no grouping)",
+        NameValuePair[] items = { new NameValuePair<>("None",
                                                       new Factory<>(null, () -> NullGroupingMethod.instance)),
                                   new NameValuePair<>("Jaccard", new Factory<>("jaccard", () -> {
                                       int totalAttributes = session.getEnrichmentLandscape()
@@ -215,7 +213,7 @@ public class CompositeMapController {
     ComboBoxModel<NameValuePair<Factory<RestrictionMethod>>> createFilteringMethodModel() {
         NameValuePair[] items = new NameValuePair[] { new NameValuePair<>("Do not remove",
                                                                           new Factory<>(null, () -> null)),
-                                                      new NameValuePair<>("Remove (Radius-based)",
+                                                      new NameValuePair<>("Remove",
                                                                           new Factory<>("radius",
                                                                                         () -> new RadiusBasedRestrictionMethod(getMinimumLandscapeSize(),
                                                                                                                                getDistanceThreshold()))) };

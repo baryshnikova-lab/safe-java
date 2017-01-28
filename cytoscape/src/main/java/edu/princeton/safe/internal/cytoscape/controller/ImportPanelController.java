@@ -190,7 +190,7 @@ public class ImportPanelController {
         JButton chooseAnnotationFileButton = annotationChooser.getChooseButton();
         JTextField annotationPath = annotationChooser.getTextField();
 
-        panel.add(new JLabel("Annotation file"));
+        panel.add(new JLabel("Attribute file"));
         panel.add(annotationPath, "growx, wmax 200, split 2");
         panel.add(chooseAnnotationFileButton, "wrap");
 
@@ -199,7 +199,7 @@ public class ImportPanelController {
 
         panel.add(annotationChooser.getStatusLabel(), "grow 0, skip 1, wrap");
 
-        distanceMetrics = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Map-based",
+        distanceMetrics = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Map-weighted",
                                                                                     new Factory<>("map",
                                                                                                   () -> new MapBasedDistanceMetric())),
                                                                 new NameValuePair<>("Edge-weighted",
@@ -211,7 +211,7 @@ public class ImportPanelController {
 
         distanceMetrics.addActionListener(event -> validateState());
 
-        weightColumnLabel = new JLabel("Weight Column");
+        weightColumnLabel = new JLabel("Weight column");
         weightColumnModel = new DefaultComboBoxModel<>();
         weightColumn = new JComboBox<>(weightColumnModel);
 
@@ -220,30 +220,30 @@ public class ImportPanelController {
         thresholdMethod = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("Percentile", Boolean.FALSE),
                                                                 new NameValuePair<>("Absolute", Boolean.TRUE) });
 
-        backgroundMethods = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("All nodes in network",
+        backgroundMethods = new JComboBox<>(new NameValuePair[] { new NameValuePair<>("All nodes in the network",
                                                                                       BackgroundMethod.Network),
-                                                                  new NameValuePair<>("All nodes in annotation standard",
+                                                                  new NameValuePair<>("All nodes in the attribute file",
                                                                                       BackgroundMethod.Annotation) });
 
         forceUndirectedEdges = new JCheckBox("Assume edges are undirected");
 
-        panel.add(new JLabel("Distance metric"));
+        panel.add(forceUndirectedEdges, "newline unrel, skip 1, wrap");
+
+        panel.add(new JLabel("Distance"));
         panel.add(distanceMetrics, "wrap");
 
         panel.add(weightColumnLabel);
         panel.add(weightColumn, "wrap");
 
-        panel.add(new JLabel("Max. distance threshold"));
-        panel.add(distanceThreshold, "split 2, growx, wmax 200");
+        panel.add(new JLabel("Threshold"));
+        panel.add(distanceThreshold, "split 2, growx, wmax 50");
         panel.add(thresholdMethod, "wrap");
 
-        panel.add(new JLabel("Background"));
+        panel.add(new JLabel("Background"), "newline unrel");
         panel.add(backgroundMethods, "wrap");
 
-        panel.add(forceUndirectedEdges, "skip 1, wrap");
-
         step1Button = createStep1Button();
-        panel.add(step1Button, "skip 1, wrap");
+        panel.add(step1Button, "newline unrel, skip 1, wrap");
 
         validateState();
 
