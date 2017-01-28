@@ -20,9 +20,9 @@ public class StyleFactory {
     public static final String ATTRIBUTE_BROWSER_STYLE = "SAFE Attribute Browser";
     public static final String DOMAIN_BROWSER_STYLE = "SAFE Domain Browser";
 
-    public static final Color NEGATIVE = new Color(0, 204, 255);
+    public static final Color NEGATIVE = new Color(0x2c, 0x7b, 0xb6);
     public static final Color ZERO = new Color(51, 51, 51);
-    public static final Color POSITIVE = new Color(255, 204, 0);
+    public static final Color POSITIVE = new Color(0xd7, 0x19, 0x1c);
 
     VisualStyleFactory visualStyleFactory;
     VisualMappingFunctionFactory continuousMappingFactory;
