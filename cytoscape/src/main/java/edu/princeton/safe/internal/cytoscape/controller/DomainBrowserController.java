@@ -17,7 +17,6 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -486,13 +485,6 @@ public class DomainBrowserController implements ExpansionChangeListener {
 
     @Override
     public void expansionChanged(boolean isExpanded) {
-        SwingUtilities.invokeLater(() -> {
-            JScrollPane container = filteredTable.getTableContainer();
-            container.validate();
-            int width = (int) container.getVisibleRect()
-                                       .getWidth();
-            UiUtil.packColumns(filteredTable.getTable(), width);
-        });
     }
 
     static interface ColorFunction {

@@ -37,7 +37,7 @@ public class FilteredTable<T> {
         table = new JTable(model);
 
         table.setFillsViewportHeight(true);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 
         sorter = new TableRowSorter<TableModel>(model) {
             @Override
