@@ -190,7 +190,8 @@ public class UiUtil {
         OPEN_FILE, SAVE_FILE, OPEN_DIRECTORY,
     }
 
-    public static void packColumns(JTable table, int width) {
+    public static void packColumns(JTable table,
+                                   int width) {
         int padding = 5;
         TableColumnModel columnModel = table.getColumnModel();
         int[] widths = new int[columnModel.getColumnCount()];
