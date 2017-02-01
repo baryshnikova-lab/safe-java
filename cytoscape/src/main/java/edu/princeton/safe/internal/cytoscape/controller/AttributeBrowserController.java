@@ -551,6 +551,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
     void updateTableLayout() {
         SwingUtilities.invokeLater(() -> {
             JScrollPane container = filteredTable.getTableContainer();
+            container.validate();
             int width = (int) container.getVisibleRect()
                                        .getWidth();
             UiUtil.packColumns(filteredTable.getTable(), width);

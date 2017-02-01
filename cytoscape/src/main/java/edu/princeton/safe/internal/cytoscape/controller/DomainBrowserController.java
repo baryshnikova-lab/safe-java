@@ -488,6 +488,7 @@ public class DomainBrowserController implements ExpansionChangeListener {
     public void expansionChanged(boolean isExpanded) {
         SwingUtilities.invokeLater(() -> {
             JScrollPane container = filteredTable.getTableContainer();
+            container.validate();
             int width = (int) container.getVisibleRect()
                                        .getWidth();
             UiUtil.packColumns(filteredTable.getTable(), width);
