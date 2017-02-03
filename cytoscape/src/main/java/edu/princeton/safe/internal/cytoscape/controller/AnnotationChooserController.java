@@ -60,10 +60,14 @@ public class AnnotationChooserController {
     ObjectIntMap<String> columnCoverage;
     IdMappingResult idMappingResult;
 
+    File lastDirectory;
+
     public AnnotationChooserController(CySwingApplication application,
                                        DialogTaskManager taskManager) {
         this.application = application;
         this.taskManager = taskManager;
+
+        lastDirectory = new File(".");
     }
 
     JButton createChooseButton() {
@@ -73,9 +77,12 @@ public class AnnotationChooserController {
             public void actionPerformed(ActionEvent event) {
                 Set<String> extensions = new HashSet<>();
                 try {
-                    File file = UiUtil.getFile(application.getJFrame(), "Select Attribute File", new File("."),
+                    File file = UiUtil.getFile(application.getJFrame(), "Select Attribute File", lastDirectory,
                                                "Attribute File", extensions, FileSelectionMode.OPEN_FILE);
                     if (file != null) {
+                        if (file.isFile()) {
+                            lastDirectory = file.getParentFile();
+                        }
                         annotationPath.setText(file.getPath());
                         handleAnnotationFileSelected();
                     }
