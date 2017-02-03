@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cytoscape.model.CyNode;
+
+import com.carrotsearch.hppc.LongSet;
+
 import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 
@@ -54,4 +58,22 @@ public class DefaultEventService implements EventService {
         listeners.add(listener);
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public void addNodeSelectionChangedListener(NodeSelectionChangedListener listener) {
+        List<NodeSelectionChangedListener> listeners = (List<NodeSelectionChangedListener>) listenersByClass.get(CyNode.class);
+        if (listeners == null) {
+            listeners = new ArrayList<>();
+            listenersByClass.put(CyNode.class, listeners);
+        }
+        listeners.add(listener);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void notifyNodeSelectionChangedListeners(LongSet nodeSuids) {
+        List<NodeSelectionChangedListener> listeners = (List<NodeSelectionChangedListener>) listenersByClass.get(CyNode.class);
+        listeners.stream()
+                 .forEach(l -> l.set(nodeSuids));
+    }
 }

@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
@@ -26,6 +27,9 @@ import javax.swing.SwingConstants;
 import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
+
+import com.carrotsearch.hppc.LongSet;
+import com.carrotsearch.hppc.cursors.LongCursor;
 
 import edu.princeton.safe.Identifiable;
 import edu.princeton.safe.internal.cytoscape.controller.ExpanderController;
@@ -242,4 +246,17 @@ public class SafeUtil {
         }
         return false;
     }
+
+    public static boolean hasIntersection(LongSet set1,
+                                          LongSet set2) {
+        Iterator<LongCursor> iterator = set1.iterator();
+        while (iterator.hasNext()) {
+            LongCursor cursor = iterator.next();
+            if (set2.contains(cursor.value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

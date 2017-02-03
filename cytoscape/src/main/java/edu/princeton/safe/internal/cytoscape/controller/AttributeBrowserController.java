@@ -4,11 +4,13 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -29,6 +31,8 @@ import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
 
+import com.carrotsearch.hppc.LongSet;
+
 import edu.princeton.safe.AnalysisMethod;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.internal.ScoringFunction;
@@ -37,6 +41,7 @@ import edu.princeton.safe.internal.cytoscape.SafeUtil;
 import edu.princeton.safe.internal.cytoscape.StyleFactory;
 import edu.princeton.safe.internal.cytoscape.SubstringRowFilter;
 import edu.princeton.safe.internal.cytoscape.UiUtil;
+import edu.princeton.safe.internal.cytoscape.event.EventService;
 import edu.princeton.safe.internal.cytoscape.model.AttributeRow;
 import edu.princeton.safe.internal.cytoscape.model.ListTableModel;
 import edu.princeton.safe.internal.cytoscape.model.NameValuePair;
@@ -49,6 +54,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
 
     VisualMappingManager visualMappingManager;
     StyleFactory styleFactory;
+    EventService eventService;
 
     SafeSession session;
     List<AttributeRow> attributes;
@@ -59,14 +65,69 @@ public class AttributeBrowserController implements ExpansionChangeListener {
     JComboBox<NameValuePair<AnalysisMethod>> analysisMethods;
     FilteredTable<AttributeRow> filteredTable;
     JButton selectSignificantButton;
+    JCheckBox filterAttributesCheckBox;
+
+    LongSet lastNodeSuids;
 
     volatile boolean allowUpdates;
 
     public AttributeBrowserController(VisualMappingManager visualMappingManager,
-                                      StyleFactory styleFactory) {
+                                      StyleFactory styleFactory,
+                                      EventService eventService) {
 
         this.visualMappingManager = visualMappingManager;
         this.styleFactory = styleFactory;
+        this.eventService = eventService;
+
+        eventService.addNodeSelectionChangedListener(nodeSuids -> {
+            lastNodeSuids = nodeSuids;
+            applyRowVisibility();
+        });
+    }
+
+    void applyRowVisibility() {
+        updateRowVisibility(lastNodeSuids);
+        if (filteredTable == null) {
+            return;
+        }
+        filteredTable.getSorter()
+                     .sort();
+    }
+
+    void updateRowVisibility(LongSet nodeSuids) {
+        if (session == null || nodeSuids == null || nodeSuids.isEmpty()) {
+            setAllVisible();
+            return;
+        }
+        if (filterAttributesCheckBox == null || !filterAttributesCheckBox.isSelected()) {
+            setAllVisible();
+            return;
+        }
+
+        Long[] nodeMappings = session.getNodeMappings();
+        if (nodeMappings == null) {
+            setAllVisible();
+            return;
+        }
+
+        AnalysisMethod analysisMethod = session.getAnalysisMethod();
+
+        Consumer<? super AttributeRow> action;
+        if (analysisMethod == AnalysisMethod.HighestAndLowest) {
+            action = row -> row.setVisible(row.hasHighest(nodeSuids) || row.hasLowest(nodeSuids));
+        } else if (analysisMethod == AnalysisMethod.Highest) {
+            action = row -> row.setVisible(row.hasHighest(nodeSuids));
+        } else {
+            action = row -> row.setVisible(row.hasLowest(nodeSuids));
+        }
+
+        attributes.stream()
+                  .forEach(action);
+    }
+
+    void setAllVisible() {
+        attributes.stream()
+                  .forEach(row -> row.setVisible(true));
     }
 
     public void setSession(SafeSession session) {
@@ -95,7 +156,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
                                    int rowIndex) {
                 AttributeRow row = attributeTableModel.getRow(rowIndex);
                 String value = row.getName();
-                return value != null && predicate.test(value);
+                return value != null && predicate.test(value) && row.isVisible();
             }
         });
 
@@ -116,6 +177,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
             } finally {
                 allowUpdates = lastState;
                 updateSelectedAttributes();
+                applyRowVisibility();
             }
         });
 
@@ -123,11 +185,15 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         selectSignificantButton.setEnabled(false);
         selectSignificantButton.addActionListener(event -> selectSignificantNodes());
 
+        filterAttributesCheckBox = new JCheckBox("Hide attributes not significantly enriched in selection");
+        filterAttributesCheckBox.addActionListener(event -> applyRowVisibility());
+
         JPanel panel = UiUtil.createJPanel();
         panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisMethods, "wrap");
         panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
+        panel.add(filterAttributesCheckBox, "span, alignx center, wrap");
         panel.add(selectSignificantButton, "span, alignx center, wrap");
 
         return panel;
@@ -481,18 +547,21 @@ public class AttributeBrowserController implements ExpansionChangeListener {
             SignificancePredicate isLowest = Neighborhood.getSignificancePredicate(EnrichmentLandscape.TYPE_LOWEST,
                                                                                    totalAttributes);
 
+            Long[] nodeMappings = session.getNodeMappings();
+
             IntStream.range(0, provider.getAttributeCount())
                      .mapToObj(i -> {
-                         AttributeRow row = new AttributeRow(i, provider.getAttributeLabel(i), 0, 0);
-                         row.setTotalHighest(landscape.getNeighborhoods()
-                                                      .stream()
-                                                      .filter(n -> isHighest.test(n, i))
-                                                      .count());
+                         AttributeRow row = new AttributeRow(i, provider.getAttributeLabel(i));
+                         landscape.getNeighborhoods()
+                                  .stream()
+                                  .filter(n -> isHighest.test(n, i))
+                                  .forEach(n -> row.addHighest(nodeMappings[n.getNodeIndex()].longValue()));
+
                          if (!provider.isBinary()) {
-                             row.setTotalLowest(landscape.getNeighborhoods()
-                                                         .stream()
-                                                         .filter(n -> isLowest.test(n, i))
-                                                         .count());
+                             landscape.getNeighborhoods()
+                                      .stream()
+                                      .filter(n -> isLowest.test(n, i))
+                                      .forEach(n -> row.addLowest(nodeMappings[n.getNodeIndex()].longValue()));
                          }
                          return row;
                      })

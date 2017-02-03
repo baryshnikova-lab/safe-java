@@ -47,6 +47,7 @@ import edu.princeton.safe.grouping.ClusterBasedGroupingMethod;
 import edu.princeton.safe.grouping.JaccardDistanceMethod;
 import edu.princeton.safe.internal.cytoscape.SafeCytoPanelComponent;
 import edu.princeton.safe.internal.cytoscape.SafeUtil;
+import edu.princeton.safe.internal.cytoscape.SelectionTracker;
 import edu.princeton.safe.internal.cytoscape.UiUtil;
 import edu.princeton.safe.internal.cytoscape.event.EventService;
 import edu.princeton.safe.internal.cytoscape.event.SetCompositeMapListener;
@@ -73,6 +74,7 @@ public class SafeController
     final AttributeBrowserController attributeBrowser;
     final CompositeMapController compositeMapPanel;
     final DomainBrowserController domainBrowser;
+    final SelectionTracker selectionTracker;
 
     CytoPanelComponent2 cytoPanelComponent;
 
@@ -93,7 +95,8 @@ public class SafeController
                           CompositeMapController compositeMapPanel,
                           DomainBrowserController domainBrowser,
                           EventService eventService,
-                          SafeSessionSerializer serializer) {
+                          SafeSessionSerializer serializer,
+                          SelectionTracker selectionTracker) {
 
         this.registrar = registrar;
         this.application = application;
@@ -105,6 +108,7 @@ public class SafeController
         this.domainBrowser = domainBrowser;
         this.eventService = eventService;
         this.serializer = serializer;
+        this.selectionTracker = selectionTracker;
 
         sessionsBySuid = new LongObjectHashMap<>();
     }
@@ -226,6 +230,7 @@ public class SafeController
             attributeBrowser.setSession(session);
             importPanel.setSession(session);
             compositeMapPanel.setSession(session);
+            selectionTracker.setSession(session);
             updateColumnList();
 
             EnrichmentLandscape landscape = session != null ? session.getEnrichmentLandscape() : null;
@@ -263,7 +268,7 @@ public class SafeController
         Component step2Section = attributeBrowser.getPanel();
         ExpanderController step2Controller = SafeUtil.addExpandingSection(panel, "Step 2: View Enrichment Landscapes",
                                                                           step2Section, attributeBrowser,
-                                                                          "grow, hmin 100, hmax 200, wrap");
+                                                                          "grow, hmin 100, hmax 250, wrap");
         SafeUtil.addSeparator(panel);
 
         Component step3Section = compositeMapPanel.getPanel();

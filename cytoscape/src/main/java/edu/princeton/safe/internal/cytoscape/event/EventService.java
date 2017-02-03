@@ -1,5 +1,7 @@
 package edu.princeton.safe.internal.cytoscape.event;
 
+import com.carrotsearch.hppc.LongSet;
+
 import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 
@@ -12,4 +14,7 @@ public interface EventService {
 
     void addCompositeMapListener(SetCompositeMapListener listener);
 
+    void addNodeSelectionChangedListener(NodeSelectionChangedListener listener);
+
+    void notifyNodeSelectionChangedListeners(LongSet nodeSuids);
 }

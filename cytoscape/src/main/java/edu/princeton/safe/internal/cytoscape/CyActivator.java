@@ -13,6 +13,7 @@ import org.cytoscape.model.CyTableManager;
 import org.cytoscape.model.events.ColumnCreatedListener;
 import org.cytoscape.model.events.ColumnDeletedListener;
 import org.cytoscape.model.events.ColumnNameChangedListener;
+import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.session.events.SessionAboutToBeSavedListener;
@@ -61,10 +62,10 @@ public class CyActivator extends AbstractCyActivator {
         StyleFactory styleFactory = new StyleFactory(visualStyleFactory, continuousMappingFactory,
                                                      passthroughMappingFactory);
 
-        AttributeBrowserController attributeBrowser = new AttributeBrowserController(visualMappingManager,
-                                                                                     styleFactory);
-
         EventService eventService = new DefaultEventService();
+
+        AttributeBrowserController attributeBrowser = new AttributeBrowserController(visualMappingManager, styleFactory,
+                                                                                     eventService);
 
         AnnotationChooserController annotationChooser = new AnnotationChooserController(application, taskManager);
 
@@ -72,15 +73,17 @@ public class CyActivator extends AbstractCyActivator {
                                                                       eventService);
 
         DomainBrowserController domainBrowser = new DomainBrowserController(visualMappingManager, styleFactory,
-                                                                            taskManager);
+                                                                            taskManager, eventService);
 
         CompositeMapController compositeMapPanel = new CompositeMapController(taskManager, domainBrowser, eventService);
 
         SafeSessionSerializer serializer = new SafeSessionSerializer(tableManager, tableFactory);
 
+        SelectionTracker selectionTracker = new SelectionTracker(eventService);
+
         SafeController safeController = new SafeController(registrar, application, applicationManager, importPanel,
                                                            attributeBrowser, compositeMapPanel, domainBrowser,
-                                                           eventService, serializer);
+                                                           eventService, serializer, selectionTracker);
 
         Map<String, String> safeActionProperties = new MapBuilder().put("inMenuBar", "true")
                                                                    .put("preferredMenu", ServiceProperties.APPS_MENU)
@@ -94,6 +97,7 @@ public class CyActivator extends AbstractCyActivator {
                         NetworkViewAboutToBeDestroyedListener.class, ColumnCreatedListener.class,
                         ColumnDeletedListener.class, ColumnNameChangedListener.class, SessionLoadedListener.class,
                         SessionAboutToBeSavedListener.class);
+        registerService(context, selectionTracker, RowsSetListener.class);
     }
 
     void registerService(BundleContext context,

@@ -1,27 +1,23 @@
 package edu.princeton.safe.internal.cytoscape.model;
 
+import com.carrotsearch.hppc.LongScatterSet;
+import com.carrotsearch.hppc.LongSet;
+
+import edu.princeton.safe.internal.cytoscape.SafeUtil;
+
 public class AttributeRow {
     int index;
     String name;
-    long totalHighest;
-    long totalLowest;
+    LongSet highestSuids;
+    LongSet lowestSuids;
+    boolean isVisible;
 
     public AttributeRow(int index,
-                        String name,
-                        long totalHighest,
-                        long totalLowest) {
+                        String name) {
         this.index = index;
         this.name = name;
-        this.totalHighest = totalHighest;
-        this.totalLowest = totalLowest;
-    }
-
-    public void setTotalHighest(long count) {
-        totalHighest = count;
-    }
-
-    public void setTotalLowest(long count) {
-        totalLowest = count;
+        highestSuids = new LongScatterSet();
+        lowestSuids = new LongScatterSet();
     }
 
     public String getName() {
@@ -33,10 +29,34 @@ public class AttributeRow {
     }
 
     public long getTotalHighest() {
-        return totalHighest;
+        return highestSuids.size();
     }
 
     public long getTotalLowest() {
-        return totalLowest;
+        return lowestSuids.size();
+    }
+
+    public void addHighest(long suid) {
+        highestSuids.add(suid);
+    }
+
+    public void addLowest(long suid) {
+        lowestSuids.add(suid);
+    }
+
+    public boolean hasHighest(LongSet suids) {
+        return SafeUtil.hasIntersection(highestSuids, suids);
+    }
+
+    public boolean hasLowest(LongSet suids) {
+        return SafeUtil.hasIntersection(lowestSuids, suids);
+    }
+
+    public void setVisible(boolean isVisible) {
+        this.isVisible = isVisible;
+    }
+
+    public boolean isVisible() {
+        return this.isVisible;
     }
 }

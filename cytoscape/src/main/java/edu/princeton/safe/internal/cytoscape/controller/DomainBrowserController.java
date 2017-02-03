@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -35,6 +36,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
 
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.LongSet;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.internal.ScoringFunction;
@@ -44,6 +46,7 @@ import edu.princeton.safe.internal.cytoscape.SafeUtil;
 import edu.princeton.safe.internal.cytoscape.StyleFactory;
 import edu.princeton.safe.internal.cytoscape.SubstringRowFilter;
 import edu.princeton.safe.internal.cytoscape.UiUtil;
+import edu.princeton.safe.internal.cytoscape.event.EventService;
 import edu.princeton.safe.internal.cytoscape.model.DomainRow;
 import edu.princeton.safe.internal.cytoscape.model.ListTableModel;
 import edu.princeton.safe.internal.cytoscape.model.NameValuePair;
@@ -61,6 +64,7 @@ public class DomainBrowserController implements ExpansionChangeListener {
     VisualMappingManager visualMappingManager;
     StyleFactory styleFactory;
     DialogTaskManager taskManager;
+    EventService eventService;
 
     SafeSession session;
     List<DomainRow> domainRows;
@@ -70,14 +74,58 @@ public class DomainBrowserController implements ExpansionChangeListener {
     JComboBox<NameValuePair<Integer>> analysisTypes;
     FilteredTable<DomainRow> filteredTable;
     JButton selectSignificantButton;
+    JCheckBox filterDomainsCheckBox;
+
+    LongSet lastNodeSuids;
 
     public DomainBrowserController(VisualMappingManager visualMappingManager,
                                    StyleFactory styleFactory,
-                                   DialogTaskManager taskManager) {
+                                   DialogTaskManager taskManager,
+                                   EventService eventService) {
 
         this.visualMappingManager = visualMappingManager;
         this.styleFactory = styleFactory;
         this.taskManager = taskManager;
+        this.eventService = eventService;
+
+        eventService.addNodeSelectionChangedListener(nodeSuids -> {
+            lastNodeSuids = nodeSuids;
+            applyRowVisibility();
+        });
+    }
+
+    void applyRowVisibility() {
+        updateRowVisibility(lastNodeSuids);
+        if (filteredTable == null) {
+            return;
+        }
+        filteredTable.getSorter()
+                     .sort();
+    }
+
+    void updateRowVisibility(LongSet nodeSuids) {
+        if (session == null || nodeSuids == null || nodeSuids.isEmpty()) {
+            setAllVisible();
+            return;
+        }
+        if (filterDomainsCheckBox == null || !filterDomainsCheckBox.isSelected()) {
+            setAllVisible();
+            return;
+        }
+
+        Long[] nodeMappings = session.getNodeMappings();
+        if (nodeMappings == null) {
+            setAllVisible();
+            return;
+        }
+
+        domainRows.stream()
+                  .forEach(row -> row.setVisible(row.hasSignificant(nodeSuids)));
+    }
+
+    void setAllVisible() {
+        domainRows.stream()
+                  .forEach(row -> row.setVisible(true));
     }
 
     public void setSession(SafeSession session) {
@@ -107,7 +155,7 @@ public class DomainBrowserController implements ExpansionChangeListener {
                 DomainRow row = domainTableModel.getRow(rowIndex);
                 String value = row.getDomain()
                                   .getName();
-                return value != null && predicate.test(value);
+                return value != null && predicate.test(value) && row.isVisible();
             }
         });
 
@@ -120,7 +168,11 @@ public class DomainBrowserController implements ExpansionChangeListener {
 
         analysisTypes.addActionListener((e) -> {
             updateAnalysisType();
+            applyRowVisibility();
         });
+
+        filterDomainsCheckBox = new JCheckBox("Hide domains not significantly enriched in selection");
+        filterDomainsCheckBox.addActionListener(event -> applyRowVisibility());
 
         selectSignificantButton = new JButton("Select Significant Nodes");
         selectSignificantButton.setEnabled(false);
@@ -137,6 +189,7 @@ public class DomainBrowserController implements ExpansionChangeListener {
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisTypes, "wrap");
         panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
+        panel.add(filterDomainsCheckBox, "span, alignx center, wrap");
         panel.add(selectSignificantButton, "span, alignx center, wrap");
         panel.add(exportButton, "span, alignx center, wrap");
 
@@ -352,12 +405,27 @@ public class DomainBrowserController implements ExpansionChangeListener {
             Random random = new Random(session.getColorSeed());
             Collections.shuffle(colors, random);
 
+            int totalAttributes = annotationProvider.getAttributeCount();
+            SignificancePredicate isSignificant = Neighborhood.getSignificancePredicate(analysisType, totalAttributes);
+
+            Long[] nodeMappings = session.getNodeMappings();
+            List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
             IntStream.range(0, domains.size())
                      .mapToObj(domainIndex -> {
                          Domain domain = domains.get(domainIndex);
                          DomainRow row = new DomainRow();
                          row.setDomain(domain);
                          row.setColor(colors.get(domainIndex));
+                         IntStream.range(0, domain.getAttributeCount())
+                                  .map(i -> domain.getAttribute(i))
+                                  .filter(j -> compositeMap.isTop(j, analysisType))
+                                  .forEach(j -> {
+                                      neighborhoods.stream()
+                                                   .filter(n -> isSignificant.test(n, j))
+                                                   .map(n -> nodeMappings[n.getNodeIndex()])
+                                                   .forEach(suid -> row.addSignificant(suid));
+
+                                  });
                          return row;
                      })
                      .forEach(row -> domainRows.add(row));
@@ -365,6 +433,7 @@ public class DomainBrowserController implements ExpansionChangeListener {
             applyColors(compositeMap, analysisType, null);
         } finally {
             domainTableModel.fireTableDataChanged();
+            applyRowVisibility();
         }
 
     }

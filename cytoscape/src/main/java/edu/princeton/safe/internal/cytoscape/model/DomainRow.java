@@ -1,10 +1,20 @@
 package edu.princeton.safe.internal.cytoscape.model;
 
+import com.carrotsearch.hppc.LongScatterSet;
+import com.carrotsearch.hppc.LongSet;
+
+import edu.princeton.safe.internal.cytoscape.SafeUtil;
 import edu.princeton.safe.model.Domain;
 
 public class DomainRow {
     Domain domain;
     double[] color;
+    LongSet significantSuids;
+    boolean isVisible;
+
+    public DomainRow() {
+        significantSuids = new LongScatterSet();
+    }
 
     @Override
     public String toString() {
@@ -28,5 +38,21 @@ public class DomainRow {
 
     public void setColor(double[] color) {
         this.color = color;
+    }
+
+    public void addSignificant(long suid) {
+        significantSuids.add(suid);
+    }
+
+    public boolean hasSignificant(LongSet suids) {
+        return SafeUtil.hasIntersection(significantSuids, suids);
+    }
+
+    public void setVisible(boolean isVisible) {
+        this.isVisible = isVisible;
+    }
+
+    public boolean isVisible() {
+        return this.isVisible;
     }
 }
