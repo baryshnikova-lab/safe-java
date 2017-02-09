@@ -104,6 +104,21 @@ public class ImportPanelController {
                 session.setNodeMappings(nodeMappings);
             }
         };
+        
+        annotationChooser.addListener(file -> handleAnnotationFileSelected(file));
+    }
+
+    private void handleAnnotationFileSelected(File file) {
+        if (step1Button == null) {
+            return;
+        }
+        
+        if (file == null) {
+            step1Button.setEnabled(false);
+            return;
+        }
+        
+        step1Button.setEnabled(file.isFile());
     }
 
     void setEnrichmentLandscape(EnrichmentLandscape landscape) {
@@ -113,7 +128,7 @@ public class ImportPanelController {
     void setSession(SafeSession session) {
         this.session = session;
 
-        step1Button.setEnabled(session != null);
+        step1Button.setEnabled(false);
 
         if (session == null) {
             return;
@@ -126,6 +141,7 @@ public class ImportPanelController {
         } else {
             annotationPath.setText(annotationFile.getPath());
         }
+        handleAnnotationFileSelected(annotationFile);
 
         JComboBox<String> nodeIdComboBox = annotationChooser.getNodeIdComboBox();
         nodeIdComboBox.setSelectedItem(session.getIdColumn());

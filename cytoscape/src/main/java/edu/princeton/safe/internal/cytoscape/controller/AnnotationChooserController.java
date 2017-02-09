@@ -6,6 +6,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,12 +63,16 @@ public class AnnotationChooserController {
 
     File lastDirectory;
 
+    List<FileSelectedListener> listeners;
+
     public AnnotationChooserController(CySwingApplication application,
                                        DialogTaskManager taskManager) {
         this.application = application;
         this.taskManager = taskManager;
 
         lastDirectory = new File(".");
+
+        listeners = new ArrayList<>();
     }
 
     JButton createChooseButton() {
@@ -95,6 +100,8 @@ public class AnnotationChooserController {
     }
 
     void handleAnnotationFileSelected() {
+        notifyListeners(null);
+        
         String path = annotationPath.getText();
         File file = new File(path);
         if (!file.isFile()) {
@@ -139,6 +146,7 @@ public class AnnotationChooserController {
                 try {
                     String canonicalPath = file.getCanonicalPath();
                     lastAnnotationPath = canonicalPath;
+                    notifyListeners(file);
                 } catch (IOException e) {
                     fail(e, "Unexpected error");
                 }
@@ -251,5 +259,19 @@ public class AnnotationChooserController {
     void fail(Throwable t,
               String string) {
         t.printStackTrace();
+    }
+
+    public void addListener(FileSelectedListener listener) {
+        listeners.add(listener);
+    }
+
+    void notifyListeners(File selectedFile) {
+        listeners.stream()
+                 .forEach(l -> l.selected(selectedFile));
+    }
+
+    @FunctionalInterface
+    public interface FileSelectedListener {
+        void selected(File file);
     }
 }
