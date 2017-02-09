@@ -90,14 +90,14 @@ public class SafeUtil {
                                                          ExpansionChangeListener expansionListener,
                                                          String layoutOptions) {
 
-        ExpanderController controller = new ExpanderController();
-        JComponent expander = controller.getExpander();
-
         JLabel label = new JLabel(title);
 
         Font boldFont = label.getFont()
                              .deriveFont(Font.BOLD);
         label.setFont(boldFont);
+
+        ExpanderController controller = new ExpanderController(label);
+        JComponent expander = controller.getExpander();
 
         label.addMouseListener(new MouseAdapter() {
             @Override

@@ -20,6 +20,7 @@ import org.cytoscape.session.events.SessionAboutToBeSavedListener;
 import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.model.events.NetworkViewAboutToBeDestroyedListener;
+import org.cytoscape.view.model.events.UpdateNetworkPresentationListener;
 import org.cytoscape.view.vizmap.VisualMappingFunctionFactory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyleFactory;
@@ -81,6 +82,8 @@ public class CyActivator extends AbstractCyActivator {
 
         SelectionTracker selectionTracker = new SelectionTracker(eventService);
 
+        RedrawTracker redrawTracker = new RedrawTracker(eventService);
+
         SafeController safeController = new SafeController(registrar, application, applicationManager, importPanel,
                                                            attributeBrowser, compositeMapPanel, domainBrowser,
                                                            eventService, serializer, selectionTracker);
@@ -98,6 +101,7 @@ public class CyActivator extends AbstractCyActivator {
                         ColumnDeletedListener.class, ColumnNameChangedListener.class, SessionLoadedListener.class,
                         SessionAboutToBeSavedListener.class);
         registerService(context, selectionTracker, RowsSetListener.class);
+        registerService(context, redrawTracker, UpdateNetworkPresentationListener.class);
     }
 
     void registerService(BundleContext context,

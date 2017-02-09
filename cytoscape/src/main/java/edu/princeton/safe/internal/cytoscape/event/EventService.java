@@ -17,4 +17,8 @@ public interface EventService {
     void addNodeSelectionChangedListener(NodeSelectionChangedListener listener);
 
     void notifyNodeSelectionChangedListeners(LongSet nodeSuids);
+
+    void addPresentationStateChangedListener(PresentationStateChangedListener listener);
+
+    void notifyPresentationStateChanged(boolean isClean);
 }

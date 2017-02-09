@@ -480,6 +480,8 @@ public class AttributeBrowserController implements ExpansionChangeListener {
 
         SafeUtil.checkSafeColumns(nodeTable);
 
+        eventService.notifyPresentationStateChanged(false);
+
         EnrichmentLandscape landscape = session.getEnrichmentLandscape();
         List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
         neighborhoods.stream()

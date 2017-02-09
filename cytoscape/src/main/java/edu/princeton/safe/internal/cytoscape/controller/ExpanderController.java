@@ -19,8 +19,11 @@ public class ExpanderController {
     List<EnableListener> enableListeners;
 
     JLabel expander;
+    JLabel title;
 
-    public ExpanderController() {
+    public ExpanderController(JLabel titleLabel) {
+        title = titleLabel;
+
         isEnabled = true;
         isExpanded = true;
 
@@ -83,6 +86,10 @@ public class ExpanderController {
         this.isEnabled = isEnabled;
         enableListeners.stream()
                        .forEach(l -> l.set(isEnabled));
+    }
+
+    public void setTitle(String value) {
+        title.setText(value);
     }
 
     @FunctionalInterface

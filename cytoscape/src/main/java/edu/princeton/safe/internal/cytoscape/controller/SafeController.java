@@ -63,6 +63,11 @@ public class SafeController
         implements SetCurrentNetworkViewListener, NetworkViewAboutToBeDestroyedListener, ColumnCreatedListener,
         ColumnDeletedListener, ColumnNameChangedListener, SessionLoadedListener, SessionAboutToBeSavedListener {
 
+    private static final String STEP_1_TITLE = "Step 1: Build Enrichment Landscapes";
+    private static final String STEP_2_TITLE = "Step 2: View Enrichment Landscapes";
+    private static final String STEP_3_TITLE = "Step 3: Build Composite Map";
+    private static final String STEP_4_TITLE = "Step 4: View Composite Map";
+
     final CyServiceRegistrar registrar;
     final CySwingApplication application;
     final CyApplicationManager applicationManager;
@@ -86,6 +91,9 @@ public class SafeController
     boolean panelVisible;
 
     Component panel;
+
+    ExpanderController step2Controller;
+    ExpanderController step4Controller;
 
     public SafeController(CyServiceRegistrar registrar,
                           CySwingApplication application,
@@ -111,6 +119,16 @@ public class SafeController
         this.selectionTracker = selectionTracker;
 
         sessionsBySuid = new LongObjectHashMap<>();
+
+        eventService.addPresentationStateChangedListener(isClean -> {
+            if (isClean) {
+                step2Controller.setTitle(STEP_2_TITLE);
+                step4Controller.setTitle(STEP_4_TITLE);
+            } else {
+                step2Controller.setTitle(STEP_2_TITLE + " (Updating...)");
+                step4Controller.setTitle(STEP_4_TITLE + " (Updating...)");
+            }
+        });
     }
 
     @Override
@@ -261,25 +279,23 @@ public class SafeController
         panel.setLayout(new MigLayout("fillx, hidemode 3"));
 
         Component step1Section = importPanel.getPanel();
-        ExpanderController step1Controller = SafeUtil.addExpandingSection(panel, "Step 1: Build Enrichment Landscapes",
-                                                                          step1Section, null, "grow, wrap");
+        ExpanderController step1Controller = SafeUtil.addExpandingSection(panel, STEP_1_TITLE, step1Section, null,
+                                                                          "grow, wrap");
         SafeUtil.addSeparator(panel);
 
         Component step2Section = attributeBrowser.getPanel();
-        ExpanderController step2Controller = SafeUtil.addExpandingSection(panel, "Step 2: View Enrichment Landscapes",
-                                                                          step2Section, attributeBrowser,
-                                                                          "grow, hmin 100, hmax 250, wrap");
+        step2Controller = SafeUtil.addExpandingSection(panel, STEP_2_TITLE, step2Section, attributeBrowser,
+                                                       "grow, hmin 100, hmax 250, wrap");
         SafeUtil.addSeparator(panel);
 
         Component step3Section = compositeMapPanel.getPanel();
-        ExpanderController step3Controller = SafeUtil.addExpandingSection(panel, "Step 3: Build Composite Map",
-                                                                          step3Section, null, "grow, wrap");
+        ExpanderController step3Controller = SafeUtil.addExpandingSection(panel, STEP_3_TITLE, step3Section, null,
+                                                                          "grow, wrap");
         SafeUtil.addSeparator(panel);
 
         Component step4Section = domainBrowser.getPanel();
-        ExpanderController step4Controller = SafeUtil.addExpandingSection(panel, "Step 4: View Composite Map",
-                                                                          step4Section, domainBrowser,
-                                                                          "grow, hmin 100, hmax 300, wrap");
+        step4Controller = SafeUtil.addExpandingSection(panel, STEP_4_TITLE, step4Section, domainBrowser,
+                                                       "grow, hmin 100, hmax 300, wrap");
 
         JScrollPane container = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);

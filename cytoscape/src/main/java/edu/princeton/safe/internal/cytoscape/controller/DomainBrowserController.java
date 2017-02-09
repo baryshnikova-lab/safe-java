@@ -460,6 +460,8 @@ public class DomainBrowserController implements ExpansionChangeListener {
 
         ColorFunction coloring = d -> (int) Math.round(Math.min(1, d * 1.5) * 255);
 
+        eventService.notifyPresentationStateChanged(false);
+
         List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
         neighborhoods.stream()
                      .forEach(n -> {
