@@ -190,8 +190,8 @@ public class DomainBrowserController implements ExpansionChangeListener {
         panel.add(analysisTypes, "wrap");
         panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
         panel.add(filterDomainsCheckBox, "span, alignx center, wrap");
-        panel.add(selectSignificantButton, "span, alignx center, wrap");
-        panel.add(exportButton, "span, alignx center, wrap");
+        panel.add(selectSignificantButton, "span, alignx center, split 2");
+        panel.add(exportButton, "wrap");
 
         return panel;
     }

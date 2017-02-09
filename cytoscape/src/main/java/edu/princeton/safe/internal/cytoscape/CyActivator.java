@@ -65,7 +65,7 @@ public class CyActivator extends AbstractCyActivator {
         EventService eventService = new DefaultEventService();
 
         AttributeBrowserController attributeBrowser = new AttributeBrowserController(visualMappingManager, styleFactory,
-                                                                                     eventService);
+                                                                                     eventService, taskManager);
 
         AnnotationChooserController annotationChooser = new AnnotationChooserController(application, taskManager);
 

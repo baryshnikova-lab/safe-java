@@ -8,15 +8,13 @@ import org.cytoscape.work.TaskMonitor;
 
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.internal.cytoscape.model.SafeSession;
-import edu.princeton.safe.internal.io.AttributeReport;
-import edu.princeton.safe.internal.io.NodeReport;
+import edu.princeton.safe.internal.io.NeighborhoodReport;
 import edu.princeton.safe.io.LabelFunction;
-import edu.princeton.safe.model.CompositeMap;
 import edu.princeton.safe.model.EnrichmentLandscape;
 
-public class ExportReportsTask extends BaseExportReportsTask {
+public class ExportNeighborhoodReportsTask extends BaseExportReportsTask {
 
-    public ExportReportsTask(SafeSession session) {
+    public ExportNeighborhoodReportsTask(SafeSession session) {
         super(session);
     }
 
@@ -25,19 +23,17 @@ public class ExportReportsTask extends BaseExportReportsTask {
         taskMonitor.setTitle("SAFE: Export Reports");
 
         EnrichmentLandscape landscape = session.getEnrichmentLandscape();
-        CompositeMap compositeMap = session.getCompositeMap();
         AnnotationProvider annotationProvider = landscape.getAnnotationProvider();
 
-        writeReports(landscape, compositeMap, EnrichmentLandscape.TYPE_HIGHEST);
+        writeReports(landscape, EnrichmentLandscape.TYPE_HIGHEST);
         if (!annotationProvider.isBinary()) {
-            writeReports(landscape, compositeMap, EnrichmentLandscape.TYPE_LOWEST);
+            writeReports(landscape, EnrichmentLandscape.TYPE_LOWEST);
         }
 
         taskMonitor.setStatusMessage("Reports exported successfully");
     }
 
     private void writeReports(EnrichmentLandscape landscape,
-                              CompositeMap compositeMap,
                               int typeIndex)
             throws IOException {
 
@@ -51,16 +47,9 @@ public class ExportReportsTask extends BaseExportReportsTask {
         String typeName = typeIndex == EnrichmentLandscape.TYPE_HIGHEST ? "highest" : "lowest";
 
         try (PrintWriter writer = new PrintWriter(new File(directory,
-                                                           String.format("%s-node_properties_annotation-%s.txt",
+                                                           String.format("%s-neighborhood_scores_annotation-%s.txt",
                                                                          baseName, typeName)))) {
-            NodeReport.write(writer, landscape, compositeMap, typeIndex, label);
-        }
-
-        try (PrintWriter writer = new PrintWriter(new File(directory,
-                                                           String.format("%s-attribute_properties_annotation-%s.txt",
-                                                                         baseName, typeName)))) {
-            AttributeReport.write(writer, landscape, compositeMap, typeIndex);
+            NeighborhoodReport.write(writer, landscape, typeIndex, label);
         }
     }
-
 }

@@ -30,6 +30,8 @@ import org.cytoscape.model.CyTable;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
+import org.cytoscape.work.TaskFactory;
+import org.cytoscape.work.swing.DialogTaskManager;
 
 import com.carrotsearch.hppc.LongSet;
 
@@ -46,6 +48,8 @@ import edu.princeton.safe.internal.cytoscape.model.AttributeRow;
 import edu.princeton.safe.internal.cytoscape.model.ListTableModel;
 import edu.princeton.safe.internal.cytoscape.model.NameValuePair;
 import edu.princeton.safe.internal.cytoscape.model.SafeSession;
+import edu.princeton.safe.internal.cytoscape.task.ExportNeighborhoodReportsTask;
+import edu.princeton.safe.internal.cytoscape.task.SimpleTaskFactory;
 import edu.princeton.safe.model.EnrichmentLandscape;
 import edu.princeton.safe.model.Neighborhood;
 import net.miginfocom.swing.MigLayout;
@@ -55,6 +59,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
     VisualMappingManager visualMappingManager;
     StyleFactory styleFactory;
     EventService eventService;
+    DialogTaskManager taskManager;
 
     SafeSession session;
     List<AttributeRow> attributes;
@@ -73,11 +78,13 @@ public class AttributeBrowserController implements ExpansionChangeListener {
 
     public AttributeBrowserController(VisualMappingManager visualMappingManager,
                                       StyleFactory styleFactory,
-                                      EventService eventService) {
+                                      EventService eventService,
+                                      DialogTaskManager taskManager) {
 
         this.visualMappingManager = visualMappingManager;
         this.styleFactory = styleFactory;
         this.eventService = eventService;
+        this.taskManager = taskManager;
 
         eventService.addNodeSelectionChangedListener(nodeSuids -> {
             lastNodeSuids = nodeSuids;
@@ -185,6 +192,12 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         selectSignificantButton.setEnabled(false);
         selectSignificantButton.addActionListener(event -> selectSignificantNodes());
 
+        JButton exportButton = new JButton("Export Reports");
+        exportButton.addActionListener(event -> {
+            TaskFactory taskFactory = new SimpleTaskFactory(() -> new ExportNeighborhoodReportsTask(session));
+            taskManager.execute(taskFactory.createTaskIterator());
+        });
+
         filterAttributesCheckBox = new JCheckBox("Hide attributes not significantly enriched in selection");
         filterAttributesCheckBox.addActionListener(event -> applyRowVisibility());
 
@@ -194,7 +207,8 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         panel.add(analysisMethods, "wrap");
         panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
         panel.add(filterAttributesCheckBox, "span, alignx center, wrap");
-        panel.add(selectSignificantButton, "span, alignx center, wrap");
+        panel.add(selectSignificantButton, "span, alignx center, split 2");
+        panel.add(exportButton, "wrap");
 
         return panel;
     }
