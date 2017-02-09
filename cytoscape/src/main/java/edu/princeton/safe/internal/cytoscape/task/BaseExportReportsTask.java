@@ -50,7 +50,8 @@ public abstract class BaseExportReportsTask extends AbstractTask {
         return name.substring(0, index);
     }
 
-    LabelFunction getLabelFunction(Long[] nodeMappings, String nameColumn) {
+    LabelFunction getLabelFunction(Long[] nodeMappings,
+                                   String nameColumn) {
         return i -> {
             Long suid = nodeMappings[i];
             CyRow row = nodeTable.getRow(suid);

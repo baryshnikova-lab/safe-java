@@ -104,7 +104,7 @@ public class ImportPanelController {
                 session.setNodeMappings(nodeMappings);
             }
         };
-        
+
         annotationChooser.addListener(file -> handleAnnotationFileSelected(file));
     }
 
@@ -112,12 +112,12 @@ public class ImportPanelController {
         if (step1Button == null) {
             return;
         }
-        
+
         if (file == null) {
             step1Button.setEnabled(false);
             return;
         }
-        
+
         step1Button.setEnabled(file.isFile());
     }
 

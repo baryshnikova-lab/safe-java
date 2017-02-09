@@ -101,7 +101,7 @@ public class AnnotationChooserController {
 
     void handleAnnotationFileSelected() {
         notifyListeners(null);
-        
+
         String path = annotationPath.getText();
         File file = new File(path);
         if (!file.isFile()) {
