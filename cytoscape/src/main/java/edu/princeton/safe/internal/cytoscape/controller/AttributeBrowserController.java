@@ -198,7 +198,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
             taskManager.execute(taskFactory.createTaskIterator());
         });
 
-        filterAttributesCheckBox = new JCheckBox("Hide attributes not significantly enriched in selection");
+        filterAttributesCheckBox = new JCheckBox("Only attributes enriched in selection");
         filterAttributesCheckBox.addActionListener(event -> applyRowVisibility());
 
         JPanel panel = UiUtil.createJPanel();
@@ -206,7 +206,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisMethods, "wrap");
         panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
-        panel.add(filterAttributesCheckBox, "span, alignx center, wrap");
+        panel.add(filterAttributesCheckBox, "span, alignx left, wrap");
         panel.add(selectSignificantButton, "span, alignx center, split 2");
         panel.add(exportButton, "wrap");
 

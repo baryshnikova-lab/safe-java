@@ -171,7 +171,7 @@ public class DomainBrowserController implements ExpansionChangeListener {
             applyRowVisibility();
         });
 
-        filterDomainsCheckBox = new JCheckBox("Hide domains not significantly enriched in selection");
+        filterDomainsCheckBox = new JCheckBox("Only domains associated with selection");
         filterDomainsCheckBox.addActionListener(event -> applyRowVisibility());
 
         selectSignificantButton = new JButton("Select Significant Nodes");
@@ -189,7 +189,7 @@ public class DomainBrowserController implements ExpansionChangeListener {
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisTypes, "wrap");
         panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
-        panel.add(filterDomainsCheckBox, "span, alignx center, wrap");
+        panel.add(filterDomainsCheckBox, "span, alignx left, wrap");
         panel.add(selectSignificantButton, "span, alignx center, split 2");
         panel.add(exportButton, "wrap");
 
