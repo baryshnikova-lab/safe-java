@@ -49,7 +49,7 @@ public class ExportNeighborhoodReportsTask extends BaseExportReportsTask {
         try (PrintWriter writer = new PrintWriter(new File(directory,
                                                            String.format("%s-neighborhood_scores_annotation-%s.txt",
                                                                          baseName, typeName)))) {
-            NeighborhoodReport.write(writer, landscape, typeIndex, label);
+            NeighborhoodReport.write(writer, landscape, typeIndex, nameColumn, label);
         }
     }
 }
