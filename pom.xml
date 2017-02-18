@@ -11,7 +11,7 @@
 	<packaging>pom</packaging>
 	<name>SAFE Parent</name>
 
-	<version>1.0.0-beta6</version>
+	<version>1.0.0-beta7</version>
 
 	<modules>
 		<module>core</module>
