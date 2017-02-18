@@ -51,7 +51,7 @@ public class NeighborhoodReport {
         writer.println("## High values (close to 1) indicate high enrichment. Low values (close to 0) indicate low enrichment.");
         writer.printf("## Any value higher than %.3f is considered significant (-log10 of p-value = 0.05, corrected for multiple testing and scaled to [0,1] range).\n",
                       threshold);
-        
+
         writer.print(nodeColumnName);
 
         IntStream.range(0, totalAttributes)
