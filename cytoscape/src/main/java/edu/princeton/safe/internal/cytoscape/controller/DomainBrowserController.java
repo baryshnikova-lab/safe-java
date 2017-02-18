@@ -1,6 +1,6 @@
 package edu.princeton.safe.internal.cytoscape.controller;
 
-import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,8 +16,10 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -70,11 +72,12 @@ public class DomainBrowserController implements ExpansionChangeListener {
     List<DomainRow> domainRows;
     ListTableModel<DomainRow> domainTableModel;
 
-    Component panel;
+    JComponent panel;
     JComboBox<NameValuePair<Integer>> analysisTypes;
     FilteredTable<DomainRow> filteredTable;
     JButton selectSignificantButton;
     JCheckBox filterDomainsCheckBox;
+    JLabel statusLabel;
 
     LongSet lastNodeSuids;
 
@@ -92,9 +95,22 @@ public class DomainBrowserController implements ExpansionChangeListener {
             lastNodeSuids = nodeSuids;
             applyRowVisibility();
         });
+
+        eventService.addPresentationStateChangedListener(isClean -> {
+            if (!isClean || statusLabel == null) {
+                return;
+            }
+            statusLabel.setVisible(false);
+            panel.setOpaque(false);
+        });
     }
 
     void applyRowVisibility() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> applyRowVisibility());
+            return;
+        }
+
         updateRowVisibility(lastNodeSuids);
         if (filteredTable == null) {
             return;
@@ -136,14 +152,14 @@ public class DomainBrowserController implements ExpansionChangeListener {
         SafeUtil.setSelected(analysisTypes, session.getAnalysisType());
     }
 
-    Component getPanel() {
+    JComponent getPanel() {
         if (panel == null) {
             panel = createPanel();
         }
         return panel;
     }
 
-    Component createPanel() {
+    JComponent createPanel() {
         analysisTypes = new JComboBox<>(createAnalysisTypeModel());
         domainRows = new ArrayList<>();
         domainTableModel = createDomainTableModel();
@@ -174,6 +190,11 @@ public class DomainBrowserController implements ExpansionChangeListener {
         filterDomainsCheckBox = new JCheckBox("Only domains associated with selection");
         filterDomainsCheckBox.addActionListener(event -> applyRowVisibility());
 
+        statusLabel = SafeUtil.createStatusLabel("Updating...");
+
+        JScrollPane tableContainer = filteredTable.getTableContainer();
+        tableContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+
         selectSignificantButton = new JButton("Select Significant Nodes");
         selectSignificantButton.setEnabled(false);
         selectSignificantButton.addActionListener(event -> selectSignificantNodes());
@@ -185,15 +206,23 @@ public class DomainBrowserController implements ExpansionChangeListener {
         });
 
         JPanel panel = UiUtil.createJPanel();
-        panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
+        panel.setLayout(new MigLayout("fillx, insets 0, hidemode 3", "[grow 0, right]rel[left]"));
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisTypes, "wrap");
-        panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
+        panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, wrap");
         panel.add(filterDomainsCheckBox, "span, alignx left, wrap");
         panel.add(selectSignificantButton, "span, alignx center, split 2");
         panel.add(exportButton, "wrap");
 
-        return panel;
+        JPanel container = UiUtil.createJPanel();
+        container.setLayout(new MigLayout("fillx, insets 4, gap 0, hidemode 3"));
+        container.add(panel, "wrap");
+        container.add(statusLabel, "alignx center, wrap");
+        container.setBackground(StyleFactory.NEGATIVE);
+
+        statusLabel.setVisible(false);
+
+        return container;
     }
 
     @SuppressWarnings("unchecked")
@@ -435,8 +464,10 @@ public class DomainBrowserController implements ExpansionChangeListener {
 
             applyColors(compositeMap, analysisType, null);
         } finally {
-            domainTableModel.fireTableDataChanged();
-            applyRowVisibility();
+            SwingUtilities.invokeLater(() -> {
+                domainTableModel.fireTableDataChanged();
+                applyRowVisibility();
+            });
         }
 
     }
@@ -463,36 +494,41 @@ public class DomainBrowserController implements ExpansionChangeListener {
 
         ColorFunction coloring = d -> (int) Math.round(Math.min(1, d * 1.5) * 255);
 
-        eventService.notifyPresentationStateChanged(false);
+        statusLabel.setVisible(true);
+        panel.setOpaque(true);
 
-        List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
-        neighborhoods.stream()
-                     .forEach(n -> {
-                         Long suid = nodeMappings[n.getNodeIndex()];
-                         CyRow row = nodeTable.getRow(suid);
+        Runnable action = () -> {
+            List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
+            neighborhoods.stream()
+                         .forEach(n -> {
+                             Long suid = nodeMappings[n.getNodeIndex()];
+                             CyRow row = nodeTable.getRow(suid);
 
-                         double[] color = computeColor(compositeMap, domains, filteredDomains, isSignificant, score, n,
-                                                       typeIndex);
-                         if (color == null) {
-                             row.set(StyleFactory.COLOR_COLUMN, null);
-                             row.set(StyleFactory.BRIGHTNESSS_COLUMN, 0D);
-                             row.set(StyleFactory.HIGHLIGHT_COLUMN, null);
-                         } else {
-                             int red = coloring.get(color[0]);
-                             int green = coloring.get(color[1]);
-                             int blue = coloring.get(color[2]);
+                             double[] color = computeColor(compositeMap, domains, filteredDomains, isSignificant, score,
+                                                           n, typeIndex);
+                             if (color == null) {
+                                 row.set(StyleFactory.COLOR_COLUMN, null);
+                                 row.set(StyleFactory.BRIGHTNESSS_COLUMN, 0D);
+                                 row.set(StyleFactory.HIGHLIGHT_COLUMN, null);
+                             } else {
+                                 int red = coloring.get(color[0]);
+                                 int green = coloring.get(color[1]);
+                                 int blue = coloring.get(color[2]);
 
-                             String hexColor = String.format("#%02x%02x%02x", red, green, blue);
-                             row.set(StyleFactory.COLOR_COLUMN, hexColor);
+                                 String hexColor = String.format("#%02x%02x%02x", red, green, blue);
+                                 row.set(StyleFactory.COLOR_COLUMN, hexColor);
 
-                             double brightness = (color[0] + color[1] + color[2]) / 3;
-                             brightness = Math.round(brightness * 10000.0) / 10000.0;
-                             row.set(StyleFactory.BRIGHTNESSS_COLUMN, brightness);
-                             row.set(StyleFactory.HIGHLIGHT_COLUMN, null);
-                         }
-                     });
+                                 double brightness = (color[0] + color[1] + color[2]) / 3;
+                                 brightness = Math.round(brightness * 10000.0) / 10000.0;
+                                 row.set(StyleFactory.BRIGHTNESSS_COLUMN, brightness);
+                                 row.set(StyleFactory.HIGHLIGHT_COLUMN, null);
+                             }
+                         });
 
-        setDomainBrowserStyle(view);
+            setDomainBrowserStyle(view);
+        };
+
+        SwingUtilities.invokeLater(action);
     }
 
     void setDomainBrowserStyle(CyNetworkView view) {

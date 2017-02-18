@@ -119,16 +119,6 @@ public class SafeController
         this.selectionTracker = selectionTracker;
 
         sessionsBySuid = new LongObjectHashMap<>();
-
-        eventService.addPresentationStateChangedListener(isClean -> {
-            if (isClean) {
-                step2Controller.setTitle(STEP_2_TITLE);
-                step4Controller.setTitle(STEP_4_TITLE);
-            } else {
-                step2Controller.setTitle(STEP_2_TITLE + " (Updating...)");
-                step4Controller.setTitle(STEP_4_TITLE + " (Updating...)");
-            }
-        });
     }
 
     @Override
@@ -285,7 +275,7 @@ public class SafeController
 
         Component step2Section = attributeBrowser.getPanel();
         step2Controller = SafeUtil.addExpandingSection(panel, STEP_2_TITLE, step2Section, attributeBrowser,
-                                                       "grow, hmin 100, hmax 250, wrap");
+                                                       "grow, hmin 100, wrap");
         SafeUtil.addSeparator(panel);
 
         Component step3Section = compositeMapPanel.getPanel();

@@ -1,5 +1,6 @@
 package edu.princeton.safe.internal.cytoscape;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -16,6 +17,7 @@ import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -23,6 +25,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 
 import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyNetwork;
@@ -82,6 +85,27 @@ public class SafeUtil {
         label.setFont(boldFont);
 
         panel.add(label, "alignx " + alignment + ", wrap");
+    }
+
+    public static Border createEmptyBorder(int width) {
+        return BorderFactory.createEmptyBorder(width, width, width, width);
+    }
+
+    public static JLabel createStatusLabel(String initialText) {
+        JLabel label = new JLabel(initialText);
+
+        Font boldFont = label.getFont()
+                             .deriveFont(Font.BOLD);
+        label.setFont(boldFont);
+
+        label.setBackground(StyleFactory.NEGATIVE);
+        label.setForeground(Color.white);
+        label.setBorder(createEmptyBorder(2));
+        label.setOpaque(true);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        label.setVerticalAlignment(SwingConstants.CENTER);
+
+        return label;
     }
 
     public static ExpanderController addExpandingSection(JPanel parent,

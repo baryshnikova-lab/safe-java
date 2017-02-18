@@ -1,6 +1,7 @@
 package edu.princeton.safe.internal.cytoscape.controller;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,8 +13,10 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -66,11 +69,12 @@ public class AttributeBrowserController implements ExpansionChangeListener {
     ListTableModel<AttributeRow> attributeTableModel;
     TableColumn optionalColumn;
 
-    Component panel;
+    JComponent panel;
     JComboBox<NameValuePair<AnalysisMethod>> analysisMethods;
     FilteredTable<AttributeRow> filteredTable;
     JButton selectSignificantButton;
     JCheckBox filterAttributesCheckBox;
+    JLabel statusLabel;
 
     LongSet lastNodeSuids;
 
@@ -90,9 +94,22 @@ public class AttributeBrowserController implements ExpansionChangeListener {
             lastNodeSuids = nodeSuids;
             applyRowVisibility();
         });
+
+        eventService.addPresentationStateChangedListener(isClean -> {
+            if (!isClean || statusLabel == null) {
+                return;
+            }
+            statusLabel.setVisible(false);
+            panel.setOpaque(false);
+        });
     }
 
     void applyRowVisibility() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> applyRowVisibility());
+            return;
+        }
+
         updateRowVisibility(lastNodeSuids);
         if (filteredTable == null) {
             return;
@@ -152,7 +169,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         return panel;
     }
 
-    Component createPanel() {
+    JComponent createPanel() {
         analysisMethods = new JComboBox<>();
         attributes = new ArrayList<>();
         attributeTableModel = createAttributeTableModel();
@@ -183,7 +200,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
                 updateTableLayout();
             } finally {
                 allowUpdates = lastState;
-                updateSelectedAttributes();
+                updateSelectedAttributes(false);
                 applyRowVisibility();
             }
         });
@@ -201,16 +218,29 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         filterAttributesCheckBox = new JCheckBox("Only attributes enriched in selection");
         filterAttributesCheckBox.addActionListener(event -> applyRowVisibility());
 
+        statusLabel = SafeUtil.createStatusLabel("Updating...");
+
+        JScrollPane tableContainer = filteredTable.getTableContainer();
+        tableContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+
         JPanel panel = UiUtil.createJPanel();
-        panel.setLayout(new MigLayout("fillx, insets 0", "[grow 0, right]rel[left]"));
+        panel.setLayout(new MigLayout("fillx, insets 0, hidemode 3", "[grow 0, right]rel[left]"));
         panel.add(new JLabel("Values to consider"));
         panel.add(analysisMethods, "wrap");
-        panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, hmax 200, wrap");
+        panel.add(filteredTable.getPanel(), "span 2, grow, hmin 100, wrap");
         panel.add(filterAttributesCheckBox, "span, alignx left, wrap");
         panel.add(selectSignificantButton, "span, alignx center, split 2");
         panel.add(exportButton, "wrap");
 
-        return panel;
+        JPanel container = UiUtil.createJPanel();
+        container.setLayout(new MigLayout("fillx, insets 4, gap 0, hidemode 3"));
+        container.add(panel, "wrap");
+        container.add(statusLabel, "alignx center, wrap");
+        container.setBackground(StyleFactory.NEGATIVE);
+
+        statusLabel.setVisible(false);
+
+        return container;
     }
 
     private SignificancePredicate getSignificancePredicate() {
@@ -289,7 +319,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         TableRowSorter<TableModel> sorter = filteredTable.getSorter();
         configureSorter(sorter);
 
-        updateSelectedAttributes(sorter, table.getSelectedRows());
+        updateSelectedAttributes(sorter, table.getSelectedRows(), false);
     }
 
     ListSelectionListener createListSelectionListener(JTable table,
@@ -303,7 +333,7 @@ public class AttributeBrowserController implements ExpansionChangeListener {
 
                 int[] selectedRows = table.getSelectedRows();
                 selectSignificantButton.setEnabled(selectedRows.length > 0);
-                updateSelectedAttributes(sorter, selectedRows);
+                updateSelectedAttributes(sorter, selectedRows, false);
             }
         };
     }
@@ -453,17 +483,18 @@ public class AttributeBrowserController implements ExpansionChangeListener {
         }
     }
 
-    void updateSelectedAttributes() {
+    void updateSelectedAttributes(boolean forceUpdate) {
         TableRowSorter<TableModel> sorter = filteredTable.getSorter();
         JTable table = filteredTable.getTable();
         int[] rows = table.getSelectedRows();
-        updateSelectedAttributes(sorter, rows);
+        updateSelectedAttributes(sorter, rows, forceUpdate);
     }
 
     void updateSelectedAttributes(TableRowSorter<TableModel> sorter,
-                                  int[] rows) {
+                                  int[] rows,
+                                  boolean forceUpdate) {
 
-        if (!allowUpdates || sorter.getViewRowCount() == 0) {
+        if (!forceUpdate && (!allowUpdates || sorter.getViewRowCount() == 0)) {
             return;
         }
 
@@ -480,36 +511,41 @@ public class AttributeBrowserController implements ExpansionChangeListener {
 
         SafeUtil.checkSafeColumns(nodeTable);
 
-        eventService.notifyPresentationStateChanged(false);
+        statusLabel.setVisible(true);
+        panel.setOpaque(true);
 
-        EnrichmentLandscape landscape = session.getEnrichmentLandscape();
-        List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
-        neighborhoods.stream()
-                     .forEach(n -> {
-                         double score = Arrays.stream(rows)
-                                              .map(i -> sorter.convertRowIndexToModel(i))
-                                              .mapToDouble(i -> scoringFunction.get(n, i))
-                                              .reduce(0, (x,
-                                                          y) -> Math.abs(x) > Math.abs(y) ? x : y);
+        Runnable action = () -> {
+            EnrichmentLandscape landscape = session.getEnrichmentLandscape();
+            List<? extends Neighborhood> neighborhoods = landscape.getNeighborhoods();
+            neighborhoods.stream()
+                         .forEach(n -> {
+                             double score = Arrays.stream(rows)
+                                                  .map(i -> sorter.convertRowIndexToModel(i))
+                                                  .mapToDouble(i -> scoringFunction.get(n, i))
+                                                  .reduce(0, (x,
+                                                              y) -> Math.abs(x) > Math.abs(y) ? x : y);
 
-                         if (!Double.isFinite(score)) {
-                             score = 0;
-                         }
+                             if (!Double.isFinite(score)) {
+                                 score = 0;
+                             }
 
-                         // Round to 4 places
-                         score = Math.round(score * 10000.0) / 10000.0;
+                             // Round to 4 places
+                             score = Math.round(score * 10000.0) / 10000.0;
 
-                         Long suid = nodeMappings[n.getNodeIndex()];
-                         CyRow row = nodeTable.getRow(suid);
-                         row.set(StyleFactory.HIGHLIGHT_COLUMN, score);
+                             Long suid = nodeMappings[n.getNodeIndex()];
+                             CyRow row = nodeTable.getRow(suid);
+                             row.set(StyleFactory.HIGHLIGHT_COLUMN, score);
 
-                         double brightness = Math.abs(score);
-                         row.set(StyleFactory.BRIGHTNESSS_COLUMN, brightness);
+                             double brightness = Math.abs(score);
+                             row.set(StyleFactory.BRIGHTNESSS_COLUMN, brightness);
 
-                         row.set(StyleFactory.COLOR_COLUMN, null);
-                     });
+                             row.set(StyleFactory.COLOR_COLUMN, null);
+                         });
 
-        setAttributeBrowserStyle(view);
+            setAttributeBrowserStyle(view);
+        };
+
+        SwingUtilities.invokeLater(action);
     }
 
     void setAttributeBrowserStyle(CyNetworkView view) {
@@ -584,14 +620,19 @@ public class AttributeBrowserController implements ExpansionChangeListener {
                      .forEach(r -> attributes.add(r));
 
         } finally {
-            attributeTableModel.fireTableDataChanged();
+            SwingUtilities.invokeLater(() -> {
+                attributeTableModel.fireTableDataChanged();
 
-            if (attributeTableModel.getRowCount() > 0) {
-                setSelectedRows(new int[] { 0 });
+                if (attributeTableModel.getRowCount() > 0) {
+                    filteredTable.getSorter()
+                                 .sort();
+                    setSelectedRows(new int[] { 0 });
 
-                allowUpdates = true;
-                updateSelectedAttributes();
-            }
+                    allowUpdates = true;
+
+                    updateSelectedAttributes(true);
+                }
+            });
         }
     }
 
