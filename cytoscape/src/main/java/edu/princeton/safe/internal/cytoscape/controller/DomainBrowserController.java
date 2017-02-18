@@ -414,8 +414,11 @@ public class DomainBrowserController implements ExpansionChangeListener {
                      .mapToObj(domainIndex -> {
                          Domain domain = domains.get(domainIndex);
                          DomainRow row = new DomainRow();
+
+                         double[] color = colors.get(domainIndex);
+                         domain.setColor(color);
                          row.setDomain(domain);
-                         row.setColor(colors.get(domainIndex));
+
                          IntStream.range(0, domain.getAttributeCount())
                                   .map(i -> domain.getAttribute(i))
                                   .filter(j -> compositeMap.isTop(j, analysisType))
@@ -532,15 +535,13 @@ public class DomainBrowserController implements ExpansionChangeListener {
         }
 
         stream.forEach(domain -> {
-            int index = domain.getIndex();
             domain.forEachAttribute(j -> {
                 if (!isSignificant.test(neighborhood, j) || !compositeMap.isTop(j, typeIndex)) {
                     return;
                 }
 
-                DomainRow row = domainRows.get(index);
                 double opacity = score.get(neighborhood, j);
-                double[] attributeColor = Util.multiply(opacity * opacity, row.getColor());
+                double[] attributeColor = Util.multiply(opacity * opacity, domain.getColor());
                 Util.addInPlace(attributeColor, color);
                 totalContributions[0]++;
             });

@@ -8,7 +8,6 @@ import edu.princeton.safe.model.Domain;
 
 public class DomainRow {
     Domain domain;
-    double[] color;
     LongSet significantSuids;
     boolean isVisible;
 
@@ -18,14 +17,11 @@ public class DomainRow {
 
     @Override
     public String toString() {
+        double[] color = domain.getColor();
         String hexColor = String.format("#%02x%02x%02x", Math.round(color[0] * 255), Math.round(color[1] * 255),
                                         Math.round(color[2] * 255));
         return String.format("<html><span style=\"color: %s; font-family: FontAwesome\">\uf111</span> %s", hexColor,
                              domain.getName());
-    }
-
-    public double[] getColor() {
-        return color;
     }
 
     public Domain getDomain() {
@@ -34,10 +30,6 @@ public class DomainRow {
 
     public void setDomain(Domain domain) {
         this.domain = domain;
-    }
-
-    public void setColor(double[] color) {
-        this.color = color;
     }
 
     public void addSignificant(long suid) {

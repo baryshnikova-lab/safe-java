@@ -12,4 +12,8 @@ public interface Domain {
     int getAttribute(int memberIndex);
 
     String getName();
+
+    double[] getColor();
+
+    void setColor(double[] color);
 }

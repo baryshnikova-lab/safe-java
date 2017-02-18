@@ -13,6 +13,7 @@ public class DefaultDomain implements Domain {
     IntArrayList attributeIndexes;
     int index;
     String name;
+    double[] color;
 
     public DefaultDomain() {
         attributeIndexes = new IntArrayList();
@@ -45,6 +46,16 @@ public class DefaultDomain implements Domain {
 
     public void addAttribute(int attributeIndex) {
         attributeIndexes.add(attributeIndex);
+    }
+
+    @Override
+    public double[] getColor() {
+        return color;
+    }
+
+    @Override
+    public void setColor(double[] color) {
+        this.color = color;
     }
 
 }

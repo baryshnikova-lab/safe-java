@@ -9,6 +9,7 @@ import org.cytoscape.work.TaskMonitor;
 import edu.princeton.safe.AnnotationProvider;
 import edu.princeton.safe.internal.cytoscape.model.SafeSession;
 import edu.princeton.safe.internal.io.AttributeReport;
+import edu.princeton.safe.internal.io.DomainReport;
 import edu.princeton.safe.internal.io.NodeReport;
 import edu.princeton.safe.io.LabelFunction;
 import edu.princeton.safe.model.CompositeMap;
@@ -60,6 +61,12 @@ public class ExportReportsTask extends BaseExportReportsTask {
                                                            String.format("%s-attribute_properties_annotation-%s.txt",
                                                                          baseName, typeName)))) {
             AttributeReport.write(writer, landscape, compositeMap, typeIndex);
+        }
+
+        try (PrintWriter writer = new PrintWriter(new File(directory,
+                                                           String.format("%s-domain_properties_annotation-%s.txt",
+                                                                         baseName, typeName)))) {
+            DomainReport.write(writer, compositeMap, typeIndex);
         }
     }
 
